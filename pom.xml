@@ -4,7 +4,7 @@
   <groupId>com.google.cloud.alloydb</groupId>
   <artifactId>java-connector-parent</artifactId>
   <packaging>pom</packaging>
-  <version>0.1.0-SNAPSHOT</version><!-- {x-version-update:alloydb-java-connector:current} -->
+  <version>0.0.1-SNAPSHOT</version><!-- {x-version-update:alloydb-java-connector:current} -->
   <name>Google Cloud AlloyDB Java Connector Parent</name>
   <url>https://github.com/GoogleCloudPlatform/alloydb-java-connector</url>
   <description>
