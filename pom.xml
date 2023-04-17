@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.google.cloud.alloydb</groupId>
-  <artifactId>java-connector-parent</artifactId>
+  <artifactId>alloydb-connector-parent</artifactId>
   <packaging>pom</packaging>
   <version>0.0.1-SNAPSHOT</version><!-- {x-version-update:alloydb-java-connector:current} -->
   <name>Google Cloud AlloyDB Java Connector Parent</name>
@@ -78,13 +78,6 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
-          <configuration>
-            <ignoredUnusedDeclaredDependencies>
-              <ignoredUnusedDeclaredDependency>com.google.http-client:google-http-client-jackson2</ignoredUnusedDeclaredDependency>
-              <ignoredUnusedDeclaredDependency>com.google.oauth-client:google-oauth-client</ignoredUnusedDeclaredDependency>
-              <ignoredUnusedDeclaredDependency>javax.annotation:javax.annotation-api</ignoredUnusedDeclaredDependency>
-            </ignoredUnusedDeclaredDependencies>
-          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>

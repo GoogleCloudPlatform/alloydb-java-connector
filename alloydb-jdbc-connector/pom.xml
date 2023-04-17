@@ -21,7 +21,7 @@
 
   <parent>
     <groupId>com.google.cloud.alloydb</groupId>
-    <artifactId>java-connector-parent</artifactId>
+    <artifactId>alloydb-connector-parent</artifactId>
     <version>0.0.1-SNAPSHOT</version><!-- {x-version-update:alloydb-java-connector:current} -->
     <relativePath>../pom.xml</relativePath>
   </parent>
