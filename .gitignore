@@ -25,14 +25,13 @@ nosetests.xml
 .DS_Store
 .classpath
 
-# Built documentation
-docs/
-
 # API key file containing value of GOOGLE_API_KEY for integration tests
 api_key
 
 # Python utilities
 *.pyc
 artman-genfiles
+/venv
+/env
 
 .flattened-pom.xml

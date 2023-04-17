@@ -1,0 +1,13 @@
+{
+  "api_shortname": "alloydb-java-connector",
+  "name_pretty": "Google Cloud AlloyDB Java Connector",
+  "product_documentation": "https://cloud.google.com/alloydb",
+  "release_level": "stable",
+  "language": "java",
+  "repo": "GoogleCloudPlatform/alloydb-java-connector",
+  "repo_short": "alloydb-java-connector",
+  "distribution_name": "com.google.cloud.alloydb:alloydb-java-conneector-parent",
+  "api_id": "alloydb.googleapis.com",
+  "library_type": "OTHER",
+  "codeowner_team": "@GoogleCloudPlatform/infra-db-sdk"
+}
