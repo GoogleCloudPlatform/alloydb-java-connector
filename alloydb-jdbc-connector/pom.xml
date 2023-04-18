@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copyright 2023 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.google.cloud.alloydb</groupId>
+    <artifactId>alloydb-connector-parent</artifactId>
+    <version>0.0.1-SNAPSHOT</version><!-- {x-version-update:alloydb-java-connector:current} -->
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+  <artifactId>alloydb-jdbc-connector</artifactId>
+  <packaging>jar</packaging>
+
+  <name>Google Cloud AlloyDB JDBC Connector</name>
+  <description>
+    Socket factory for the Postgres JDBC driver that allows a user with the appropriate permissions
+    to connect to an AlloyDB instance without having to deal with IP allowlisting or SSL
+    certificates manually.
+  </description>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>flatten-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>
