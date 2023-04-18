@@ -1,4 +1,4 @@
-# Copyright 2020 Google LLC
+# Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ java.common_templates(excludes=[
   "README.md",
   "CONTRIBUTING.md",
   ".github/auto-label.yaml",
+  ".github/CODEOWNERS",
   ".github/ISSUE_TEMPLATE/bug_report.md",
   ".github/ISSUE_TEMPLATE/feature_request.md",
   ".github/ISSUE_TEMPLATE/support_request.md",

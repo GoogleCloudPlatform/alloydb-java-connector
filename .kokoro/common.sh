@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Google LLC
+# Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ function retry_with_backoff {
 
     # store current flag state
     flags=$-
-    
+
     # allow a failures to continue
     set +e
     ${command}
