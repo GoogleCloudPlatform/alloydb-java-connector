@@ -4,4 +4,4 @@ assign_prs_by:
 - labels:
   - samples
   to:
-  - googlecloudplatform/infra-db-sdk
+  - googleapis/java-samples-reviewers
