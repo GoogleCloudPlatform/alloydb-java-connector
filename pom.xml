@@ -60,7 +60,7 @@
       <dependency>
         <groupId>com.google.cloud.alloydb</groupId>
         <artifactId>alloydb-jdbc-connector</artifactId>
-        <version>0.1.1-SNAPSHOT</version><!-- {x-version-update:alloydb-jdbc-connector:current} -->
+        <version>0.0.1-SNAPSHOT</version><!-- {x-version-update:alloydb-jdbc-connector:current} -->
       </dependency>
       <!-- Test dependencies -->
       <dependency>
