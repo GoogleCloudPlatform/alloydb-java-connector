@@ -26,5 +26,4 @@ java.common_templates(excludes=[
   ".github/ISSUE_TEMPLATE/feature_request.md",
   ".github/ISSUE_TEMPLATE/support_request.md",
   ".github/snippet-bot.yml",
-  "samples/*",
 ])
