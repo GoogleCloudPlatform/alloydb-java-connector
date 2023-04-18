@@ -20,6 +20,7 @@ java.common_templates(excludes=[
   "README.md",
   "CONTRIBUTING.md",
   ".github/auto-label.yaml",
+  ".github/blunderbuss.yml",
   ".github/CODEOWNERS",
   ".github/ISSUE_TEMPLATE/bug_report.md",
   ".github/ISSUE_TEMPLATE/feature_request.md",
