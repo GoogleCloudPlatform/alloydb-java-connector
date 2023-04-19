@@ -68,7 +68,7 @@ body:
       value: |
         1. OS type and version:
         2. Java SDK version:
-        3. AlloyDB Java Socket Factory version:
+        3. AlloyDB Java Connector version:
     validations:
       required: true
   - type: textarea
