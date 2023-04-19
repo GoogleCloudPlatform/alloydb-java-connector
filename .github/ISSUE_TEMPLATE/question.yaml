@@ -26,7 +26,7 @@ body:
         
         Please run down the following list and make sure you've tried the usual "quick fixes":
         - Search the [current open issues](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues) for a similar question
-        - Check for answers on [StackOverflow](https://stackoverflow.com/questions/tagged/google-cloud-sql) (under the 'google-cloud-sql' tag)
+        - Check for answers on [StackOverflow](https://stackoverflow.com/questions/tagged/google-alloydb) (under the 'google-alloydb' tag)
         
         If you still have a question, please include as much information as possible below! :smile:
   - type: textarea
