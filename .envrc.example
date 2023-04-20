@@ -1,1 +1,1 @@
-export ALLOYDB_INSTANCE_URI="projects/<PROJECT>>/locations/<REGION>/clusters/<CLUSTER>/instances/<INSTANCE>"
+export ALLOYDB_INSTANCE_URI="projects/<PROJECT>/locations/<REGION>/clusters/<CLUSTER>/instances/<INSTANCE>"
