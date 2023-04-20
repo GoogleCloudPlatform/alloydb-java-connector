@@ -55,8 +55,8 @@ public class ITDefaultConnectionInfoRepositoryTest {
     executor = new ScheduledThreadPoolExecutor(1);
     alloyDBAdminClient = AlloyDBAdminClient.create();
 
-    defaultConnectionInfoRepository = new DefaultConnectionInfoRepository(
-        executor, alloyDBAdminClient);
+    defaultConnectionInfoRepository =
+        new DefaultConnectionInfoRepository(executor, alloyDBAdminClient);
   }
 
   @After

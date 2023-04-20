@@ -44,18 +44,18 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
   private final ScheduledExecutorService executor;
   private final AlloyDBAdminClient alloyDBAdminClient;
 
-  DefaultConnectionInfoRepository(ScheduledExecutorService executor,
-      AlloyDBAdminClient alloyDBAdminClient) {
+  DefaultConnectionInfoRepository(
+      ScheduledExecutorService executor, AlloyDBAdminClient alloyDBAdminClient) {
     this.executor = executor;
     this.alloyDBAdminClient = alloyDBAdminClient;
   }
 
   @Override
   public ConnectionInfo getConnectionInfo(InstanceName instanceName, KeyPair keyPair) {
-    Future<com.google.cloud.alloydb.v1beta.ConnectionInfo> infoFuture = executor.submit(
-        () -> getConnectionInfo(instanceName));
-    Future<GenerateClientCertificateResponse> clientCertificateResponseFuture = executor.submit(
-        () -> getGenerateClientCertificateResponse(instanceName, keyPair));
+    Future<com.google.cloud.alloydb.v1beta.ConnectionInfo> infoFuture =
+        executor.submit(() -> getConnectionInfo(instanceName));
+    Future<GenerateClientCertificateResponse> clientCertificateResponseFuture =
+        executor.submit(() -> getGenerateClientCertificateResponse(instanceName, keyPair));
 
     com.google.cloud.alloydb.v1beta.ConnectionInfo info;
     try {
@@ -71,7 +71,8 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
       throw new RuntimeException(e);
     }
     ByteString clientCertificate = certificateResponse.getPemCertificateBytes();
-    List<ByteString> certificateChain = certificateResponse.getPemCertificateChainList().asByteStringList();
+    List<ByteString> certificateChain =
+        certificateResponse.getPemCertificateChainList().asByteStringList();
 
     return new ConnectionInfo(
         info.getIpAddress(), info.getInstanceUid(), clientCertificate, certificateChain);
@@ -120,9 +121,7 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
     PKCS10CertificationRequestBuilder requestBuilder =
         new JcaPKCS10CertificationRequestBuilder(subject, keyPair.getPublic());
 
-    ContentSigner signer =
-        new JcaContentSignerBuilder("SHA256WithRSA")
-            .build(keyPair.getPrivate());
+    ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSA").build(keyPair.getPrivate());
 
     return requestBuilder.build(signer);
   }
