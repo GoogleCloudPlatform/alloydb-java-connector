@@ -24,7 +24,8 @@ import com.google.cloud.alloydb.v1beta.InstanceName;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,7 +36,7 @@ public class ITDefaultConnectionInfoRepositoryTest {
   private KeyPair keyPair;
   private AlloyDBAdminClient alloyDBAdminClient;
   private String instanceUri;
-  private ScheduledThreadPoolExecutor executor;
+  private ExecutorService executor;
 
   @Before
   public void setUp() throws Exception {
@@ -52,7 +53,7 @@ public class ITDefaultConnectionInfoRepositoryTest {
     generator.initialize(2048);
 
     keyPair = generator.generateKeyPair();
-    executor = new ScheduledThreadPoolExecutor(1);
+    executor = Executors.newSingleThreadExecutor();
     alloyDBAdminClient = AlloyDBAdminClient.create();
 
     defaultConnectionInfoRepository =
@@ -73,7 +74,7 @@ public class ITDefaultConnectionInfoRepositoryTest {
 
     assertThat(connectionInfo.getInstanceUid()).isNotEmpty();
     assertThat(connectionInfo.getIpAddress()).isNotEmpty();
-    assertThat(connectionInfo.getClientCertificate()).isNotEmpty();
+    assertThat(connectionInfo.getClientCertificate()).isNotNull();
     assertThat(connectionInfo.getCertificateChain()).hasSize(2);
   }
 

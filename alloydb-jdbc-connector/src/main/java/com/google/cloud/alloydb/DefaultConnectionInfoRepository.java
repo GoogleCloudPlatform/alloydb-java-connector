@@ -22,13 +22,19 @@ import com.google.cloud.alloydb.v1beta.GenerateClientCertificateResponse;
 import com.google.cloud.alloydb.v1beta.InstanceName;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
@@ -69,9 +75,22 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
-    ByteString clientCertificate = certificateResponse.getPemCertificateBytes();
-    List<ByteString> certificateChain =
+    ByteString pemCertificateBytes = certificateResponse.getPemCertificateBytes();
+    X509Certificate clientCertificate;
+    try {
+      clientCertificate = parseCertificate(pemCertificateBytes);
+    } catch (CertificateException e) {
+      throw new RuntimeException(e);
+    }
+    List<ByteString> certificateChainBytes =
         certificateResponse.getPemCertificateChainList().asByteStringList();
+    List<X509Certificate> certificateChain = certificateChainBytes.stream().map(cert -> {
+      try {
+        return parseCertificate(cert);
+      } catch (CertificateException e) {
+        throw new RuntimeException(e);
+      }
+    }).collect(Collectors.toList());
 
     return new ConnectionInfo(
         info.getIpAddress(), info.getInstanceUid(), clientCertificate, certificateChain);
@@ -121,5 +140,11 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
     ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSA").build(keyPair.getPrivate());
 
     return requestBuilder.build(signer);
+  }
+
+  private X509Certificate parseCertificate(ByteString cert) throws CertificateException {
+    ByteArrayInputStream certStream = new ByteArrayInputStream(cert.toByteArray());
+    CertificateFactory x509CertificateFactory = CertificateFactory.getInstance("X.509");
+    return (X509Certificate) x509CertificateFactory.generateCertificate(certStream);
   }
 }

@@ -87,17 +87,11 @@ class ConnectionInfo {
 
   @Override
   public String toString() {
-    return "ConnectionInfo{"
-        + "ipAddress='"
-        + ipAddress
-        + '\''
-        + ", instanceUid='"
-        + instanceUid
-        + '\''
-        + ", clientCertificate="
-        + clientCertificate
-        + ", certificateChain="
-        + certificateChain
-        + '}';
+    return "ConnectionInfo{" +
+        "ipAddress='" + ipAddress + '\'' +
+        ", instanceUid='" + instanceUid + '\'' +
+        ", clientCertificate=" + clientCertificate +
+        ", certificateChain=" + certificateChain +
+        '}';
   }
 }
