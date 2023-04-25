@@ -27,8 +27,8 @@ import java.io.StringWriter;
 import java.security.KeyPair;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
@@ -41,11 +41,10 @@ import org.bouncycastle.util.io.pem.PemObject;
 
 class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
 
-  private final ScheduledExecutorService executor;
+  private final ExecutorService executor;
   private final AlloyDBAdminClient alloyDBAdminClient;
 
-  DefaultConnectionInfoRepository(
-      ScheduledExecutorService executor, AlloyDBAdminClient alloyDBAdminClient) {
+  DefaultConnectionInfoRepository(ExecutorService executor, AlloyDBAdminClient alloyDBAdminClient) {
     this.executor = executor;
     this.alloyDBAdminClient = alloyDBAdminClient;
   }
@@ -103,9 +102,7 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
             .setPemCsr(str.toString())
             .build();
 
-    GenerateClientCertificateResponse response =
-        alloyDBAdminClient.generateClientCertificate(request);
-    return response;
+    return alloyDBAdminClient.generateClientCertificate(request);
   }
 
   private String getParent(InstanceName instanceName) {
