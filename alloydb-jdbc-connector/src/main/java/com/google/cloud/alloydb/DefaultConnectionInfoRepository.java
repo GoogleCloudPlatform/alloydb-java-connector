@@ -135,7 +135,8 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
     PKCS10CertificationRequestBuilder requestBuilder =
         new JcaPKCS10CertificationRequestBuilder(subject, keyPair.getPublic());
 
-    ContentSigner signer = new JcaContentSignerBuilder(SHA_256_WITH_RSA).build(keyPair.getPrivate());
+    ContentSigner signer =
+        new JcaContentSignerBuilder(SHA_256_WITH_RSA).build(keyPair.getPrivate());
 
     return requestBuilder.build(signer);
   }
