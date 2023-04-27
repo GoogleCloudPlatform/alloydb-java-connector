@@ -16,21 +16,21 @@
 
 package com.google.cloud.alloydb;
 
-import com.google.protobuf.ByteString;
+import java.security.cert.X509Certificate;
 import java.util.List;
 
 class ConnectionInfo {
 
   private final String ipAddress;
   private final String instanceUid;
-  private final ByteString clientCertificate;
-  private final List<ByteString> certificateChain;
+  private final X509Certificate clientCertificate;
+  private final List<X509Certificate> certificateChain;
 
   ConnectionInfo(
       String ipAddress,
       String instanceUid,
-      ByteString clientCertificate,
-      List<ByteString> certificateChain) {
+      X509Certificate clientCertificate,
+      List<X509Certificate> certificateChain) {
     this.ipAddress = ipAddress;
     this.instanceUid = instanceUid;
     this.clientCertificate = clientCertificate;
@@ -45,11 +45,11 @@ class ConnectionInfo {
     return instanceUid;
   }
 
-  ByteString getClientCertificate() {
+  X509Certificate getClientCertificate() {
     return clientCertificate;
   }
 
-  List<ByteString> getCertificateChain() {
+  List<X509Certificate> getCertificateChain() {
     return certificateChain;
   }
 
