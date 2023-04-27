@@ -123,10 +123,10 @@ jobs:
       - run: .kokoro/build.sh
         env:
           JOB_TYPE: graalvm17
-  integration:
+  unitsAndE2e:
     # run job on proper workflow event triggers (skip job for pull_request event from forks and only run pull_request_target for "tests: run" label)
     if: "${{ (github.event.action != 'labeled' && github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) || github.event.label.name == 'tests: run' }}"
-    name: integration + e2e
+    name: units + e2e
     runs-on: ubuntu-latest
     permissions:
       contents: 'read'
