@@ -46,6 +46,9 @@ import org.bouncycastle.util.io.pem.PemObject;
 
 class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
 
+  private static final String CERTIFICATE_REQUEST = "CERTIFICATE REQUEST";
+  private static final String SHA_256_WITH_RSA = "SHA256WithRSA";
+  private static final String X_509 = "X.509";
   private final ExecutorService executor;
   private final AlloyDBAdminClient alloyDBAdminClient;
 
@@ -55,25 +58,16 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
   }
 
   @Override
-  public ConnectionInfo getConnectionInfo(InstanceName instanceName, KeyPair keyPair) {
+  public ConnectionInfo getConnectionInfo(InstanceName instanceName, KeyPair keyPair)
+      throws ExecutionException, InterruptedException {
     Future<com.google.cloud.alloydb.v1beta.ConnectionInfo> infoFuture =
         executor.submit(() -> getConnectionInfo(instanceName));
     Future<GenerateClientCertificateResponse> clientCertificateResponseFuture =
         executor.submit(() -> getGenerateClientCertificateResponse(instanceName, keyPair));
 
-    com.google.cloud.alloydb.v1beta.ConnectionInfo info;
-    try {
-      info = infoFuture.get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
+    com.google.cloud.alloydb.v1beta.ConnectionInfo info = infoFuture.get();
 
-    GenerateClientCertificateResponse certificateResponse;
-    try {
-      certificateResponse = clientCertificateResponseFuture.get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
+    GenerateClientCertificateResponse certificateResponse = clientCertificateResponseFuture.get();
     ByteString pemCertificateBytes = certificateResponse.getPemCertificateBytes();
     X509Certificate clientCertificate;
     try {
@@ -81,6 +75,7 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
     } catch (CertificateException e) {
       throw new RuntimeException(e);
     }
+
     List<ByteString> certificateChainBytes =
         certificateResponse.getPemCertificateChainList().asByteStringList();
     List<X509Certificate> certificateChain =
@@ -109,7 +104,7 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
     StringWriter str = new StringWriter();
     try {
       PKCS10CertificationRequest certRequest = createPKCS10(keyPair);
-      PemObject pemObject = new PemObject("CERTIFICATE REQUEST", certRequest.getEncoded());
+      PemObject pemObject = new PemObject(CERTIFICATE_REQUEST, certRequest.getEncoded());
       JcaPEMWriter pemWriter = new JcaPEMWriter(str);
       pemWriter.writeObject(pemObject);
       pemWriter.close();
@@ -140,14 +135,14 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
     PKCS10CertificationRequestBuilder requestBuilder =
         new JcaPKCS10CertificationRequestBuilder(subject, keyPair.getPublic());
 
-    ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSA").build(keyPair.getPrivate());
+    ContentSigner signer = new JcaContentSignerBuilder(SHA_256_WITH_RSA).build(keyPair.getPrivate());
 
     return requestBuilder.build(signer);
   }
 
   private X509Certificate parseCertificate(ByteString cert) throws CertificateException {
     ByteArrayInputStream certStream = new ByteArrayInputStream(cert.toByteArray());
-    CertificateFactory x509CertificateFactory = CertificateFactory.getInstance("X.509");
+    CertificateFactory x509CertificateFactory = CertificateFactory.getInstance(X_509);
     return (X509Certificate) x509CertificateFactory.generateCertificate(certStream);
   }
 }

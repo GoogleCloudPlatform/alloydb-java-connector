@@ -24,6 +24,7 @@ import com.google.cloud.alloydb.v1beta.InstanceName;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.junit.After;
@@ -67,7 +68,7 @@ public class ITDefaultConnectionInfoRepositoryTest {
   }
 
   @Test
-  public void testGetConnectionInfo() {
+  public void testGetConnectionInfo() throws ExecutionException, InterruptedException {
     InstanceName instanceName = InstanceName.parse(instanceUri);
     ConnectionInfo connectionInfo =
         defaultConnectionInfoRepository.getConnectionInfo(instanceName, keyPair);
