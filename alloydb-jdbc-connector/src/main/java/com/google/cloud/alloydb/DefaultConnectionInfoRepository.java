@@ -25,7 +25,6 @@ import com.google.protobuf.Duration;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -84,13 +83,17 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
     }
     List<ByteString> certificateChainBytes =
         certificateResponse.getPemCertificateChainList().asByteStringList();
-    List<X509Certificate> certificateChain = certificateChainBytes.stream().map(cert -> {
-      try {
-        return parseCertificate(cert);
-      } catch (CertificateException e) {
-        throw new RuntimeException(e);
-      }
-    }).collect(Collectors.toList());
+    List<X509Certificate> certificateChain =
+        certificateChainBytes.stream()
+            .map(
+                cert -> {
+                  try {
+                    return parseCertificate(cert);
+                  } catch (CertificateException e) {
+                    throw new RuntimeException(e);
+                  }
+                })
+            .collect(Collectors.toList());
 
     return new ConnectionInfo(
         info.getIpAddress(), info.getInstanceUid(), clientCertificate, certificateChain);
