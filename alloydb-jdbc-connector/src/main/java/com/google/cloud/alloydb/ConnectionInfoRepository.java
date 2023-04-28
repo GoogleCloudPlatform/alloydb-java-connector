@@ -18,9 +18,10 @@ package com.google.cloud.alloydb;
 
 import com.google.cloud.alloydb.v1beta.InstanceName;
 import java.security.KeyPair;
+import java.security.cert.CertificateException;
 import java.util.concurrent.ExecutionException;
 
 interface ConnectionInfoRepository {
   ConnectionInfo getConnectionInfo(InstanceName instanceName, KeyPair publicKey)
-      throws ExecutionException, InterruptedException;
+      throws ExecutionException, InterruptedException, CertificateException;
 }

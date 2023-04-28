@@ -29,11 +29,11 @@ import java.security.KeyPair;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
@@ -59,7 +59,7 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
 
   @Override
   public ConnectionInfo getConnectionInfo(InstanceName instanceName, KeyPair keyPair)
-      throws ExecutionException, InterruptedException {
+      throws ExecutionException, InterruptedException, CertificateException {
     Future<com.google.cloud.alloydb.v1beta.ConnectionInfo> infoFuture =
         executor.submit(() -> getConnectionInfo(instanceName));
     Future<GenerateClientCertificateResponse> clientCertificateResponseFuture =
@@ -69,26 +69,14 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
 
     GenerateClientCertificateResponse certificateResponse = clientCertificateResponseFuture.get();
     ByteString pemCertificateBytes = certificateResponse.getPemCertificateBytes();
-    X509Certificate clientCertificate;
-    try {
-      clientCertificate = parseCertificate(pemCertificateBytes);
-    } catch (CertificateException e) {
-      throw new RuntimeException(e);
-    }
+    X509Certificate clientCertificate = parseCertificate(pemCertificateBytes);
 
     List<ByteString> certificateChainBytes =
         certificateResponse.getPemCertificateChainList().asByteStringList();
-    List<X509Certificate> certificateChain =
-        certificateChainBytes.stream()
-            .map(
-                cert -> {
-                  try {
-                    return parseCertificate(cert);
-                  } catch (CertificateException e) {
-                    throw new RuntimeException(e);
-                  }
-                })
-            .collect(Collectors.toList());
+    List<X509Certificate> certificateChain = new ArrayList<>();
+    for (ByteString certificateChainByte : certificateChainBytes) {
+      certificateChain.add(parseCertificate(certificateChainByte));
+    }
 
     return new ConnectionInfo(
         info.getIpAddress(), info.getInstanceUid(), clientCertificate, certificateChain);
