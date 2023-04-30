@@ -86,6 +86,12 @@
       <version>${bouncycastle.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>dev.failsafe</groupId>
+      <artifactId>failsafe</artifactId>
+      <version>3.3.1</version>
+    </dependency>
+
     <!-- Test dependencies -->
     <dependency>
       <groupId>junit</groupId>
@@ -98,6 +104,13 @@
       <groupId>com.google.truth</groupId>
       <artifactId>truth</artifactId>
       <version>1.1.3</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jmock</groupId>
+      <artifactId>jmock</artifactId>
+      <version>2.12.0</version>
       <scope>test</scope>
     </dependency>
 
