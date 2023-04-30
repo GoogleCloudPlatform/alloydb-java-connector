@@ -57,15 +57,15 @@
     </dependency>
 
     <dependency>
-      <groupId>com.google.protobuf</groupId>
-      <artifactId>protobuf-java</artifactId>
-      <version>3.21.12</version>
-    </dependency>
-
-    <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-alloydb</artifactId>
       <version>0.4.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <version>3.21.12</version>
     </dependency>
 
     <dependency>
@@ -93,6 +93,7 @@
       <version>4.13.2</version>
       <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>com.google.truth</groupId>
       <artifactId>truth</artifactId>
