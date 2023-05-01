@@ -83,8 +83,8 @@ public class ConnectionInfoCacheTest {
     executor.runNextPendingCommand(); // Simulate completion of background thread.
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
 
-    assertThat(connectionInfo.getIpAddress()).isEqualTo("10.0.0.1");
-    assertThat(connectionInfo.getInstanceUid()).isEqualTo("some-instance-id");
+    assertThat(connectionInfo.getIpAddress()).isEqualTo(TEST_INSTANCE_IP);
+    assertThat(connectionInfo.getInstanceUid()).isEqualTo(TEST_INSTANCE_ID);
     assertThat(
             connectionInfo
                 .getClientCertificate()
