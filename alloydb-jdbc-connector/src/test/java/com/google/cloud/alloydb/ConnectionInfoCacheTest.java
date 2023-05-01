@@ -47,7 +47,6 @@ public class ConnectionInfoCacheTest {
   private static final String TEST_INSTANCE_ID = "some-instance-id";
   private static final Instant ONE_HOUR_FROM_NOW = Instant.now().plus(1, ChronoUnit.HOURS);
   private static final Instant TWO_HOURS_FROM_NOW = ONE_HOUR_FROM_NOW.plus(1, ChronoUnit.HOURS);
-  public static final Duration REFRESH_DURATION = Duration.ofNanos(1L);
   private InstanceName instanceName;
   private KeyPair keyPair;
   private DeterministicScheduler executor;
@@ -221,7 +220,7 @@ public class ConnectionInfoCacheTest {
     assertThat(spyRateLimiter.wasRateLimited.get()).isFalse();
 
     executor.runNextPendingCommand(); // Simulate completion of background thread.
-    ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
+    connectionInfoCache.getConnectionInfo();
 
     assertThat(spyRateLimiter.wasRateLimited.get()).isTrue();
   }
@@ -245,7 +244,7 @@ public class ConnectionInfoCacheTest {
     }
 
     @Override
-    public void acquirePermits(int i) throws InterruptedException {}
+    public void acquirePermits(int i) {}
 
     @Override
     public Duration reservePermits(int i) {
@@ -263,7 +262,7 @@ public class ConnectionInfoCacheTest {
     }
 
     @Override
-    public boolean tryAcquirePermits(int i, Duration duration) throws InterruptedException {
+    public boolean tryAcquirePermits(int i, Duration duration) {
       return false;
     }
   }
