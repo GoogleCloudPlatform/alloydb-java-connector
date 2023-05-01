@@ -62,7 +62,7 @@ public class TestCertificates {
   private static final String SHA_256_WITH_RSA = "SHA256WithRSA";
   private static final X500Name ROOT_CERT_SUBJECT = new X500Name("CN=root.alloydb");
   private static final X500Name INTERMEDIATE_CERT_SUBJECT = new X500Name("CN=client.alloydb");
-  private static final X500Name SERVER_CERT_SUBJECT = new X500Name("CN="+DEFAULT_SERVER_NAME);
+  private static final X500Name SERVER_CERT_SUBJECT = new X500Name("CN=" + DEFAULT_SERVER_NAME);
   public static final Instant ONE_YEAR_FROM_NOW = Instant.now().plus(365, ChronoUnit.DAYS);
 
   private final X509Certificate rootCertificate;
