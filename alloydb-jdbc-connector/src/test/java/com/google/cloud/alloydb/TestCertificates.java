@@ -48,10 +48,10 @@ import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
  * certificates:
  *
  * <ol>
- *   <li>A self-signed root CA certificate</li>
- *   <li>An intermediate CA certificate, signed by the root CA</li>
- *   <li>A Proxy server certificate signed by the root CA</li>
- *   <li>An ephemeral certificate signed by the intermediate CA</li>
+ *   <li>A self-signed root CA certificate
+ *   <li>An intermediate CA certificate, signed by the root CA
+ *   <li>A Proxy server certificate signed by the root CA
+ *   <li>An ephemeral certificate signed by the intermediate CA
  * </ol>
  */
 public class TestCertificates {
