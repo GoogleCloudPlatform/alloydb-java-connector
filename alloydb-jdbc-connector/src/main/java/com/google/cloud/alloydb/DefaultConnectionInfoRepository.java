@@ -16,6 +16,7 @@
 
 package com.google.cloud.alloydb;
 
+import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.alloydb.v1beta.AlloyDBAdminClient;
 import com.google.cloud.alloydb.v1beta.GenerateClientCertificateRequest;
 import com.google.cloud.alloydb.v1beta.GenerateClientCertificateResponse;
@@ -59,7 +60,7 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
 
   @Override
   public ConnectionInfo getConnectionInfo(InstanceName instanceName, KeyPair keyPair)
-      throws ExecutionException, InterruptedException, CertificateException {
+      throws ExecutionException, InterruptedException, CertificateException, ApiException {
     Future<com.google.cloud.alloydb.v1beta.ConnectionInfo> infoFuture =
         executor.submit(() -> getConnectionInfo(instanceName));
     Future<GenerateClientCertificateResponse> clientCertificateResponseFuture =
