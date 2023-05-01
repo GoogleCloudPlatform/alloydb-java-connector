@@ -34,7 +34,7 @@ class ConnectionInfoCache {
   private final ScheduledExecutorService executor;
   private final ConnectionInfoRepository connectionInfoRepo;
   private final InstanceName instanceName;
-  private final KeyPair keyPair;
+  private final KeyPair clientConnectorKeyPair;
   private final RateLimiter<Object> rateLimiter;
 
   private final Object connectionInfoLock = new Object();
@@ -46,12 +46,12 @@ class ConnectionInfoCache {
       ScheduledExecutorService executor,
       ConnectionInfoRepository connectionInfoRepo,
       InstanceName instanceName,
-      KeyPair keyPair,
+      KeyPair clientConnectorKeyPair,
       RateLimiter<Object> rateLimiter) {
     this.executor = executor;
     this.connectionInfoRepo = connectionInfoRepo;
     this.instanceName = instanceName;
-    this.keyPair = keyPair;
+    this.clientConnectorKeyPair = clientConnectorKeyPair;
     this.rateLimiter = rateLimiter;
     synchronized (connectionInfoLock) {
       this.current = executor.submit(this::performRefresh);
@@ -84,7 +84,7 @@ class ConnectionInfoCache {
 
     try {
       ConnectionInfo connectionInfo =
-          this.connectionInfoRepo.getConnectionInfo(this.instanceName, this.keyPair);
+          this.connectionInfoRepo.getConnectionInfo(this.instanceName, this.clientConnectorKeyPair);
 
       synchronized (connectionInfoLock) {
         current = Futures.immediateFuture(connectionInfo);
