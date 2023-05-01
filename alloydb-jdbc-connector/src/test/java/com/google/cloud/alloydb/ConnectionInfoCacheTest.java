@@ -51,21 +51,21 @@ public class ConnectionInfoCacheTest {
   private KeyPair keyPair;
   private DeterministicScheduler executor;
   private SpyRateLimiter<Object> spyRateLimiter;
+  private TestCertificates testCertificates;
 
   @Before
-  public void setUp() {
+  public void setUp() throws CertificateException, IOException, OperatorCreationException {
     instanceName =
         InstanceName.parse(
             "projects/<PROJECT>/locations/<REGION>/clusters/<CLUSTER>/instances/<INSTANCE>");
     keyPair = RsaKeyPairGenerator.generateKeyPair();
     executor = new DeterministicScheduler();
     spyRateLimiter = new SpyRateLimiter<>();
+    testCertificates = new TestCertificates();
   }
 
   @Test
-  public void testGetConnectionInfo_returnsConnectionInfo()
-      throws CertificateException, IOException, OperatorCreationException {
-    TestCertificates testCertificates = new TestCertificates();
+  public void testGetConnectionInfo_returnsConnectionInfo() {
     InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
     connectionInfoRepo.addResponses(
         () ->
@@ -97,9 +97,7 @@ public class ConnectionInfoCacheTest {
   }
 
   @Test
-  public void testGetConnectionInfo_scheduledNextOperation()
-      throws CertificateException, IOException, OperatorCreationException {
-    TestCertificates testCertificates = new TestCertificates();
+  public void testGetConnectionInfo_scheduledNextOperation() {
     InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
     List<X509Certificate> certificateChain =
         Arrays.asList(
@@ -147,9 +145,7 @@ public class ConnectionInfoCacheTest {
   }
 
   @Test
-  public void testGetConnectionInfo_scheduledNextOperationImmediatelyAfterFailure()
-      throws CertificateException, IOException, OperatorCreationException {
-    TestCertificates testCertificates = new TestCertificates();
+  public void testGetConnectionInfo_scheduledNextOperationImmediatelyAfterFailure() {
     InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
     List<X509Certificate> certificateChain =
         Arrays.asList(
@@ -200,9 +196,7 @@ public class ConnectionInfoCacheTest {
   }
 
   @Test
-  public void testGetConnectionInfo_isRateLimited()
-      throws CertificateException, IOException, OperatorCreationException {
-    TestCertificates testCertificates = new TestCertificates();
+  public void testGetConnectionInfo_isRateLimited() {
     InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
     connectionInfoRepo.addResponses(
         () ->
