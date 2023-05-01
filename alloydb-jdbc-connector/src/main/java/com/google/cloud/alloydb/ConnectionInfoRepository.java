@@ -16,9 +16,13 @@
 
 package com.google.cloud.alloydb;
 
+import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.alloydb.v1beta.InstanceName;
 import java.security.KeyPair;
+import java.security.cert.CertificateException;
+import java.util.concurrent.ExecutionException;
 
 interface ConnectionInfoRepository {
-  ConnectionInfo getConnectionInfo(InstanceName instanceName, KeyPair publicKey);
+  ConnectionInfo getConnectionInfo(InstanceName instanceName, KeyPair publicKey)
+      throws ExecutionException, InterruptedException, CertificateException, ApiException;
 }
