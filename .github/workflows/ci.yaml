@@ -106,6 +106,7 @@ jobs:
     - run: .kokoro/build.sh
       env:
         JOB_TYPE: clirr
+
           #  graalvm17:
           #    # run job on proper workflow event triggers (skip job for pull_request event from forks and only run pull_request_target for "tests: run" label)
           #    if: "${{ (github.event.action != 'labeled' && github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) || github.event.label.name == 'tests: run' }}"
@@ -180,11 +181,12 @@ jobs:
           #          chmod +x ./flakybot
           #          ./flakybot --repo ${{github.repository}} --commit_hash ${{github.sha}} --build_url https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
           #
+
   unitsAndE2e:
     # run job on proper workflow event triggers (skip job for pull_request event from forks and only run pull_request_target for "tests: run" label)
     if: "${{ (github.event.action != 'labeled' && github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) || github.event.label.name == 'tests: run' }}"
     name: units + e2e
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -218,7 +220,12 @@ jobs:
         uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.1
         with:
           distribution: 'zulu'
-          java-version: 17
+          java-version: 8
+
+      - name: Setup Maven Action
+        uses: s4u/setup-maven-action@94605e0cdfe442da48d603db22bbf4c7d203c076
+        with:
+          java-version: 8
 
       - id: 'auth'
         name: Authenticate to Google Cloud
