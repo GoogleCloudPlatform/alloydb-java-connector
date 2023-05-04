@@ -25,12 +25,11 @@ public class RsaKeyPairGenerator {
     KeyPairGenerator generator;
     try {
       generator = java.security.KeyPairGenerator.getInstance("RSA");
-    } catch (NoSuchAlgorithmException err) {
+    } catch (NoSuchAlgorithmException e) {
       throw new RuntimeException("Missing RSA generator");
     }
     generator.initialize(2048);
 
-    KeyPair keyPair1 = generator.generateKeyPair();
-    return keyPair1;
+    return generator.generateKeyPair();
   }
 }
