@@ -25,7 +25,7 @@ import java.time.temporal.ChronoUnit;
 class RefreshCalculator {
 
   private static final int ONE_HOUR_IN_SECONDS = 3600;
-  private static final long REFRESH_BUFFER_IN_SECONDS = 240; // Four minutes
+  private static final int REFRESH_BUFFER_IN_SECONDS = 240; // Four minutes
 
   long calculateSecondsUntilNextRefresh(Instant now, Instant clientCertificateExpiration) {
     long secondsUntilExpiration = ChronoUnit.SECONDS.between(now, clientCertificateExpiration);
