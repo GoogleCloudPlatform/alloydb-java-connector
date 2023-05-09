@@ -17,6 +17,7 @@
 package com.google.cloud.alloydb;
 
 import java.security.cert.X509Certificate;
+import java.time.Instant;
 import java.util.List;
 
 class ConnectionInfo {
@@ -47,6 +48,10 @@ class ConnectionInfo {
 
   X509Certificate getClientCertificate() {
     return clientCertificate;
+  }
+
+  Instant getClientCertificateExpiration() {
+    return clientCertificate.getNotAfter().toInstant();
   }
 
   List<X509Certificate> getCertificateChain() {
