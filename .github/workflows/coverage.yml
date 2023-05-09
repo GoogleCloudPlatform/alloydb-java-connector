@@ -37,7 +37,7 @@ jobs:
       - name: Calculate base code coverage
         run: |
           mvn clean verify -P coverage
-          export CUR_COVER=$(cat core/target/site/jacoco/index.html | grep -o 'Total[^%]*' | sed 's/<.*>//; s/Total//')
+          export CUR_COVER=$(cat alloydb-jdbc-connector/target/site/jacoco/index.html | grep -o 'Total[^%]*' | sed 's/<.*>//; s/Total//')
           echo "CUR_COVER=$CUR_COVER" >> $GITHUB_ENV
 
       - name: Checkout PR branch
@@ -49,7 +49,7 @@ jobs:
       - name: Calculate PR code coverage
         run: |
           mvn clean verify -P coverage
-          export PR_COVER=$(cat core/target/site/jacoco/index.html | grep -o 'Total[^%]*' | sed 's/<.*>//; s/Total//')
+          export PR_COVER=$(cat alloydb-jdbc-connector/target/site/jacoco/index.html | grep -o 'Total[^%]*' | sed 's/<.*>//; s/Total//')
           echo "PR_COVER=$PR_COVER" >> $GITHUB_ENV
 
       - name: Verify code coverage. If your reading this and the step has failed, please add tests to cover your changes.
