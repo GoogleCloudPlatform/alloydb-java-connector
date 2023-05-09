@@ -24,6 +24,7 @@ import com.google.errorprone.annotations.concurrent.GuardedBy;
 import dev.failsafe.RateLimiter;
 import java.security.KeyPair;
 import java.security.cert.CertificateException;
+import java.time.Instant;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -36,8 +37,8 @@ class ConnectionInfoCache {
   private final InstanceName instanceName;
   private final KeyPair clientConnectorKeyPair;
   private final RateLimiter<Object> rateLimiter;
-
   private final Object connectionInfoLock = new Object();
+  private final RefreshCalculator refreshCalculator;
 
   @GuardedBy("connectionInfoLock")
   private Future<ConnectionInfo> current;
@@ -47,11 +48,13 @@ class ConnectionInfoCache {
       ConnectionInfoRepository connectionInfoRepo,
       InstanceName instanceName,
       KeyPair clientConnectorKeyPair,
+      RefreshCalculator refreshCalculator,
       RateLimiter<Object> rateLimiter) {
     this.executor = executor;
     this.connectionInfoRepo = connectionInfoRepo;
     this.instanceName = instanceName;
     this.clientConnectorKeyPair = clientConnectorKeyPair;
+    this.refreshCalculator = refreshCalculator;
     this.rateLimiter = rateLimiter;
     synchronized (connectionInfoLock) {
       this.current = executor.submit(this::performRefresh);
@@ -90,7 +93,11 @@ class ConnectionInfoCache {
         current = Futures.immediateFuture(connectionInfo);
       }
 
-      executor.schedule(this::performRefresh, 60 * 56 /* FIXME: 56 minutes */, TimeUnit.SECONDS);
+      executor.schedule(
+          this::performRefresh,
+          refreshCalculator.calculateSecondsUntilNextRefresh(
+              Instant.now(), connectionInfo.getClientCertificateExpiration()),
+          TimeUnit.SECONDS);
 
       return connectionInfo;
     } catch (CertificateException | ExecutionException | InterruptedException e) {

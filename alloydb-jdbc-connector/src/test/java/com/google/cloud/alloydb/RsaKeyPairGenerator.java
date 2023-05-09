@@ -21,6 +21,8 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 
 public class RsaKeyPairGenerator {
+  public static final KeyPair TEST_KEY_PAIR = generateKeyPair();
+
   public static KeyPair generateKeyPair() {
     KeyPairGenerator generator;
     try {

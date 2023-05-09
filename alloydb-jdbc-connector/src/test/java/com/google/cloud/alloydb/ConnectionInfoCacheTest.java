@@ -78,7 +78,12 @@ public class ConnectionInfoCacheTest {
                     testCertificates.getRootCertificate())));
     ConnectionInfoCache connectionInfoCache =
         new ConnectionInfoCache(
-            executor, connectionInfoRepo, instanceName, keyPair, spyRateLimiter);
+            executor,
+            connectionInfoRepo,
+            instanceName,
+            keyPair,
+            new RefreshCalculator(),
+            spyRateLimiter);
 
     executor.runNextPendingCommand(); // Simulate completion of background thread.
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
@@ -117,7 +122,12 @@ public class ConnectionInfoCacheTest {
                 certificateChain));
     ConnectionInfoCache connectionInfoCache =
         new ConnectionInfoCache(
-            executor, connectionInfoRepo, instanceName, keyPair, spyRateLimiter);
+            executor,
+            connectionInfoRepo,
+            instanceName,
+            keyPair,
+            new RefreshCalculator(),
+            spyRateLimiter);
 
     executor.runNextPendingCommand(); // Simulate completion of background thread.
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
@@ -176,7 +186,12 @@ public class ConnectionInfoCacheTest {
                 certificateChain));
     ConnectionInfoCache connectionInfoCache =
         new ConnectionInfoCache(
-            executor, connectionInfoRepo, instanceName, keyPair, spyRateLimiter);
+            executor,
+            connectionInfoRepo,
+            instanceName,
+            keyPair,
+            new RefreshCalculator(),
+            spyRateLimiter);
 
     executor.runNextPendingCommand(); // Simulate completion of background thread.
     assertThrows(RuntimeException.class, connectionInfoCache::getConnectionInfo);
@@ -209,7 +224,12 @@ public class ConnectionInfoCacheTest {
                     testCertificates.getRootCertificate())));
     ConnectionInfoCache connectionInfoCache =
         new ConnectionInfoCache(
-            executor, connectionInfoRepo, instanceName, keyPair, spyRateLimiter);
+            executor,
+            connectionInfoRepo,
+            instanceName,
+            keyPair,
+            new RefreshCalculator(),
+            spyRateLimiter);
 
     assertThat(spyRateLimiter.wasRateLimited.get()).isFalse();
 
