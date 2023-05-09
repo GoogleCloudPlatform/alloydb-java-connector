@@ -15,6 +15,6 @@
 
 export CUR_COVER=$(cat alloydb-jdbc-connector/target/site/jacoco/index.html | grep -o 'Total[^%]*' | sed 's/<.*>//; s/Total//')
 echo "Current Coverage is $CUR_COVER"
-if [ "$CUR_COVER" -lt 70  ]; then
+if [ "$CUR_COVER" -lt 75  ]; then
   exit 1;
 fi
