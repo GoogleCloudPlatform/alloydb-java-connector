@@ -29,7 +29,7 @@ public class RefreshCalculatorTest {
   private static final Instant SIXTY_TWO_MINUTES_FROM_NOW = NOW.plus(62, ChronoUnit.MINUTES);
   private static final Instant FIFTY_EIGHT_MINUTES_FROM_NOW = NOW.plus(58, ChronoUnit.MINUTES);
   private static final Instant THREE_MINUTES_FROM_NOW = NOW.plus(3, ChronoUnit.MINUTES);
-  private static final int THIRTY_ONE_MINUTES_FROM_NOW_IN_SECONDS = 31 * 60;
+  private static final int THIRTY_ONE_MINUTES_FROM_NOW_IN_SECONDS = 1860;
   private RefreshCalculator refreshCalculator;
 
   @Before
