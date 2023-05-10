@@ -246,6 +246,10 @@ jobs:
         run: .kokoro/build.sh
         shell: bash
 
+      - name: Check Coverage
+        run: .kokoro/check_coverage.sh
+
+
       - name: FlakyBot
         # only run flakybot on periodic (schedule) and continuous (push) events
         if: ${{ (github.event_name == 'schedule' || github.event_name == 'push') && runner.os == 'Linux' && always() }}
