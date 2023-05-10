@@ -48,4 +48,5 @@ branchProtectionRules:
   - "graalvm17"
   - "units + e2e"
   - "cla/google"
-  - "OwlBot Post Processor"
+  # Wait until we make the repo public before bringing this back
+  # - "OwlBot Post Processor"
