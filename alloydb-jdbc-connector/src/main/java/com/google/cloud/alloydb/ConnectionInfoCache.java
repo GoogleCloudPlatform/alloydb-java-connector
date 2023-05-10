@@ -124,8 +124,8 @@ class ConnectionInfoCache {
   }
 
   /**
-   * Schedules a refresh to start immediately or if a refresh is already scheduled,
-   * makes it available for getConnectionInfo().
+   * Schedules a refresh to start immediately or if a refresh is already scheduled, makes it
+   * available for getConnectionInfo().
    */
   void forceRefresh() {
     synchronized (connectionInfoLock) {
