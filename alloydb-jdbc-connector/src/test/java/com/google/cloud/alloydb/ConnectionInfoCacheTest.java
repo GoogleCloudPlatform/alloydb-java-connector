@@ -304,7 +304,7 @@ public class ConnectionInfoCacheTest {
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-                certificateChain), // something failed,
+                certificateChain),
         () ->
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
@@ -320,6 +320,7 @@ public class ConnectionInfoCacheTest {
             new RefreshCalculator(),
             spyRateLimiter);
 
+    // Before force refresh, the first refresh data is available.
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
     assertThat(
             connectionInfo
@@ -331,8 +332,8 @@ public class ConnectionInfoCacheTest {
 
     connectionInfoCache.forceRefresh();
 
+    // After the force refresh, new refresh data is available.
     connectionInfo = connectionInfoCache.getConnectionInfo();
-
     assertThat(
             connectionInfo
                 .getClientCertificate()
