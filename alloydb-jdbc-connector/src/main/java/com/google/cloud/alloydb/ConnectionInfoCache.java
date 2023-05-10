@@ -43,6 +43,9 @@ class ConnectionInfoCache {
   @GuardedBy("connectionInfoLock")
   private Future<ConnectionInfo> current;
 
+  @GuardedBy("connectionInfoLock")
+  private Future<ConnectionInfo> next;
+
   ConnectionInfoCache(
       ScheduledExecutorService executor,
       ConnectionInfoRepository connectionInfoRepo,
@@ -58,6 +61,7 @@ class ConnectionInfoCache {
     this.rateLimiter = rateLimiter;
     synchronized (connectionInfoLock) {
       this.current = executor.submit(this::performRefresh);
+      this.next = this.current;
     }
   }
 
@@ -91,27 +95,49 @@ class ConnectionInfoCache {
 
       synchronized (connectionInfoLock) {
         current = Futures.immediateFuture(connectionInfo);
+        next =
+            executor.schedule(
+                this::performRefresh,
+                refreshCalculator.calculateSecondsUntilNextRefresh(
+                    Instant.now(), connectionInfo.getClientCertificateExpiration()),
+                TimeUnit.SECONDS);
       }
-
-      executor.schedule(
-          this::performRefresh,
-          refreshCalculator.calculateSecondsUntilNextRefresh(
-              Instant.now(), connectionInfo.getClientCertificateExpiration()),
-          TimeUnit.SECONDS);
 
       return connectionInfo;
     } catch (CertificateException | ExecutionException | InterruptedException e) {
       // For known exceptions, schedule a refresh immediately.
-      executor.submit(this::performRefresh);
+      synchronized (connectionInfoLock) {
+        next = executor.submit(this::performRefresh);
+      }
       throw e;
     } catch (RuntimeException e) {
       // If the exception is an ApiException, schedule a refresh immediately.
       // Otherwise, just throw the exception.
       Throwable cause = e.getCause();
       if (cause instanceof ApiException) {
-        executor.submit(this::performRefresh);
+        synchronized (connectionInfoLock) {
+          next = executor.submit(this::performRefresh);
+        }
       }
       throw e;
+    }
+  }
+
+  /**
+   * Schedules a refresh to start immediately or if a refresh is already in scheduled, makes it
+   * available for getConnectionInfo().
+   */
+  void forceRefresh() {
+    synchronized (connectionInfoLock) {
+      // If a scheduled refresh hasn't started, perform one immediately.
+      next.cancel(false);
+      if (next.isCancelled()) {
+        current = executor.submit(this::performRefresh);
+        next = current;
+      } else {
+        // Otherwise it's already running, so just move next to current.
+        current = next;
+      }
     }
   }
 }

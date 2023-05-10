@@ -34,6 +34,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -179,11 +181,12 @@ public class ConnectionInfoCacheTest {
               },
               true);
         },
-        () -> new ConnectionInfo(
-            TEST_INSTANCE_IP,
-            TEST_INSTANCE_ID,
-            testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-            certificateChain));
+        () ->
+            new ConnectionInfo(
+                TEST_INSTANCE_IP,
+                TEST_INSTANCE_ID,
+                testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
+                certificateChain));
     ConnectionInfoCache connectionInfoCache =
         new ConnectionInfoCache(
             executor,
@@ -221,11 +224,12 @@ public class ConnectionInfoCacheTest {
         () -> {
           throw new CertificateException();
         },
-        () -> new ConnectionInfo(
-            TEST_INSTANCE_IP,
-            TEST_INSTANCE_ID,
-            testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-            certificateChain));
+        () ->
+            new ConnectionInfo(
+                TEST_INSTANCE_IP,
+                TEST_INSTANCE_ID,
+                testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
+                certificateChain));
     ConnectionInfoCache connectionInfoCache =
         new ConnectionInfoCache(
             executor,
@@ -236,8 +240,8 @@ public class ConnectionInfoCacheTest {
             spyRateLimiter);
 
     executor.runNextPendingCommand(); // Simulate completion of background thread.
-    RuntimeException runtimeException = assertThrows(RuntimeException.class,
-        connectionInfoCache::getConnectionInfo);
+    RuntimeException runtimeException =
+        assertThrows(RuntimeException.class, connectionInfoCache::getConnectionInfo);
 
     // The RuntimeException wraps an ExecutionException which wraps the original exception.
     assertThat(runtimeException.getCause().getCause()).isInstanceOf(CertificateException.class);
@@ -248,11 +252,11 @@ public class ConnectionInfoCacheTest {
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
 
     assertThat(
-        connectionInfo
-            .getClientCertificate()
-            .getNotAfter()
-            .toInstant()
-            .truncatedTo(ChronoUnit.SECONDS))
+            connectionInfo
+                .getClientCertificate()
+                .getNotAfter()
+                .toInstant()
+                .truncatedTo(ChronoUnit.SECONDS))
         .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
   }
 
@@ -284,6 +288,58 @@ public class ConnectionInfoCacheTest {
     connectionInfoCache.getConnectionInfo();
 
     assertThat(spyRateLimiter.wasRateLimited.get()).isTrue();
+  }
+
+  @Test
+  public void testForceRefresh_schedulesNextRefreshImmediately() {
+    ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
+
+    InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
+    List<X509Certificate> certificateChain =
+        Arrays.asList(
+            testCertificates.getIntermediateCertificate(), testCertificates.getRootCertificate());
+    connectionInfoRepo.addResponses(
+        () ->
+            new ConnectionInfo(
+                TEST_INSTANCE_IP,
+                TEST_INSTANCE_ID,
+                testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
+                certificateChain), // something failed,
+        () ->
+            new ConnectionInfo(
+                TEST_INSTANCE_IP,
+                TEST_INSTANCE_ID,
+                testCertificates.getEphemeralCertificate(keyPair.getPublic(), TWO_HOURS_FROM_NOW),
+                certificateChain));
+    ConnectionInfoCache connectionInfoCache =
+        new ConnectionInfoCache(
+            executor,
+            connectionInfoRepo,
+            instanceName,
+            keyPair,
+            new RefreshCalculator(),
+            spyRateLimiter);
+
+    ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
+    assertThat(
+            connectionInfo
+                .getClientCertificate()
+                .getNotAfter()
+                .toInstant()
+                .truncatedTo(ChronoUnit.SECONDS))
+        .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
+
+    connectionInfoCache.forceRefresh();
+
+    connectionInfo = connectionInfoCache.getConnectionInfo();
+
+    assertThat(
+            connectionInfo
+                .getClientCertificate()
+                .getNotAfter()
+                .toInstant()
+                .truncatedTo(ChronoUnit.SECONDS))
+        .isEqualTo(TWO_HOURS_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
   }
 
   private static class SpyRateLimiter<T> implements RateLimiter<T> {
