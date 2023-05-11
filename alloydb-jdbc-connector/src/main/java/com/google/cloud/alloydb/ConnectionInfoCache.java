@@ -60,6 +60,7 @@ class ConnectionInfoCache {
     this.refreshCalculator = refreshCalculator;
     this.rateLimiter = rateLimiter;
     synchronized (connectionInfoLock) {
+      // Assign to current and next to avoid null references.
       this.current = executor.submit(this::performRefresh);
       this.next = this.current;
     }
