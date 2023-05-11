@@ -59,6 +59,7 @@ public class ConnectionInfoTest {
   }
 
   @Test
+  @SuppressWarnings("TruthIncompatibleType")
   public void testEquals() throws CertificateException, OperatorCreationException, CertIOException {
     Instant now = Instant.now();
     X509Certificate ephemeralCertificate =

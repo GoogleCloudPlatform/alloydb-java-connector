@@ -19,9 +19,11 @@ package com.google.cloud.alloydb;
 import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.alloydb.v1beta.InstanceName;
 import java.security.KeyPair;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class InMemoryConnectionInfoRepo implements ConnectionInfoRepository {
@@ -34,13 +36,17 @@ class InMemoryConnectionInfoRepo implements ConnectionInfoRepository {
     index = new AtomicInteger(0);
   }
 
+  @SuppressWarnings("RedundantThrows")
   @Override
   public ConnectionInfo getConnectionInfo(InstanceName instanceName, KeyPair publicKey)
-      throws ApiException {
+      throws ExecutionException, InterruptedException, CertificateException, ApiException {
     Callable<ConnectionInfo> callable = registeredCallables.get(index.getAndIncrement());
     try {
       return callable.call();
     } catch (Exception e) {
+      if (e instanceof CertificateException) {
+        throw (CertificateException) e;
+      }
       throw new RuntimeException(e);
     }
   }
