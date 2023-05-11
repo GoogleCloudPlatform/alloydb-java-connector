@@ -20,9 +20,15 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.cloud.alloydb.v1beta.AlloyDBAdminClient;
 import com.google.cloud.alloydb.v1beta.InstanceName;
 import java.io.IOException;
+import java.net.ConnectException;
+import java.security.KeyPair;
+import java.security.cert.CertificateException;
+import java.time.Instant;
+import java.util.Arrays;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import javax.net.ssl.SSLSocket;
+import org.bouncycastle.operator.OperatorCreationException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,7 +50,11 @@ public class ITConnectorTest {
       ConnectionInfoRepository connectionInfoRepository =
           new DefaultConnectionInfoRepository(executor, alloyDBAdminClient);
       Connector connector =
-          new Connector(executor, connectionInfoRepository, RsaKeyPairGenerator.generateKeyPair());
+          new Connector(
+              executor,
+              connectionInfoRepository,
+              RsaKeyPairGenerator.generateKeyPair(),
+              new DefaultConnectionInfoCacheFactory());
 
       socket = (SSLSocket) connector.connect(InstanceName.parse(instanceUri));
 
@@ -58,5 +68,49 @@ public class ITConnectorTest {
         executor.shutdown();
       }
     }
+  }
+
+  @Test
+  public void testConnect_whenTlsHandshakeFails()
+      throws IOException, CertificateException, OperatorCreationException {
+    KeyPair clientConnectorKeyPair = RsaKeyPairGenerator.generateKeyPair();
+    TestCertificates testCertificates = new TestCertificates();
+    StubConnectionInfoCache stubConnectionInfoCache = new StubConnectionInfoCache();
+    stubConnectionInfoCache.setConnectionInfo(
+        new ConnectionInfo(
+            "127.0.0.1", // localhost doesn't do TLS
+            "some-instance",
+            testCertificates.getEphemeralCertificate(
+                clientConnectorKeyPair.getPublic(), Instant.now()),
+            Arrays.asList(
+                testCertificates.getIntermediateCertificate(),
+                testCertificates.getRootCertificate())));
+    StubConnectionInfoCacheFactory connectionInfoCacheFactory =
+        new StubConnectionInfoCacheFactory(stubConnectionInfoCache);
+    SSLSocket socket = null;
+    ScheduledThreadPoolExecutor executor = null;
+
+    try (AlloyDBAdminClient alloyDBAdminClient = AlloyDBAdminClientFactory.create()) {
+      executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
+      Connector connector =
+          new Connector(
+              executor,
+              new DefaultConnectionInfoRepository(executor, alloyDBAdminClient),
+              clientConnectorKeyPair,
+              connectionInfoCacheFactory);
+      socket = (SSLSocket) connector.connect(InstanceName.parse(instanceUri));
+    } catch (ConnectException ignore) {
+      // The socket connect will fail because it's trying to connect to localhost with TLS certs.
+      // So ignore the exception here.
+    } finally {
+      if (socket != null) {
+        socket.close();
+      }
+      if (executor != null) {
+        executor.shutdown();
+      }
+    }
+
+    assertThat(stubConnectionInfoCache.getForceRefreshWasCalled()).isTrue();
   }
 }
