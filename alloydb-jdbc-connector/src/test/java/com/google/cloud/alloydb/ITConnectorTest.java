@@ -34,11 +34,11 @@ import org.junit.Test;
 
 public class ITConnectorTest {
 
-  private String instanceUri;
+  private String instanceName;
 
   @Before
   public void setUp() {
-    instanceUri = System.getenv("ALLOYDB_INSTANCE_URI");
+    instanceName = System.getenv("ALLOYDB_INSTANCE_NAME");
   }
 
   @Test
@@ -56,7 +56,7 @@ public class ITConnectorTest {
               RsaKeyPairGenerator.generateKeyPair(),
               new DefaultConnectionInfoCacheFactory());
 
-      socket = (SSLSocket) connector.connect(InstanceName.parse(instanceUri));
+      socket = (SSLSocket) connector.connect(InstanceName.parse(instanceName));
 
       assertThat(socket.getKeepAlive()).isTrue();
       assertThat(socket.getTcpNoDelay()).isTrue();
@@ -98,7 +98,7 @@ public class ITConnectorTest {
               new DefaultConnectionInfoRepository(executor, alloyDBAdminClient),
               clientConnectorKeyPair,
               connectionInfoCacheFactory);
-      socket = (SSLSocket) connector.connect(InstanceName.parse(instanceUri));
+      socket = (SSLSocket) connector.connect(InstanceName.parse(instanceName));
     } catch (ConnectException ignore) {
       // The socket connect will fail because it's trying to connect to localhost with TLS certs.
       // So ignore the exception here.

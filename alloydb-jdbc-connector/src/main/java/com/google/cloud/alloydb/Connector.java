@@ -182,4 +182,40 @@ class Connector {
     keyManagerFactory.init(clientAuthenticationKeyStore, new char[0] /* no password */);
     return keyManagerFactory.getKeyManagers();
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Connector connector = (Connector) o;
+
+    if (!executor.equals(connector.executor)) {
+      return false;
+    }
+    if (!connectionInfoRepo.equals(connector.connectionInfoRepo)) {
+      return false;
+    }
+    if (!clientConnectorKeyPair.equals(connector.clientConnectorKeyPair)) {
+      return false;
+    }
+    if (!connectionInfoCacheFactory.equals(connector.connectionInfoCacheFactory)) {
+      return false;
+    }
+    return instances.equals(connector.instances);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = executor.hashCode();
+    result = 31 * result + connectionInfoRepo.hashCode();
+    result = 31 * result + clientConnectorKeyPair.hashCode();
+    result = 31 * result + connectionInfoCacheFactory.hashCode();
+    result = 31 * result + instances.hashCode();
+    return result;
+  }
 }

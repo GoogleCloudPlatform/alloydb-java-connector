@@ -42,7 +42,7 @@ public class ITDefaultConnectionInfoRepositoryTest {
 
   @Before
   public void setUp() throws Exception {
-    instanceUri = System.getenv("ALLOYDB_INSTANCE_URI");
+    instanceUri = System.getenv("ALLOYDB_INSTANCE_NAME");
 
     KeyPairGenerator generator;
     try {

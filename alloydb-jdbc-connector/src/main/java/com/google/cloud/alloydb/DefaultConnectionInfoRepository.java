@@ -135,4 +135,28 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
     CertificateFactory x509CertificateFactory = CertificateFactory.getInstance(X_509);
     return (X509Certificate) x509CertificateFactory.generateCertificate(certStream);
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    DefaultConnectionInfoRepository that = (DefaultConnectionInfoRepository) o;
+
+    if (!executor.equals(that.executor)) {
+      return false;
+    }
+    return alloyDBAdminClient.equals(that.alloyDBAdminClient);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = executor.hashCode();
+    result = 31 * result + alloyDBAdminClient.hashCode();
+    return result;
+  }
 }

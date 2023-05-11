@@ -20,10 +20,10 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 
-public class RsaKeyPairGenerator {
+class RsaKeyPairGenerator {
   public static final KeyPair TEST_KEY_PAIR = generateKeyPair();
 
-  public static KeyPair generateKeyPair() {
+  static KeyPair generateKeyPair() {
     KeyPairGenerator generator;
     try {
       generator = java.security.KeyPairGenerator.getInstance("RSA");
