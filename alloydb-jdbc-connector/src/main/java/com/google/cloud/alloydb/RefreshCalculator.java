@@ -17,7 +17,6 @@ package com.google.cloud.alloydb;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 
 /**
  * RefreshCalculator determines the number of seconds until the next refresh operation using the
@@ -29,7 +28,6 @@ class RefreshCalculator {
   // certificate must be valid to ensure the next refresh attempt has adequate
   // time to complete.
   private static final Duration DEFAULT_REFRESH_BUFFER = Duration.ofMinutes(4);
-
 
   long calculateSecondsUntilNextRefresh(Instant now, Instant expiration) {
     Duration timeUntilExp = Duration.between(now, expiration);
