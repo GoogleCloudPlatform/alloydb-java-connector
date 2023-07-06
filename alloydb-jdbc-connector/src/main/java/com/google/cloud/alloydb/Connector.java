@@ -20,6 +20,7 @@ import dev.failsafe.RateLimiter;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyStore;
@@ -112,7 +113,7 @@ class Connector {
       return socket;
     } catch (Exception e) {
       connectionInfoCache.forceRefresh();
-      throw e;
+      throw new SocketException(e);
     }
   }
 

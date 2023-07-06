@@ -32,7 +32,7 @@ public class StubConnectionInfoCache implements ConnectionInfoCache {
     forceRefreshWasCalled.set(true);
   }
 
-  public boolean getForceRefreshWasCalled() {
+  public boolean hasForceRefreshed() {
     return forceRefreshWasCalled.get();
   }
 

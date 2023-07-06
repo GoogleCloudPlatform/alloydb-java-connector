@@ -30,6 +30,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * DefaultConnectionInfoCache is the cache used by default to hold connection info.
+ * In testing, this class may be replaced with alternative implementations of
+ * ConnectionInfoCache.
+ */
 class DefaultConnectionInfoCache implements ConnectionInfoCache {
 
   private final ScheduledExecutorService executor;
@@ -112,8 +117,8 @@ class DefaultConnectionInfoCache implements ConnectionInfoCache {
       }
       throw e;
     } catch (RuntimeException e) {
-      // If the exception is an ApiException, schedule a refresh immediately.
-      // Otherwise, just throw the exception.
+      // If the exception is an ApiException, schedule a refresh immediately
+      // before re-throwing the exception.
       Throwable cause = e.getCause();
       if (cause instanceof ApiException) {
         synchronized (connectionInfoLock) {

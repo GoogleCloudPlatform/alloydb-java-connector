@@ -111,6 +111,6 @@ public class ITConnectorTest {
       }
     }
 
-    assertThat(stubConnectionInfoCache.getForceRefreshWasCalled()).isTrue();
+    assertThat(stubConnectionInfoCache.hasForceRefreshed()).isTrue();
   }
 }
