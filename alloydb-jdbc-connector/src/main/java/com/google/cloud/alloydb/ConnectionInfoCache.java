@@ -16,8 +16,8 @@
 package com.google.cloud.alloydb;
 
 /**
- * ConnectionInfoCache is the interface for accessing caches connection info. When connection info
- * caches a connection to fail, forceRefresh is available to invalidate the cache and fetch a new
+ * ConnectionInfoCache is the interface for accessing cached connection info. When connection info
+ * causes a connection to fail, forceRefresh is available to invalidate the cache and fetch new
  * connection info.
  */
 interface ConnectionInfoCache {
