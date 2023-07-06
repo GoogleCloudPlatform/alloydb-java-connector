@@ -56,7 +56,7 @@ public class ITDefaultConnectionInfoRepositoryTest {
 
     keyPair = generator.generateKeyPair();
     executor = Executors.newSingleThreadExecutor();
-    alloyDBAdminClient = AlloyDBAdminClient.create();
+    alloyDBAdminClient = AlloyDBAdminClientFactory.create();
 
     defaultConnectionInfoRepository =
         new DefaultConnectionInfoRepository(executor, alloyDBAdminClient);
