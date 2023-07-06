@@ -55,6 +55,8 @@ class Connector {
   private static final Duration RATE_LIMIT_DURATION = Duration.ofSeconds(30);
   private static final int RATE_LIMIT_BURST_SIZE = 2;
   private static final int SERVER_SIDE_PROXY_PORT = 5433;
+  private static final String ROOT_CA_CERT = "rootCaCert";
+  private static final String CLIENT_CERT = "clientCert";
   private final ScheduledExecutorService executor;
   private final ConnectionInfoRepository connectionInfoRepo;
   private final KeyPair clientConnectorKeyPair;
@@ -142,7 +144,7 @@ class Connector {
         null // there is no password
         );
     trustedKeyStore.setCertificateEntry(
-        "rootCaCert",
+        ROOT_CA_CERT,
         certificateChain.get(certificateChain.size() - 1) // root CA cert is last in the chain
         );
     TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(X_509);
@@ -167,7 +169,7 @@ class Connector {
     Certificate[] chainArray = chain.toArray(new Certificate[] {});
     PrivateKeyEntry privateKeyEntry = new PrivateKeyEntry(privateKey, chainArray);
     clientAuthenticationKeyStore.setEntry(
-        "clientCert", privateKeyEntry, new PasswordProtection(new char[0]) /* no password */);
+        CLIENT_CERT, privateKeyEntry, new PasswordProtection(new char[0]) /* no password */);
     KeyManagerFactory keyManagerFactory =
         KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
     keyManagerFactory.init(clientAuthenticationKeyStore, new char[0] /* no password */);
