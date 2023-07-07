@@ -31,9 +31,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * DefaultConnectionInfoCache is the cache used by default to hold connection info.
- * In testing, this class may be replaced with alternative implementations of
- * ConnectionInfoCache.
+ * DefaultConnectionInfoCache is the cache used by default to hold connection info. In testing, this
+ * class may be replaced with alternative implementations of ConnectionInfoCache.
  */
 class DefaultConnectionInfoCache implements ConnectionInfoCache {
 

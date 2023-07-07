@@ -20,7 +20,6 @@ import dev.failsafe.RateLimiter;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketException;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyStore;
@@ -111,9 +110,13 @@ class Connector {
       socket.connect(new InetSocketAddress(connectionInfo.getIpAddress(), SERVER_SIDE_PROXY_PORT));
       socket.startHandshake();
       return socket;
-    } catch (Exception e) {
+    } catch (IOException e) {
       connectionInfoCache.forceRefresh();
-      throw new SocketException(e);
+      // The Socket methods above will throw an IOException or a SocketException (subclass of
+      // IOException). Catch that exception, trigger a refresh, and then throw it again so
+      // the caller sees the problem, but the connector will have a refreshed certificate on the
+      // next invocation.
+      throw e;
     }
   }
 
