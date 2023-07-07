@@ -16,6 +16,7 @@
 package com.google.cloud.alloydb;
 
 import com.google.cloud.alloydb.v1beta.InstanceName;
+import com.google.common.base.Objects;
 import dev.failsafe.RateLimiter;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -191,31 +192,22 @@ class Connector {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
-    Connector connector = (Connector) o;
-
-    if (!executor.equals(connector.executor)) {
-      return false;
-    }
-    if (!connectionInfoRepo.equals(connector.connectionInfoRepo)) {
-      return false;
-    }
-    if (!clientConnectorKeyPair.equals(connector.clientConnectorKeyPair)) {
-      return false;
-    }
-    if (!connectionInfoCacheFactory.equals(connector.connectionInfoCacheFactory)) {
-      return false;
-    }
-    return instances.equals(connector.instances);
+    Connector that = (Connector) o;
+    return Objects.equal(executor, that.executor)
+        && Objects.equal(connectionInfoRepo, that.connectionInfoRepo)
+        && Objects.equal(clientConnectorKeyPair, that.clientConnectorKeyPair)
+        && Objects.equal(connectionInfoCacheFactory, that.connectionInfoCacheFactory)
+        && Objects.equal(instances, that.instances);
   }
 
   @Override
   public int hashCode() {
-    int result = executor.hashCode();
-    result = 31 * result + connectionInfoRepo.hashCode();
-    result = 31 * result + clientConnectorKeyPair.hashCode();
-    result = 31 * result + connectionInfoCacheFactory.hashCode();
-    result = 31 * result + instances.hashCode();
-    return result;
+    return Objects.hashCode(
+        executor,
+        connectionInfoRepo,
+        clientConnectorKeyPair,
+        connectionInfoCacheFactory,
+        instances
+    );
   }
 }

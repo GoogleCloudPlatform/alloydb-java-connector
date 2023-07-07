@@ -21,6 +21,7 @@ import com.google.cloud.alloydb.v1beta.AlloyDBAdminClient;
 import com.google.cloud.alloydb.v1beta.GenerateClientCertificateRequest;
 import com.google.cloud.alloydb.v1beta.GenerateClientCertificateResponse;
 import com.google.cloud.alloydb.v1beta.InstanceName;
+import com.google.common.base.Objects;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
 import java.io.ByteArrayInputStream;
@@ -147,16 +148,12 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
 
     DefaultConnectionInfoRepository that = (DefaultConnectionInfoRepository) o;
 
-    if (!executor.equals(that.executor)) {
-      return false;
-    }
-    return alloyDBAdminClient.equals(that.alloyDBAdminClient);
+    return Objects.equal(executor, that.executor)
+        && Objects.equal(alloyDBAdminClient, that.alloyDBAdminClient);
   }
 
   @Override
   public int hashCode() {
-    int result = executor.hashCode();
-    result = 31 * result + alloyDBAdminClient.hashCode();
-    return result;
+    return Objects.hashCode(executor, alloyDBAdminClient);
   }
 }
