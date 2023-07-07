@@ -15,13 +15,28 @@
  */
 package com.google.cloud.alloydb;
 
-/**
- * ConnectionInfoCache is the interface for accessing cached connection info. When connection info
- * causes a connection to fail, forceRefresh is available to invalidate the cache and fetch new
- * connection info.
- */
-interface ConnectionInfoCache {
-  ConnectionInfo getConnectionInfo();
+import java.util.concurrent.atomic.AtomicBoolean;
 
-  void forceRefresh();
+public class StubConnectionInfoCache implements ConnectionInfoCache {
+
+  private final AtomicBoolean forceRefreshWasCalled = new AtomicBoolean(false);
+  private ConnectionInfo connectionInfo;
+
+  @Override
+  public ConnectionInfo getConnectionInfo() {
+    return connectionInfo;
+  }
+
+  @Override
+  public void forceRefresh() {
+    forceRefreshWasCalled.set(true);
+  }
+
+  public boolean hasForceRefreshed() {
+    return forceRefreshWasCalled.get();
+  }
+
+  public void setConnectionInfo(ConnectionInfo connectionInfo) {
+    this.connectionInfo = connectionInfo;
+  }
 }

@@ -60,15 +60,18 @@ class Connector {
   private final ScheduledExecutorService executor;
   private final ConnectionInfoRepository connectionInfoRepo;
   private final KeyPair clientConnectorKeyPair;
+  private final ConnectionInfoCacheFactory connectionInfoCacheFactory;
   private final ConcurrentHashMap<InstanceName, ConnectionInfoCache> instances;
 
   Connector(
       ScheduledExecutorService executor,
       ConnectionInfoRepository connectionInfoRepo,
-      KeyPair clientConnectorKeyPair) {
+      KeyPair clientConnectorKeyPair,
+      ConnectionInfoCacheFactory connectionInfoCacheFactory) {
     this.executor = executor;
     this.connectionInfoRepo = connectionInfoRepo;
     this.clientConnectorKeyPair = clientConnectorKeyPair;
+    this.connectionInfoCacheFactory = connectionInfoCacheFactory;
     this.instances = new ConcurrentHashMap<>();
   }
 
@@ -79,7 +82,7 @@ class Connector {
             k -> {
               RateLimiter<Object> rateLimiter =
                   RateLimiter.burstyBuilder(RATE_LIMIT_BURST_SIZE, RATE_LIMIT_DURATION).build();
-              return new ConnectionInfoCache(
+              return connectionInfoCacheFactory.create(
                   this.executor,
                   this.connectionInfoRepo,
                   instanceName,
@@ -107,8 +110,12 @@ class Connector {
       socket.connect(new InetSocketAddress(connectionInfo.getIpAddress(), SERVER_SIDE_PROXY_PORT));
       socket.startHandshake();
       return socket;
-    } catch (Exception e) {
-      // TODO: force refresh connection info when handshake fails.
+    } catch (IOException e) {
+      connectionInfoCache.forceRefresh();
+      // The Socket methods above will throw an IOException or a SocketException (subclass of
+      // IOException). Catch that exception, trigger a refresh, and then throw it again so
+      // the caller sees the problem, but the connector will have a refreshed certificate on the
+      // next invocation.
       throw e;
     }
   }

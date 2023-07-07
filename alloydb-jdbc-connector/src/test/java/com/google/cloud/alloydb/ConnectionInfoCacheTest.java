@@ -77,8 +77,8 @@ public class ConnectionInfoCacheTest {
                 Arrays.asList(
                     testCertificates.getIntermediateCertificate(),
                     testCertificates.getRootCertificate())));
-    ConnectionInfoCache connectionInfoCache =
-        new ConnectionInfoCache(
+    DefaultConnectionInfoCache connectionInfoCache =
+        new DefaultConnectionInfoCache(
             executor,
             connectionInfoRepo,
             instanceName,
@@ -122,8 +122,8 @@ public class ConnectionInfoCacheTest {
                 TEST_INSTANCE_ID,
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), TWO_HOURS_FROM_NOW),
                 certificateChain));
-    ConnectionInfoCache connectionInfoCache =
-        new ConnectionInfoCache(
+    DefaultConnectionInfoCache connectionInfoCache =
+        new DefaultConnectionInfoCache(
             executor,
             connectionInfoRepo,
             instanceName,
@@ -187,8 +187,8 @@ public class ConnectionInfoCacheTest {
                 TEST_INSTANCE_ID,
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
                 certificateChain));
-    ConnectionInfoCache connectionInfoCache =
-        new ConnectionInfoCache(
+    DefaultConnectionInfoCache connectionInfoCache =
+        new DefaultConnectionInfoCache(
             executor,
             connectionInfoRepo,
             instanceName,
@@ -230,8 +230,8 @@ public class ConnectionInfoCacheTest {
                 TEST_INSTANCE_ID,
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
                 certificateChain));
-    ConnectionInfoCache connectionInfoCache =
-        new ConnectionInfoCache(
+    DefaultConnectionInfoCache connectionInfoCache =
+        new DefaultConnectionInfoCache(
             executor,
             connectionInfoRepo,
             instanceName,
@@ -273,8 +273,8 @@ public class ConnectionInfoCacheTest {
                 Arrays.asList(
                     testCertificates.getIntermediateCertificate(),
                     testCertificates.getRootCertificate())));
-    ConnectionInfoCache connectionInfoCache =
-        new ConnectionInfoCache(
+    DefaultConnectionInfoCache connectionInfoCache =
+        new DefaultConnectionInfoCache(
             executor,
             connectionInfoRepo,
             instanceName,
@@ -311,8 +311,8 @@ public class ConnectionInfoCacheTest {
                 TEST_INSTANCE_ID,
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), TWO_HOURS_FROM_NOW),
                 certificateChain));
-    ConnectionInfoCache connectionInfoCache =
-        new ConnectionInfoCache(
+    DefaultConnectionInfoCache connectionInfoCache =
+        new DefaultConnectionInfoCache(
             executor,
             connectionInfoRepo,
             instanceName,
