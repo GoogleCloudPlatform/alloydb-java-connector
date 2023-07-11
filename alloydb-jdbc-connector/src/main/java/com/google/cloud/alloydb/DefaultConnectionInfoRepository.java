@@ -21,7 +21,6 @@ import com.google.cloud.alloydb.v1beta.AlloyDBAdminClient;
 import com.google.cloud.alloydb.v1beta.GenerateClientCertificateRequest;
 import com.google.cloud.alloydb.v1beta.GenerateClientCertificateResponse;
 import com.google.cloud.alloydb.v1beta.InstanceName;
-import com.google.common.base.Objects;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
 import java.io.ByteArrayInputStream;
@@ -135,25 +134,5 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
     ByteArrayInputStream certStream = new ByteArrayInputStream(cert.toByteArray());
     CertificateFactory x509CertificateFactory = CertificateFactory.getInstance(X_509);
     return (X509Certificate) x509CertificateFactory.generateCertificate(certStream);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    DefaultConnectionInfoRepository that = (DefaultConnectionInfoRepository) o;
-
-    return Objects.equal(executor, that.executor)
-        && Objects.equal(alloyDBAdminClient, that.alloyDBAdminClient);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(executor, alloyDBAdminClient);
   }
 }

@@ -68,57 +68,13 @@ class Connector {
       ScheduledExecutorService executor,
       ConnectionInfoRepository connectionInfoRepo,
       KeyPair clientConnectorKeyPair,
-      ConnectionInfoCacheFactory connectionInfoCacheFactory) {
+      ConnectionInfoCacheFactory connectionInfoCacheFactory,
+      ConcurrentHashMap<InstanceName, ConnectionInfoCache> instances) {
     this.executor = executor;
     this.connectionInfoRepo = connectionInfoRepo;
     this.clientConnectorKeyPair = clientConnectorKeyPair;
     this.connectionInfoCacheFactory = connectionInfoCacheFactory;
-    this.instances = new ConcurrentHashMap<>();
-  }
-
-  Socket connect(InstanceName instanceName) throws IOException {
-    ConnectionInfoCache connectionInfoCache =
-        instances.computeIfAbsent(
-            instanceName,
-            k -> {
-              RateLimiter<Object> rateLimiter =
-                  RateLimiter.burstyBuilder(RATE_LIMIT_BURST_SIZE, RATE_LIMIT_DURATION).build();
-              return connectionInfoCacheFactory.create(
-                  this.executor,
-                  this.connectionInfoRepo,
-                  instanceName,
-                  this.clientConnectorKeyPair,
-                  new RefreshCalculator(),
-                  rateLimiter);
-            });
-
-    ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
-
-    try {
-      SSLSocket socket =
-          buildSocket(
-              connectionInfo.getClientCertificate(),
-              connectionInfo.getCertificateChain(),
-              this.clientConnectorKeyPair.getPrivate());
-
-      // Use the instance's IP address as a HostName.
-      SSLParameters sslParameters = socket.getSSLParameters();
-      sslParameters.setServerNames(
-          Collections.singletonList(new SNIHostName(connectionInfo.getIpAddress())));
-
-      socket.setKeepAlive(true);
-      socket.setTcpNoDelay(true);
-      socket.connect(new InetSocketAddress(connectionInfo.getIpAddress(), SERVER_SIDE_PROXY_PORT));
-      socket.startHandshake();
-      return socket;
-    } catch (IOException e) {
-      connectionInfoCache.forceRefresh();
-      // The Socket methods above will throw an IOException or a SocketException (subclass of
-      // IOException). Catch that exception, trigger a refresh, and then throw it again so
-      // the caller sees the problem, but the connector will have a refreshed certificate on the
-      // next invocation.
-      throw e;
-    }
+    this.instances = instances;
   }
 
   private static SSLSocket buildSocket(
@@ -184,6 +140,51 @@ class Connector {
     return keyManagerFactory.getKeyManagers();
   }
 
+  Socket connect(InstanceName instanceName) throws IOException {
+    ConnectionInfoCache connectionInfoCache =
+        instances.computeIfAbsent(
+            instanceName,
+            k -> {
+              RateLimiter<Object> rateLimiter =
+                  RateLimiter.burstyBuilder(RATE_LIMIT_BURST_SIZE, RATE_LIMIT_DURATION).build();
+              return connectionInfoCacheFactory.create(
+                  this.executor,
+                  this.connectionInfoRepo,
+                  instanceName,
+                  this.clientConnectorKeyPair,
+                  new RefreshCalculator(),
+                  rateLimiter);
+            });
+
+    ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
+
+    try {
+      SSLSocket socket =
+          buildSocket(
+              connectionInfo.getClientCertificate(),
+              connectionInfo.getCertificateChain(),
+              this.clientConnectorKeyPair.getPrivate());
+
+      // Use the instance's IP address as a HostName.
+      SSLParameters sslParameters = socket.getSSLParameters();
+      sslParameters.setServerNames(
+          Collections.singletonList(new SNIHostName(connectionInfo.getIpAddress())));
+
+      socket.setKeepAlive(true);
+      socket.setTcpNoDelay(true);
+      socket.connect(new InetSocketAddress(connectionInfo.getIpAddress(), SERVER_SIDE_PROXY_PORT));
+      socket.startHandshake();
+      return socket;
+    } catch (IOException e) {
+      connectionInfoCache.forceRefresh();
+      // The Socket methods above will throw an IOException or a SocketException (subclass of
+      // IOException). Catch that exception, trigger a refresh, and then throw it again so
+      // the caller sees the problem, but the connector will have a refreshed certificate on the
+      // next invocation.
+      throw e;
+    }
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -207,7 +208,6 @@ class Connector {
         connectionInfoRepo,
         clientConnectorKeyPair,
         connectionInfoCacheFactory,
-        instances
-    );
+        instances);
   }
 }

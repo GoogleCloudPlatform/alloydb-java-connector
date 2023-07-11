@@ -18,6 +18,7 @@ package com.google.cloud.alloydb;
 import com.google.cloud.alloydb.v1beta.AlloyDBAdminClient;
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -45,7 +46,8 @@ public enum ConnectorRegistry implements Closeable {
             executor,
             new DefaultConnectionInfoRepository(executor, alloyDBAdminClient),
             RsaKeyPairGenerator.generateKeyPair(),
-            new DefaultConnectionInfoCacheFactory());
+            new DefaultConnectionInfoCacheFactory(),
+            new ConcurrentHashMap<>());
   }
 
   Connector getConnector() {

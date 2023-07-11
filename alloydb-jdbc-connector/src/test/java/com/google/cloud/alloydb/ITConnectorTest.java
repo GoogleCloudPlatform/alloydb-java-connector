@@ -25,6 +25,7 @@ import java.security.KeyPair;
 import java.security.cert.CertificateException;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import javax.net.ssl.SSLSocket;
@@ -54,7 +55,8 @@ public class ITConnectorTest {
               executor,
               connectionInfoRepository,
               RsaKeyPairGenerator.generateKeyPair(),
-              new DefaultConnectionInfoCacheFactory());
+              new DefaultConnectionInfoCacheFactory(),
+              new ConcurrentHashMap<>());
 
       socket = (SSLSocket) connector.connect(InstanceName.parse(instanceName));
 
@@ -97,7 +99,8 @@ public class ITConnectorTest {
               executor,
               new DefaultConnectionInfoRepository(executor, alloyDBAdminClient),
               clientConnectorKeyPair,
-              connectionInfoCacheFactory);
+              connectionInfoCacheFactory,
+              new ConcurrentHashMap<>());
       socket = (SSLSocket) connector.connect(InstanceName.parse(instanceName));
     } catch (ConnectException ignore) {
       // The socket connect will fail because it's trying to connect to localhost with TLS certs.

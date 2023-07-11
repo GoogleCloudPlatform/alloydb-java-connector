@@ -18,6 +18,7 @@ package com.google.cloud.alloydb;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.base.Objects;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.cert.CertificateException;
@@ -142,10 +143,10 @@ public class ConnectionInfoTest {
   }
 
   long getHashCode(ConnectionInfo connectionInfo) {
-    int result = connectionInfo.getIpAddress().hashCode();
-    result = 31 * result + connectionInfo.getInstanceUid().hashCode();
-    result = 31 * result + connectionInfo.getClientCertificate().hashCode();
-    result = 31 * result + connectionInfo.getCertificateChain().hashCode();
-    return result;
+    return Objects.hashCode(
+        connectionInfo.getIpAddress(),
+        connectionInfo.getInstanceUid(),
+        connectionInfo.getClientCertificate(),
+        connectionInfo.getCertificateChain());
   }
 }
