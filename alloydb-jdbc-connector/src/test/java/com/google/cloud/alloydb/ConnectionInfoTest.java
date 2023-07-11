@@ -18,7 +18,9 @@ package com.google.cloud.alloydb;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.base.Objects;
 import java.io.IOException;
+import java.security.KeyPair;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
@@ -33,11 +35,13 @@ import org.junit.Test;
 public class ConnectionInfoTest {
 
   private static final String IP_ADDRESS = "10.0.0.1";
-  public static final String INSTANCE_UID = "some-id";
+  private static final String INSTANCE_UID = "some-id";
+  private KeyPair testKeyPair;
   private TestCertificates testCertificates;
 
   @Before
   public void setUp() throws Exception {
+    testKeyPair = RsaKeyPairGenerator.generateKeyPair();
     testCertificates = new TestCertificates();
   }
 
@@ -49,8 +53,7 @@ public class ConnectionInfoTest {
         new ConnectionInfo(
             IP_ADDRESS,
             INSTANCE_UID,
-            testCertificates.getEphemeralCertificate(
-                RsaKeyPairGenerator.TEST_KEY_PAIR.getPublic(), expected),
+            testCertificates.getEphemeralCertificate(testKeyPair.getPublic(), expected),
             Arrays.asList(
                 testCertificates.getIntermediateCertificate(),
                 testCertificates.getRootCertificate()));
@@ -63,8 +66,7 @@ public class ConnectionInfoTest {
   public void testEquals() throws CertificateException, OperatorCreationException, CertIOException {
     Instant now = Instant.now();
     X509Certificate ephemeralCertificate =
-        testCertificates.getEphemeralCertificate(
-            RsaKeyPairGenerator.TEST_KEY_PAIR.getPublic(), now);
+        testCertificates.getEphemeralCertificate(testKeyPair.getPublic(), now);
     ConnectionInfo c1 =
         new ConnectionInfo(
             IP_ADDRESS,
@@ -101,8 +103,7 @@ public class ConnectionInfoTest {
                 IP_ADDRESS,
                 INSTANCE_UID,
                 testCertificates.getEphemeralCertificate(
-                    RsaKeyPairGenerator.TEST_KEY_PAIR.getPublic(),
-                    Instant.now().plus(1, ChronoUnit.DAYS)),
+                    testKeyPair.getPublic(), Instant.now().plus(1, ChronoUnit.DAYS)),
                 Arrays.asList(
                     testCertificates.getIntermediateCertificate(),
                     testCertificates.getRootCertificate())));
@@ -112,8 +113,7 @@ public class ConnectionInfoTest {
                 IP_ADDRESS,
                 INSTANCE_UID,
                 testCertificates.getEphemeralCertificate(
-                    RsaKeyPairGenerator.TEST_KEY_PAIR.getPublic(),
-                    Instant.now().plus(1, ChronoUnit.DAYS)),
+                    testKeyPair.getPublic(), Instant.now().plus(1, ChronoUnit.DAYS)),
                 Collections.emptyList()));
 
     ConnectionInfo c2 =
@@ -134,8 +134,7 @@ public class ConnectionInfoTest {
         new ConnectionInfo(
             "10.0.0.1",
             "some-id",
-            testCertificates.getEphemeralCertificate(
-                RsaKeyPairGenerator.TEST_KEY_PAIR.getPublic(), Instant.now()),
+            testCertificates.getEphemeralCertificate(testKeyPair.getPublic(), Instant.now()),
             Arrays.asList(
                 testCertificates.getIntermediateCertificate(),
                 testCertificates.getRootCertificate()));
@@ -144,10 +143,10 @@ public class ConnectionInfoTest {
   }
 
   long getHashCode(ConnectionInfo connectionInfo) {
-    int result = connectionInfo.getIpAddress().hashCode();
-    result = 31 * result + connectionInfo.getInstanceUid().hashCode();
-    result = 31 * result + connectionInfo.getClientCertificate().hashCode();
-    result = 31 * result + connectionInfo.getCertificateChain().hashCode();
-    return result;
+    return Objects.hashCode(
+        connectionInfo.getIpAddress(),
+        connectionInfo.getInstanceUid(),
+        connectionInfo.getClientCertificate(),
+        connectionInfo.getCertificateChain());
   }
 }

@@ -20,17 +20,18 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 
-public class RsaKeyPairGenerator {
-  public static final KeyPair TEST_KEY_PAIR = generateKeyPair();
+class RsaKeyPairGenerator {
 
-  public static KeyPair generateKeyPair() {
+  public static final int DEFAULT_KEY_SIZE = 2048;
+
+  static KeyPair generateKeyPair() {
     KeyPairGenerator generator;
     try {
       generator = java.security.KeyPairGenerator.getInstance("RSA");
     } catch (NoSuchAlgorithmException e) {
       throw new RuntimeException("Missing RSA generator");
     }
-    generator.initialize(2048);
+    generator.initialize(DEFAULT_KEY_SIZE);
 
     return generator.generateKeyPair();
   }

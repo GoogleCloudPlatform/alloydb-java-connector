@@ -16,6 +16,7 @@
 
 package com.google.cloud.alloydb;
 
+import com.google.common.base.Objects;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.List;
@@ -68,26 +69,15 @@ class ConnectionInfo {
     }
 
     ConnectionInfo that = (ConnectionInfo) o;
-
-    if (!ipAddress.equals(that.ipAddress)) {
-      return false;
-    }
-    if (!instanceUid.equals(that.instanceUid)) {
-      return false;
-    }
-    if (!clientCertificate.equals(that.clientCertificate)) {
-      return false;
-    }
-    return certificateChain.equals(that.certificateChain);
+    return Objects.equal(ipAddress, that.ipAddress)
+        && Objects.equal(instanceUid, that.instanceUid)
+        && Objects.equal(clientCertificate, that.clientCertificate)
+        && Objects.equal(certificateChain, that.certificateChain);
   }
 
   @Override
   public int hashCode() {
-    int result = ipAddress.hashCode();
-    result = 31 * result + instanceUid.hashCode();
-    result = 31 * result + clientCertificate.hashCode();
-    result = 31 * result + certificateChain.hashCode();
-    return result;
+    return Objects.hashCode(ipAddress, instanceUid, clientCertificate, certificateChain);
   }
 
   @Override
