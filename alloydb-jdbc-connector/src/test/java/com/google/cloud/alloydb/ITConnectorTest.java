@@ -206,8 +206,6 @@ public class ITConnectorTest {
                 connectionInfoRepo,
                 clientConnectorKeyPair,
                 connectionInfoCacheFactory,
-                instances
-            )
-        );
+                instances));
   }
 }
