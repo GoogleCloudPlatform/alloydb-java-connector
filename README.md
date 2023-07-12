@@ -5,6 +5,8 @@
 [ci-badge]: https://github.com/GoogleCloudPlatform/alloydb-java-connector/actions/workflows/ci.yml/badge.svg?event=push
 [ci-build]: https://github.com/GoogleCloudPlatform/alloydb-java-connector/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
 
+- [Product Documentation](https://cloud.google.com/alloydb/docs)
+
 The _AlloyDB Java Connector_ is a Java library for connecting securely to your
 AlloyDB instances. Using a Connector provides the following benefits:
 
@@ -162,3 +164,7 @@ listed in the release notes.
 This project aims for a minimum monthly release cadence. If no new
 features or fixes have been added, a new PATCH version with the latest
 dependencies is released.
+
+## Notice
+
+Java is a registered trademark of Oracle and/or its affiliates.
