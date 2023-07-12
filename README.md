@@ -113,7 +113,7 @@ public class ExampleApplication {
     config.setUsername(System.getenv("ALLOYDB_USER"));
     config.setPassword(System.getenv("ALLOYDB_PASS"));
 
-    // Tell the driver to use the AlloyDB Java Connector's SocketFactor
+    // Tell the driver to use the AlloyDB Java Connector's SocketFactory
     // when connecting to an instance/
     config.addDataSourceProperty("socketFactory",
         "com.google.cloud.alloydb.SocketFactory");
