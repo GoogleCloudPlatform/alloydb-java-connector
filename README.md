@@ -129,6 +129,10 @@ public class ExampleApplication {
 }
 ```
 
+See our [end to end test][e2e] for a full example.
+
+[e2e]: https://github.com/GoogleCloudPlatform/alloydb-java-connector/blob/main/alloydb-jdbc-connector/src/test/java/com/google/cloud/alloydb/ITSocketFactoryTest.java
+
 ## Support policy
 
 ### Major version lifecycle
