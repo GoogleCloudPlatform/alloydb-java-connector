@@ -10,13 +10,13 @@
 The _AlloyDB Java Connector_ is a Java library for connecting securely to your
 AlloyDB instances. Using a Connector provides the following benefits:
 
-* **IAM Authorization:** uses IAM permissions to control who/what can connect to
-  your Cloud SQL instances
-* **Improved Security:** uses robust, updated TLS 1.3 encryption and
+* **IAM Authorization:** The Connector uses IAM to ensure only principals with valid
+  permissions are allowed to connect
+* **Improved Security:** The Connector uses TLS 1.3 encryption and
   identity verification between the client connector and the server-side proxy,
   independent of the database protocol.
-* **Convenience:** removes the requirement to use and distribute SSL
-  certificates, as well as manage firewalls or source/destination IP addresses.
+* **Convenience:** The Connector removes the requirement to use and distribute SSL
+  certificates.
 
 NOTE: The Connector is currently in public preview and *may* contain breaking
 changes.
@@ -49,6 +49,11 @@ Client" (i.e., `roles/alloydb.client`).
 
 ### Adding the Connector as a Dependency
 
+You'll need to add the Connector and the appropriate [Postgres Driver][pg-driver] in your
+list of dependencies.
+
+[pg-driver]: https://mvnrepository.com/artifact/org.postgresql/postgresql
+
 #### Maven
 
 Include the following in the project's `pom.xml`:
@@ -56,9 +61,9 @@ Include the following in the project's `pom.xml`:
 ```maven-pom
 <!-- Add the connector with the latest version -->
 <dependency>
-    <groupId>com.google.cloud.alloydb</groupId>
-    <artifactId>alloydb-jdbc-connector</artifactId>
-    <version>FIXME</version>
+  <groupId>com.google.cloud.alloydb</groupId>
+  <artifactId>alloydb-jdbc-connector</artifactId>
+  <version>FIXME</version>
 </dependency>
 
 <!-- Add the driver with the latest version -->
