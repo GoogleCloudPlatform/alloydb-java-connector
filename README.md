@@ -80,9 +80,9 @@ Include the following in the project's `pom.xml`:
 Include the following the project's `gradle.build`
 
 ```gradle
-# Add connector with the latest version
+// Add connector with the latest version
 compile('com.google.cloud.alloydb:alloydb-jdbc-connector:0.1.0')
-# Add driver with the latest version
+// Add driver with the latest version
 compile('org.postgresql:postgresql:42.6.0')
 ```
 
