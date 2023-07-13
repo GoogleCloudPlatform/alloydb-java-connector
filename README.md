@@ -2,8 +2,8 @@
 
 [![CI][ci-badge]][ci-build]
 
-[ci-badge]: https://github.com/GoogleCloudPlatform/alloydb-java-connector/actions/workflows/ci.yml/badge.svg?event=push
-[ci-build]: https://github.com/GoogleCloudPlatform/alloydb-java-connector/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
+[ci-badge]: https://github.com/GoogleCloudPlatform/alloydb-java-connector/actions/workflows/ci.yaml/badge.svg?event=push
+[ci-build]: https://github.com/GoogleCloudPlatform/alloydb-java-connector/actions/workflows/ci.yaml?query=event%3Apush+branch%3Amain
 
 - [Product Documentation](https://cloud.google.com/alloydb/docs)
 
