@@ -11,7 +11,7 @@ The _AlloyDB Java Connector_ is a Java library for connecting securely to your
 AlloyDB instances. Using a Connector provides the following benefits:
 
 * **IAM Authorization:** The Connector uses IAM to ensure only principals with valid
-  permissions are allowed to connect
+  permissions are allowed to connect.
 * **Improved Security:** The Connector uses TLS 1.3 encryption and
   identity verification between the client connector and the server-side proxy,
   independent of the database protocol.
@@ -41,11 +41,12 @@ information on how to configure Application Default Credentials, see the
 [documentation][set-adc].
 
 In addition, the associated IAM principal must have the IAM role "Cloud AlloyDB
-Client" (i.e., `roles/alloydb.client`).
+Client" (i.e., `roles/alloydb.client`). See the [docs on AlloyDB IAM permissions][iam-docs]
+for more information.
 
 [adc]: https://cloud.google.com/docs/authentication/application-default-credentials
 [set-adc]: https://cloud.google.com/docs/authentication/provide-credentials-adc
-
+[iam-docs]: https://cloud.google.com/alloydb/docs/reference/iam-roles-permissions#roles
 
 ### Adding the Connector as a Dependency
 
