@@ -181,13 +181,19 @@ Contributions to this library are always welcome and highly encouraged.
 
 See [CONTRIBUTING][contributing] for more information how to get started.
 
+[contributing]: CONTRIBUTING.md
+
 Please note that this project is released with a Contributor Code of Conduct. By participating in
 this project you agree to abide by its terms. See [Code of Conduct][code-of-conduct] for more
 information.
 
+[code-of-conduct]: CODE_OF_CONDUCT.md
+
 ## License
 
 Apache 2.0 - See [LICENSE][license] for more information.
+
+[license]: LICENSE
 
 ## Notice
 
