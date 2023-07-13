@@ -171,6 +171,24 @@ This project aims for a minimum monthly release cadence. If no new
 features or fixes have been added, a new PATCH version with the latest
 dependencies is released.
 
+## Versioning
+
+This library follows [Semantic Versioning](http://semver.org/).
+
+## Contributing
+
+Contributions to this library are always welcome and highly encouraged.
+
+See [CONTRIBUTING][contributing] for more information how to get started.
+
+Please note that this project is released with a Contributor Code of Conduct. By participating in
+this project you agree to abide by its terms. See [Code of Conduct][code-of-conduct] for more
+information.
+
+## License
+
+Apache 2.0 - See [LICENSE][license] for more information.
+
 ## Notice
 
 Java is a registered trademark of Oracle and/or its affiliates.
