@@ -64,14 +64,14 @@ Include the following in the project's `pom.xml`:
 <dependency>
   <groupId>com.google.cloud.alloydb</groupId>
   <artifactId>alloydb-jdbc-connector</artifactId>
-  <version>FIXME</version>
+  <version>0.1.0</version>
 </dependency>
 
 <!-- Add the driver with the latest version -->
 <dependency>
   <groupId>org.postgresql</groupId>
   <artifactId>postgresql</artifactId>
-  <version>FIXME</version>
+  <version>42.6.0</version>
 </dependency>
 ```
 
@@ -81,9 +81,9 @@ Include the following the project's `gradle.build`
 
 ```gradle
 # Add connector with the latest version
-compile('com.google.cloud.alloydb:alloydb-jdbc-connector:FIXME')
+compile('com.google.cloud.alloydb:alloydb-jdbc-connector:0.1.0')
 # Add driver with the latest version
-compile('org.postgresql:postgresql:FIXME')
+compile('org.postgresql:postgresql:42.6.0')
 ```
 
 ### Configuring a Connection Pool
