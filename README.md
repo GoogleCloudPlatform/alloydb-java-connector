@@ -81,9 +81,9 @@ Include the following the project's `gradle.build`
 
 ```gradle
 // Add connector with the latest version
-compile('com.google.cloud.alloydb:alloydb-jdbc-connector:0.1.0')
+implementation group: 'com.google.cloud.alloydb', name: 'alloydb-jdbc-connector', version: '0.1.0'
 // Add driver with the latest version
-compile('org.postgresql:postgresql:42.6.0')
+implementation group: 'org.postgresql', name: 'postgresql', version: '42.6.0'
 ```
 
 ### Configuring a Connection Pool
