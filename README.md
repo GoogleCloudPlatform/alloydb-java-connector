@@ -7,6 +7,9 @@
 
 - [Product Documentation](https://cloud.google.com/alloydb/docs)
 
+**NOTE: The Connector is currently in public preview and *may* contain breaking
+changes.**
+
 The _AlloyDB Java Connector_ is a Java library for connecting securely to your
 AlloyDB instances. Using a Connector provides the following benefits:
 
@@ -17,9 +20,6 @@ AlloyDB instances. Using a Connector provides the following benefits:
   independent of the database protocol.
 * **Convenience:** The Connector removes the requirement to use and distribute SSL
   certificates.
-
-NOTE: The Connector is currently in public preview and *may* contain breaking
-changes.
 
 ## Usage
 
