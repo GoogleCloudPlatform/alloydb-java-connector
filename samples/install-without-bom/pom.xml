@@ -28,7 +28,7 @@
     <!-- [START _install_without_bom] -->
     <dependency>
       <groupId>com.google.cloud.alloydb</groupId>
-      <artifactId>alloydb-java-conneector-parent</artifactId>
+      <artifactId>alloydb-java-connector-parent</artifactId>
       <version>0.0.0</version>
     </dependency>
     <!-- [END _install_without_bom] -->
