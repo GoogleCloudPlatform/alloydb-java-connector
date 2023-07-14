@@ -26,9 +26,10 @@
 
   <dependencies>
     <!-- [START _install_without_bom] -->
+    <!-- {x-version-update-start:alloydb-jdbc-connector:current} -->
     <dependency>
       <groupId>com.google.cloud</groupId>
-      <artifactId>alloydb-java-connector-parent</artifactId>
+      <artifactId>alloydb-jdbc-connector</artifactId>
       <version>0.0.0</version>
     </dependency>
     <!-- [END _install_without_bom] -->
