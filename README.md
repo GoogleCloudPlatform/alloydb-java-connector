@@ -62,7 +62,7 @@ Include the following in the project's `pom.xml`:
 ```maven-pom
 <!-- Add the connector with the latest version -->
 <dependency>
-  <groupId>com.google.cloud.alloydb</groupId>
+  <groupId>com.google.cloud</groupId>
   <artifactId>alloydb-jdbc-connector</artifactId>
   <version>0.1.0</version>
 </dependency>

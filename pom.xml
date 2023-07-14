@@ -17,7 +17,6 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.google.cloud.alloydb</groupId>
   <artifactId>alloydb-connector-parent</artifactId>
   <packaging>pom</packaging>
   <version>0.0.1-SNAPSHOT</version><!-- {x-version-update:alloydb-jdbc-connector:current} -->
@@ -58,7 +57,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <github.global.server>github</github.global.server>
-    <site.installationModule>google-cloud-alloydb-java-connector-parent</site.installationModule>
+    <site.installationModule>alloydb-connector-parent</site.installationModule>
     <project.javadoc.protobufBaseURL>https://googleapis.dev/java/google-api-grpc/latest</project.javadoc.protobufBaseURL>
     <error-prone.version>2.18.0</error-prone.version>
   </properties>
@@ -74,7 +73,7 @@
       </dependency>
 
       <dependency>
-        <groupId>com.google.cloud.alloydb</groupId>
+        <groupId>com.google.cloud</groupId>
         <artifactId>alloydb-jdbc-connector</artifactId>
         <version>0.0.1-SNAPSHOT</version><!-- {x-version-update:alloydb-jdbc-connector:current} -->
       </dependency>

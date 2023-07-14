@@ -24,10 +24,10 @@
   </properties>
 
   <dependencies>
-    <!-- {x-version-update-start:alloydb-java-connector-parent:current} -->
+    <!-- {x-version-update-start:alloydb-jdbc-connector:current} -->
     <dependency>
-      <groupId>com.google.cloud.alloydb</groupId>
-      <artifactId>alloydb-java-connector-parent</artifactId>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>alloydb-jdbc-connector</artifactId>
       <version>0.0.0</version>
     </dependency>
     <!-- {x-version-update-end} -->
