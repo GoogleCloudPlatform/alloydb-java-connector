@@ -1,3 +1,5 @@
 bumpMinorPreMajor: true
 handleGHRelease: true
 releaseType: java-yoshi
+extraFiles:
+  - alloydb-jdbc-connector/src/main/java/com/google/cloud/alloydb/Version.java
