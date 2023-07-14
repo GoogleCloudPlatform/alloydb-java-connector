@@ -72,6 +72,18 @@
   color: ededed
   description: Release please has completed a release for this.
 
+- name: 'release-please:force-run'
+  color: ededed
+  description: Trigger release please
+
+- name: 'owlbot:run'
+  color: ededed
+  description: Trigger Owlbot
+
+- name: 'owlbot:ignore'
+  color: ededed
+  description: Make Owlbot ignore this
+
 - name: 'tests: run'
   color: 3DED97
   description: Label to trigger Github Action tests.
