@@ -26,7 +26,7 @@
   <dependencies>
     <!-- {x-version-update-start:alloydb-java-connector-parent:current} -->
     <dependency>
-      <groupId>com.google.cloud.alloydb</groupId>
+      <groupId>com.google.cloud</groupId>
       <artifactId>alloydb-java-connector-parent</artifactId>
       <version>0.0.0</version>
     </dependency>

@@ -21,7 +21,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.google.cloud.alloydb</groupId>
+    <groupId>com.google.cloud</groupId>
     <artifactId>alloydb-connector-parent</artifactId>
     <version>0.0.1-SNAPSHOT</version><!-- {x-version-update:alloydb-jdbc-connector:current} -->
     <relativePath>../pom.xml</relativePath>
