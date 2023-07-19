@@ -26,8 +26,8 @@
   <dependencies>
     <!-- TODO: switch to libraries-bom after this artifact is included -->
     <dependency>
-      <groupId>com.google.cloud.alloydb</groupId>
-      <artifactId>alloydb-java-conneector-parent</artifactId>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>alloydb-jdbc-connector</artifactId>
       <version>0.0.0</version>
     </dependency>
 
