@@ -5,8 +5,8 @@
 
 [ci-badge]: https://github.com/GoogleCloudPlatform/alloydb-java-connector/actions/workflows/ci.yaml/badge.svg?event=push
 [ci-build]: https://github.com/GoogleCloudPlatform/alloydb-java-connector/actions/workflows/ci.yaml?query=event%3Apush+branch%3Amain
-[maven-version-image]: https://img.shields.io/maven-central/v/com.google.cloud/alloydb-java-connector.svg
-[maven-version-link]: https://central.sonatype.com/artifact/com.google.cloud/alloydb-java-connector/0.1.0
+[maven-version-image]: https://img.shields.io/maven-central/v/com.google.cloud/alloydb-jdbc-connector.svg
+[maven-version-link]: https://central.sonatype.com/artifact/com.google.cloud/alloydb-jdbc-connector/0.1.0
 
 - [Product Documentation](https://cloud.google.com/alloydb/docs)
 
