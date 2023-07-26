@@ -35,6 +35,7 @@
     to connect to an AlloyDB instance without having to deal with IP allowlisting or SSL
     certificates manually.
   </description>
+  <url>https://github.com/googleapis/java-bigtable</url>
 
   <properties>
     <bouncycastle.version>1.70</bouncycastle.version>
