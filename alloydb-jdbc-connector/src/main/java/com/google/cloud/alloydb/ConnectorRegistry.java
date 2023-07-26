@@ -16,6 +16,7 @@
 package com.google.cloud.alloydb;
 
 import com.google.cloud.alloydb.v1beta.AlloyDBAdminClient;
+import com.google.errorprone.annotations.Immutable;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;

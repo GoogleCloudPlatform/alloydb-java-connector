@@ -17,6 +17,7 @@ package com.google.cloud.alloydb;
 
 import com.google.cloud.alloydb.v1beta.InstanceName;
 import com.google.common.base.Objects;
+import com.google.errorprone.annotations.Immutable;
 import dev.failsafe.RateLimiter;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -190,7 +191,7 @@ class Connector {
     if (this == o) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof Connector)) {
       return false;
     }
     Connector that = (Connector) o;
