@@ -36,6 +36,7 @@
     any specified AlloyDB instance without requiring any manually configured
     TLS certificates.
   </description>
+  <url>https://github.com/GoogleCloudPlatform/alloydb-java-connector</url>
 
   <properties>
     <bouncycastle.version>1.70</bouncycastle.version>
