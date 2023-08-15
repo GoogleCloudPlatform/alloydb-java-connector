@@ -1,9 +1,12 @@
 # AlloyDB Java Connector
 
 [![CI][ci-badge]][ci-build]
+[![Maven][maven-version-image]][maven-version-link]
 
 [ci-badge]: https://github.com/GoogleCloudPlatform/alloydb-java-connector/actions/workflows/ci.yaml/badge.svg?event=push
 [ci-build]: https://github.com/GoogleCloudPlatform/alloydb-java-connector/actions/workflows/ci.yaml?query=event%3Apush+branch%3Amain
+[maven-version-image]: https://img.shields.io/maven-central/v/com.google.cloud/alloydb-jdbc-connector.svg
+[maven-version-link]: https://central.sonatype.com/artifact/com.google.cloud/alloydb-jdbc-connector/
 
 - [Product Documentation](https://cloud.google.com/alloydb/docs)
 
@@ -62,7 +65,7 @@ Include the following in the project's `pom.xml`:
 ```maven-pom
 <!-- Add the connector with the latest version -->
 <dependency>
-  <groupId>com.google.cloud.alloydb</groupId>
+  <groupId>com.google.cloud</groupId>
   <artifactId>alloydb-jdbc-connector</artifactId>
   <version>0.1.0</version>
 </dependency>

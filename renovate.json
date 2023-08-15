@@ -39,7 +39,7 @@
     },
     {
       "packagePatterns": [
-        "^com.google.cloud.alloydb:alloydb-java-conneector-parent",
+        "^com.google.cloud.alloydb:alloydb-java-connector-parent",
         "^com.google.cloud:libraries-bom",
         "^com.google.cloud.samples:shared-configuration"
       ],
