@@ -19,7 +19,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.BoundType;
 import com.google.common.collect.Range;
-import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -38,15 +37,7 @@ public class ITSocketFactoryTest {
 
   @Before
   public void setUp() {
-    HikariConfig config = new HikariConfig();
-
-    config.setJdbcUrl("jdbc:postgresql:///postgres");
-    config.setUsername(System.getenv("ALLOYDB_USER"));
-    config.setPassword(System.getenv("ALLOYDB_PASS"));
-    config.addDataSourceProperty("socketFactory", "com.google.cloud.alloydb.SocketFactory");
-    config.addDataSourceProperty("alloydbInstanceName", System.getenv("ALLOYDB_INSTANCE_NAME"));
-
-    this.dataSource = new HikariDataSource(config);
+    this.dataSource = AlloyDbJdbcConnectorDataSourceFactory.createDataSource();
   }
 
   @After
