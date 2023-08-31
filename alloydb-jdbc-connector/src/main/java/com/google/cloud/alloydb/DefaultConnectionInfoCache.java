@@ -71,6 +71,7 @@ class DefaultConnectionInfoCache implements ConnectionInfoCache {
   }
 
   /** Returns the most recent connection info. */
+  @Override
   public ConnectionInfo getConnectionInfo() {
     Future<ConnectionInfo> connectionInfoFuture;
 
@@ -132,6 +133,7 @@ class DefaultConnectionInfoCache implements ConnectionInfoCache {
    * Schedules a refresh to start immediately or if a refresh is already scheduled, makes it
    * available for getConnectionInfo().
    */
+  @Override
   public void forceRefresh() {
     synchronized (connectionInfoLock) {
       // If a scheduled refresh hasn't started, perform one immediately.

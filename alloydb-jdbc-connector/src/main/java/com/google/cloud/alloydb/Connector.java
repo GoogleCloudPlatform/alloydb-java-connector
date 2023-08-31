@@ -190,7 +190,7 @@ class Connector {
     if (this == o) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof Connector)) {
       return false;
     }
     Connector that = (Connector) o;
