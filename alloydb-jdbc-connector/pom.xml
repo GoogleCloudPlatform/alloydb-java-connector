@@ -66,13 +66,11 @@
     <dependency>
       <groupId>com.google.api.grpc</groupId>
       <artifactId>proto-google-cloud-alloydb-v1beta</artifactId>
-      <version>0.4.0</version>
     </dependency>
 
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-alloydb</artifactId>
-      <version>0.4.0</version>
     </dependency>
 
     <dependency>
