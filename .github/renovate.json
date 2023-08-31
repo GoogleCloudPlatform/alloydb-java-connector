@@ -75,10 +75,9 @@
     {
       "matchPackagePatterns": [
         "^com.google.cloud:google-cloud-shared-dependencies",
-        "^com.google.api.grpc:proto-google-cloud-alloydb-v1beta",
-        "^com.google.cloud:google-cloud-alloydb"
+        "^com.google.cloud:google-cloud-alloydb-bom"
       ],
-      "groupName": "shared dependencies"
+      "groupName": "alloydb BOM & shared dependencies"
     }
   ]
 }

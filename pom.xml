@@ -77,6 +77,22 @@
         <artifactId>alloydb-jdbc-connector</artifactId>
         <version>0.1.1-SNAPSHOT</version><!-- {x-version-update:alloydb-jdbc-connector:current} -->
       </dependency>
+
+      <dependency>
+        <groupId>com.google.cloud</groupId>
+        <artifactId>google-cloud-shared-dependencies</artifactId>
+        <version>3.14.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>com.google.cloud</groupId>
+        <artifactId>google-cloud-alloydb-bom</artifactId>
+        <version>0.13.0-SNAPSHOT</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
