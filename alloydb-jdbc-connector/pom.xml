@@ -21,9 +21,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.google.cloud.alloydb</groupId>
+    <groupId>com.google.cloud</groupId>
     <artifactId>alloydb-connector-parent</artifactId>
-    <version>0.0.1-SNAPSHOT</version><!-- {x-version-update:alloydb-jdbc-connector:current} -->
+    <version>0.1.1-SNAPSHOT</version><!-- {x-version-update:alloydb-jdbc-connector:current} -->
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>alloydb-jdbc-connector</artifactId>
@@ -31,10 +31,12 @@
 
   <name>Google Cloud AlloyDB JDBC Connector</name>
   <description>
-    Socket factory for the Postgres JDBC driver that allows a user with the appropriate permissions
-    to connect to an AlloyDB instance without having to deal with IP allowlisting or SSL
-    certificates manually.
+    The AlloyDB JDBC Connector provides a socket factory for the Postgres JDBC
+    driver for AlloyDB. The socket factory provides an mTLS 1.3 connection to
+    any specified AlloyDB instance without requiring any manually configured
+    TLS certificates.
   </description>
+  <url>https://github.com/GoogleCloudPlatform/alloydb-java-connector</url>
 
   <properties>
     <bouncycastle.version>1.70</bouncycastle.version>

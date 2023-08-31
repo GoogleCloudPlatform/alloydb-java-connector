@@ -13,8 +13,8 @@
 # limitations under the License.
 
 assign_issues:
-  - enocom
-
+  - ttosta-google
 
 assign_prs:
   - enocom
+  - ttosta-google
