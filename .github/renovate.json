@@ -1,10 +1,83 @@
 {
   "extends": [
-    "config:base",
-    "helpers:pinGitHubActionDigests"
+    "config:recommended",
+    "helpers:pinGitHubActionDigests",
+    ":separateMajorReleases",
+    ":combinePatchMinorReleases",
+    ":ignoreUnstable",
+    ":prImmediately",
+    ":updateNotScheduled",
+    ":automergeDisabled",
+    ":ignoreModulesAndTests",
+    ":maintainLockFilesDisabled"
   ],
   "commitMessagePrefix": "deps: ",
-  "schedule": [
-    "before 4am on the first day of the month"
+  "semanticCommits": "enabled",
+  "dependencyDashboard": true,
+  "packageRules": [
+    {
+      "matchPackagePatterns": [
+        "^com.google.guava:"
+      ],
+      "versioning": "docker"
+    },
+    {
+      "matchPackagePatterns": [
+        "*"
+      ],
+      "semanticCommitType": "deps",
+      "semanticCommitScope": null
+    },
+    {
+      "matchPackagePatterns": [
+        "^org.apache.maven",
+        "^org.jacoco:",
+        "^org.codehaus.mojo:",
+        "^org.sonatype.plugins:",
+        "^com.coveo:",
+        "^com.google.cloud:google-cloud-shared-config"
+      ],
+      "semanticCommitType": "build",
+      "semanticCommitScope": "deps"
+    },
+    {
+      "matchPackagePatterns": [
+        "^com.google.cloud.alloydb:alloydb-java-connector-parent",
+        "^com.google.cloud:libraries-bom",
+        "^com.google.cloud.samples:shared-configuration"
+      ],
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "deps"
+    },
+    {
+      "matchPackagePatterns": [
+        "^junit:junit",
+        "^com.google.truth:truth",
+        "^org.mockito:mockito-core",
+        "^org.objenesis:objenesis",
+        "^com.google.cloud:google-cloud-conformance-tests"
+      ],
+      "semanticCommitType": "test",
+      "semanticCommitScope": "deps"
+    },
+    {
+      "matchPackagePatterns": [
+        "^com.google.cloud:google-cloud-"
+      ],
+      "ignoreUnstable": false
+    },
+    {
+      "matchPackagePatterns": [
+        "^com.fasterxml.jackson.core"
+      ],
+      "groupName": "jackson dependencies"
+    },
+    {
+      "matchPackagePatterns": [
+        "^com.google.cloud:google-cloud-shared-dependencies",
+        "^com.google.cloud:google-cloud-alloydb-bom"
+      ],
+      "groupName": "alloydb BOM & shared dependencies"
+    }
   ]
 }
