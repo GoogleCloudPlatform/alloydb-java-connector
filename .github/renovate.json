@@ -71,6 +71,14 @@
         "^com.fasterxml.jackson.core"
       ],
       "groupName": "jackson dependencies"
+    },
+    {
+      "matchPackagePatterns": [
+        "^com.google.api:gax",
+        "^com.google.api.grpc:proto-google-cloud-alloydb-v1beta",
+        "^com.google.cloud:google-cloud-alloydb"
+      ],
+      "groupName": "alloydb & gax dependencies"
     }
   ]
 }
