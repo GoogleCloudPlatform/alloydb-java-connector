@@ -17,7 +17,6 @@ package com.google.cloud.alloydb;
 
 import com.google.cloud.alloydb.v1beta.InstanceName;
 import com.google.common.base.Objects;
-import com.google.errorprone.annotations.Immutable;
 import dev.failsafe.RateLimiter;
 import java.io.IOException;
 import java.net.InetSocketAddress;
