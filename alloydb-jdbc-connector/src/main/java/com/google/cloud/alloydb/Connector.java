@@ -17,7 +17,6 @@ package com.google.cloud.alloydb;
 
 import com.google.cloud.alloydb.v1beta.InstanceName;
 import com.google.common.base.Objects;
-import dev.failsafe.RateLimiter;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -145,8 +144,8 @@ class Connector {
         instances.computeIfAbsent(
             instanceName,
             k -> {
-              RateLimiter<Object> rateLimiter =
-                  RateLimiter.burstyBuilder(RATE_LIMIT_BURST_SIZE, RATE_LIMIT_DURATION).build();
+              DefaultRateLimiter rateLimiter =
+                  new DefaultRateLimiter(RATE_LIMIT_BURST_SIZE, RATE_LIMIT_DURATION);
               return connectionInfoCacheFactory.create(
                   this.executor,
                   this.connectionInfoRepo,

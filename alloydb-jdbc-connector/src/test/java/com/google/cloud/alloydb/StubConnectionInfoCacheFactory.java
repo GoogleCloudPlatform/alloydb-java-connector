@@ -16,7 +16,6 @@
 package com.google.cloud.alloydb;
 
 import com.google.cloud.alloydb.v1beta.InstanceName;
-import dev.failsafe.RateLimiter;
 import java.security.KeyPair;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -35,7 +34,7 @@ public class StubConnectionInfoCacheFactory implements ConnectionInfoCacheFactor
       InstanceName instanceName,
       KeyPair clientConnectorKeyPair,
       RefreshCalculator refreshCalculator,
-      RateLimiter<Object> rateLimiter) {
+      RateLimiter rateLimiter) {
     return stubConnectionInfoCache;
   }
 }
