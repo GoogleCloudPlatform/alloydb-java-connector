@@ -163,13 +163,14 @@ jobs:
             ALLOYDB_INSTANCE_NAME:${{ secrets.GOOGLE_CLOUD_PROJECT }}/ALLOYDB_INSTANCE_URI
             ALLOYDB_CLUSTER_PASS:${{ secrets.GOOGLE_CLOUD_PROJECT }}/ALLOYDB_CLUSTER_PASS
 
-      - run: .kokoro/build.sh
+      - name: Run tests
         env:
           ALLOYDB_DB: "postgres"
           ALLOYDB_USER: "postgres"
           ALLOYDB_PASS: "${{ steps.secrets.outputs.ALLOYDB_CLUSTER_PASS }}"
           ALLOYDB_INSTANCE_NAME: '${{ steps.secrets.outputs.ALLOYDB_INSTANCE_NAME }}'
           JOB_TYPE: graalvm17
+        run: .kokoro/build.sh
         shell: bash
 
       - name: FlakyBot
@@ -252,7 +253,7 @@ jobs:
 
       - name: Check Coverage
         run: .kokoro/check_coverage.sh
-
+        shell: bash
 
       - name: FlakyBot
         # only run flakybot on periodic (schedule) and continuous (push) events
