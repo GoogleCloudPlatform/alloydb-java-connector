@@ -16,18 +16,15 @@
 
 package com.google.cloud.alloydb;
 
-import java.time.Duration;
-
 public class DefaultRateLimiter implements RateLimiter {
   private com.google.common.util.concurrent.RateLimiter rateLimiter;
 
-  public DefaultRateLimiter(double permitsPerSecond, Duration warmupPeriod) {
-    this.rateLimiter =
-        com.google.common.util.concurrent.RateLimiter.create(permitsPerSecond, warmupPeriod);
+  public DefaultRateLimiter(double permitsPerSecond) {
+    this.rateLimiter = com.google.common.util.concurrent.RateLimiter.create(permitsPerSecond);
   }
 
   @Override
-  public double acquire() {
-    return this.rateLimiter.acquire();
+  public void acquire() {
+    this.rateLimiter.acquire();
   }
 }

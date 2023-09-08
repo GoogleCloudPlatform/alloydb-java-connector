@@ -17,5 +17,5 @@
 package com.google.cloud.alloydb;
 
 interface RateLimiter {
-  double acquire();
+  void acquire();
 }

@@ -343,9 +343,8 @@ public class ConnectionInfoCacheTest {
     public final AtomicBoolean wasRateLimited = new AtomicBoolean(false);
 
     @Override
-    public double acquire() {
+    public void acquire() {
       wasRateLimited.set(true);
-      return 0;
     }
   }
 }
