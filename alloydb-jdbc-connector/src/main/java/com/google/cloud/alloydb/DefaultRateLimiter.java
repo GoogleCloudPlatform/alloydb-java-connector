@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.google.cloud.alloydb;
 
-import com.google.cloud.alloydb.v1beta.InstanceName;
-import java.security.KeyPair;
-import java.util.concurrent.ScheduledExecutorService;
+public class DefaultRateLimiter implements RateLimiter {
+  private com.google.common.util.concurrent.RateLimiter rateLimiter;
 
-interface ConnectionInfoCacheFactory {
+  public DefaultRateLimiter(double permitsPerSecond) {
+    this.rateLimiter = com.google.common.util.concurrent.RateLimiter.create(permitsPerSecond);
+  }
 
-  ConnectionInfoCache create(
-      ScheduledExecutorService executor,
-      ConnectionInfoRepository connectionInfoRepo,
-      InstanceName instanceName,
-      KeyPair clientConnectorKeyPair,
-      RefreshCalculator refreshCalculator,
-      RateLimiter rateLimiter);
+  @Override
+  public void acquire() {
+    this.rateLimiter.acquire();
+  }
 }

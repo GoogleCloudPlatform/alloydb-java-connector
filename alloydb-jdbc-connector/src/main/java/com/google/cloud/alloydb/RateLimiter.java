@@ -13,19 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.google.cloud.alloydb;
 
-import com.google.cloud.alloydb.v1beta.InstanceName;
-import java.security.KeyPair;
-import java.util.concurrent.ScheduledExecutorService;
-
-interface ConnectionInfoCacheFactory {
-
-  ConnectionInfoCache create(
-      ScheduledExecutorService executor,
-      ConnectionInfoRepository connectionInfoRepo,
-      InstanceName instanceName,
-      KeyPair clientConnectorKeyPair,
-      RefreshCalculator refreshCalculator,
-      RateLimiter rateLimiter);
+interface RateLimiter {
+  void acquire();
 }

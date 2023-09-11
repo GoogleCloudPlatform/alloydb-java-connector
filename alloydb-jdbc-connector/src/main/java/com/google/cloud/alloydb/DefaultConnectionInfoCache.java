@@ -21,7 +21,6 @@ import com.google.cloud.alloydb.v1beta.InstanceName;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.errorprone.annotations.concurrent.GuardedBy;
-import dev.failsafe.RateLimiter;
 import java.security.KeyPair;
 import java.security.cert.CertificateException;
 import java.time.Instant;
@@ -40,7 +39,7 @@ class DefaultConnectionInfoCache implements ConnectionInfoCache {
   private final ConnectionInfoRepository connectionInfoRepo;
   private final InstanceName instanceName;
   private final KeyPair clientConnectorKeyPair;
-  private final RateLimiter<Object> rateLimiter;
+  private final RateLimiter rateLimiter;
   private final Object connectionInfoLock = new Object();
   private final RefreshCalculator refreshCalculator;
 
@@ -56,7 +55,7 @@ class DefaultConnectionInfoCache implements ConnectionInfoCache {
       InstanceName instanceName,
       KeyPair clientConnectorKeyPair,
       RefreshCalculator refreshCalculator,
-      RateLimiter<Object> rateLimiter) {
+      RateLimiter rateLimiter) {
     this.executor = executor;
     this.connectionInfoRepo = connectionInfoRepo;
     this.instanceName = instanceName;
@@ -93,7 +92,7 @@ class DefaultConnectionInfoCache implements ConnectionInfoCache {
   private ConnectionInfo performRefresh()
       throws CertificateException, ExecutionException, InterruptedException {
     // Rate limit the speed of refresh operations.
-    this.rateLimiter.acquirePermit();
+    this.rateLimiter.acquire();
 
     try {
       ConnectionInfo connectionInfo =

@@ -22,14 +22,10 @@ import static org.junit.Assert.assertThrows;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.cloud.alloydb.v1beta.InstanceName;
-import dev.failsafe.RateLimiter;
-import dev.failsafe.RateLimiterConfig;
-import dev.failsafe.spi.PolicyExecutor;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -51,7 +47,7 @@ public class ConnectionInfoCacheTest {
   private static final Instant TWO_HOURS_FROM_NOW = ONE_HOUR_FROM_NOW.plus(1, ChronoUnit.HOURS);
   private InstanceName instanceName;
   private KeyPair keyPair;
-  private SpyRateLimiter<Object> spyRateLimiter;
+  private SpyRateLimiter spyRateLimiter;
   private TestCertificates testCertificates;
 
   @Before
@@ -60,7 +56,7 @@ public class ConnectionInfoCacheTest {
         InstanceName.parse(
             "projects/<PROJECT>/locations/<REGION>/clusters/<CLUSTER>/instances/<INSTANCE>");
     keyPair = RsaKeyPairGenerator.generateKeyPair();
-    spyRateLimiter = new SpyRateLimiter<>();
+    spyRateLimiter = new SpyRateLimiter();
     testCertificates = new TestCertificates();
   }
 
@@ -343,45 +339,12 @@ public class ConnectionInfoCacheTest {
         .isEqualTo(TWO_HOURS_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
   }
 
-  private static class SpyRateLimiter<T> implements RateLimiter<T> {
+  private static class SpyRateLimiter implements RateLimiter {
     public final AtomicBoolean wasRateLimited = new AtomicBoolean(false);
 
     @Override
-    public void acquirePermit() {
+    public void acquire() {
       wasRateLimited.set(true);
-    }
-
-    @Override
-    public RateLimiterConfig<T> getConfig() {
-      return null;
-    }
-
-    @Override
-    public PolicyExecutor<T> toExecutor(int i) {
-      return null;
-    }
-
-    @Override
-    public void acquirePermits(int i) {}
-
-    @Override
-    public Duration reservePermits(int i) {
-      return null;
-    }
-
-    @Override
-    public Duration tryReservePermits(int i, Duration duration) {
-      return null;
-    }
-
-    @Override
-    public boolean tryAcquirePermits(int i) {
-      return false;
-    }
-
-    @Override
-    public boolean tryAcquirePermits(int i, Duration duration) {
-      return false;
     }
   }
 }
