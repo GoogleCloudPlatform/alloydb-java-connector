@@ -23,6 +23,10 @@ on:
   schedule:
     - cron: '0 2 * * *'
 name: ci
+
+# Declare default permissions as read only.
+permissions: read-all
+
 jobs:
   units:
     runs-on: ubuntu-latest

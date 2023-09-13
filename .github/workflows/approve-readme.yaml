@@ -16,6 +16,10 @@
 on:
   pull_request:
 name: auto-merge-readme
+
+# Declare default permissions as read only.
+permissions: read-all
+
 jobs:
   approve:
     runs-on: ubuntu-latest
