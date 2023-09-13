@@ -88,6 +88,10 @@
     </dependencies>
   </dependencyManagement>
 
+  <modules>
+    <module>alloydb-jdbc-connector</module>
+  </modules>
+
   <build>
     <pluginManagement>
       <plugins>
@@ -169,9 +173,5 @@
       </build>
     </profile>
   </profiles>
-
-  <modules>
-    <module>alloydb-jdbc-connector</module>
-  </modules>
 
 </project>
