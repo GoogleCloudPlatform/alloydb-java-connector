@@ -19,7 +19,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>alloydb-connector-parent</artifactId>
   <packaging>pom</packaging>
-  <version>0.1.1-SNAPSHOT</version><!-- {x-version-update:alloydb-jdbc-connector:current} -->
+  <version>0.1.2-SNAPSHOT</version><!-- {x-version-update:alloydb-jdbc-connector:current} -->
   <name>Google Cloud AlloyDB Java Connector Parent</name>
   <url>https://github.com/GoogleCloudPlatform/alloydb-java-connector</url>
   <description>
@@ -67,7 +67,7 @@
       <dependency>
         <groupId>com.google.cloud</groupId>
         <artifactId>google-cloud-shared-dependencies</artifactId>
-        <version>3.14.0</version>
+        <version>3.15.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -75,13 +75,13 @@
       <dependency>
         <groupId>com.google.cloud</groupId>
         <artifactId>alloydb-jdbc-connector</artifactId>
-        <version>0.1.1-SNAPSHOT</version><!-- {x-version-update:alloydb-jdbc-connector:current} -->
+        <version>0.1.2-SNAPSHOT</version><!-- {x-version-update:alloydb-jdbc-connector:current} -->
       </dependency>
 
       <dependency>
         <groupId>com.google.cloud</groupId>
         <artifactId>google-cloud-alloydb-bom</artifactId>
-        <version>0.12.0</version>
+        <version>0.13.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

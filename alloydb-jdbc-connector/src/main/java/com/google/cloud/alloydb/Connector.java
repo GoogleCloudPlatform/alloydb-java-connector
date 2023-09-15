@@ -17,7 +17,6 @@ package com.google.cloud.alloydb;
 
 import com.google.cloud.alloydb.v1beta.InstanceName;
 import com.google.common.base.Objects;
-import dev.failsafe.RateLimiter;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -34,7 +33,6 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -53,8 +51,7 @@ class Connector {
 
   private static final String TLS_1_3 = "TLSv1.3";
   private static final String X_509 = "X.509";
-  private static final Duration RATE_LIMIT_DURATION = Duration.ofSeconds(30);
-  private static final int RATE_LIMIT_BURST_SIZE = 2;
+  private static final double RATE_LIMIT_PER_SEC = 1.0 / 30.0;
   private static final int SERVER_SIDE_PROXY_PORT = 5433;
   private static final String ROOT_CA_CERT = "rootCaCert";
   private static final String CLIENT_CERT = "clientCert";
@@ -145,8 +142,7 @@ class Connector {
         instances.computeIfAbsent(
             instanceName,
             k -> {
-              RateLimiter<Object> rateLimiter =
-                  RateLimiter.burstyBuilder(RATE_LIMIT_BURST_SIZE, RATE_LIMIT_DURATION).build();
+              DefaultRateLimiter rateLimiter = new DefaultRateLimiter(RATE_LIMIT_PER_SEC);
               return connectionInfoCacheFactory.create(
                   this.executor,
                   this.connectionInfoRepo,

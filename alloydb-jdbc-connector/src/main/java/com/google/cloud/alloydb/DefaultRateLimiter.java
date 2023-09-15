@@ -13,10 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.google.cloud.alloydb;
 
-class Version {
-  // {x-version-update-start:alloydb-jdbc-connector:current}
-  static final String VERSION = "0.1.2-SNAPSHOT";
-  // {x-version-update-end}
+public class DefaultRateLimiter implements RateLimiter {
+  private com.google.common.util.concurrent.RateLimiter rateLimiter;
+
+  public DefaultRateLimiter(double permitsPerSecond) {
+    this.rateLimiter = com.google.common.util.concurrent.RateLimiter.create(permitsPerSecond);
+  }
+
+  @Override
+  public void acquire() {
+    this.rateLimiter.acquire();
+  }
 }
