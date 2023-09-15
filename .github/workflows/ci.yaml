@@ -152,6 +152,11 @@ jobs:
           components: "native-image"
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Setup Maven Action
+        uses: s4u/setup-maven-action@c1ef1c9458a52c0b6ac714574c4694a9fcf00d45
+        with:
+          java-version: 17
+
       - id: "auth"
         name: Authenticate to Google Cloud
         uses: google-github-actions/auth@35b0e87d162680511bf346c299f71c9c5c379033 # v1.1.1
