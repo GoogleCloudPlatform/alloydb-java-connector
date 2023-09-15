@@ -172,6 +172,10 @@ class DefaultConnectionInfoCache implements ConnectionInfoCache {
       // Don't force a refresh until the current forceRefresh operation
       // has produced a successful refresh.
       if (forceRefreshRunning) {
+        logger.info(
+            String.format(
+                "[%s] Force Refresh: ignore this call as a refresh operation is currently in progress.",
+                instanceName));
         return;
       }
 
