@@ -74,8 +74,13 @@ graalvm17)
     # Run Unit and Integration Tests with Native Image
     mvn -B ${INTEGRATION_TEST_ARGS} \
       -ntp \
+      -Pcoverage \
       -Pnative \
       -Penable-integration-tests \
+      -DtrimStackTrace=false \
+      -Dclirr.skip=true \
+      -Denforcer.skip=true \
+      -fae \
       verify
     RETURN_CODE=$?
     ;;
