@@ -25,12 +25,10 @@ import java.io.IOException;
  * The AlloyDB direct path data source demonstrates how to enable Auto IAM AuthN without using the
  * AlloyDB Java Connector. To do that, the code here overrides the HikariDataSource's getPassword
  * method to dynamically retrieve an OAuth2 token. This means every new connection made by the
- * connection pool will get a fresh OAuth2 token without relying on the AlloyDB Java Connector.
- * For details on how this is used, see
- * <a href="https://github.com/GoogleCloudPlatform/alloydb-java-connector/blob/main/alloydb-jdbc-connector/src/test/java/com/google/cloud/alloydb/AlloyDbJdbcDirectPathDataSourceFactory.java">
- *   AlloyDbJdbcDirectPathDataSourceFactory
- * </a>
- *
+ * connection pool will get a fresh OAuth2 token without relying on the AlloyDB Java Connector. For
+ * details on how this is used, see <a
+ * href="https://github.com/GoogleCloudPlatform/alloydb-java-connector/blob/main/alloydb-jdbc-connector/src/test/java/com/google/cloud/alloydb/AlloyDbJdbcDirectPathDataSourceFactory.java">
+ * AlloyDbJdbcDirectPathDataSourceFactory </a>
  */
 public class AlloyDBDirectPathDataSource extends HikariDataSource {
 
