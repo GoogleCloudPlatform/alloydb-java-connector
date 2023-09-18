@@ -187,8 +187,7 @@ class DefaultConnectionInfoCache implements ConnectionInfoCache {
               "[%s] Force Refresh: the next refresh operation was cancelled."
                   + " Scheduling new refresh operation immediately.",
               instanceName));
-      current = executor.submit(this::performRefresh);
-      next = current;
+      next = executor.submit(this::performRefresh);
     }
   }
 }
