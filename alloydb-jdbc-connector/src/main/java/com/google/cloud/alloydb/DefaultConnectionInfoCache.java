@@ -24,16 +24,21 @@ import com.google.errorprone.annotations.concurrent.GuardedBy;
 import java.security.KeyPair;
 import java.security.cert.CertificateException;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * DefaultConnectionInfoCache is the cache used by default to hold connection info. In testing, this
  * class may be replaced with alternative implementations of ConnectionInfoCache.
  */
 class DefaultConnectionInfoCache implements ConnectionInfoCache {
+
+  private static final Logger logger = LoggerFactory.getLogger(DefaultConnectionInfoCache.class);
 
   private final ScheduledExecutorService executor;
   private final ConnectionInfoRepository connectionInfoRepo;
@@ -48,6 +53,9 @@ class DefaultConnectionInfoCache implements ConnectionInfoCache {
 
   @GuardedBy("connectionInfoLock")
   private Future<ConnectionInfo> next;
+
+  @GuardedBy("connectionInfoLock")
+  private boolean forceRefreshRunning;
 
   DefaultConnectionInfoCache(
       ScheduledExecutorService executor,
@@ -91,35 +99,61 @@ class DefaultConnectionInfoCache implements ConnectionInfoCache {
    */
   private ConnectionInfo performRefresh()
       throws CertificateException, ExecutionException, InterruptedException {
+    logger.info(
+        String.format("[%s] Refresh Operation: Acquiring rate limiter permit.", instanceName));
     // Rate limit the speed of refresh operations.
     this.rateLimiter.acquire();
+    logger.info(
+        String.format(
+            "[%s] Refresh Operation: Acquired rate limiter permit. Starting refresh...",
+            instanceName));
 
     try {
       ConnectionInfo connectionInfo =
           this.connectionInfoRepo.getConnectionInfo(this.instanceName, this.clientConnectorKeyPair);
+      logger.info(
+          String.format(
+              "[%s] Refresh Operation: Completed refresh with new certificate expiration at %s.",
+              instanceName, connectionInfo.getClientCertificateExpiration().toString()));
+
+      long secondsToRefresh =
+          refreshCalculator.calculateSecondsUntilNextRefresh(
+              Instant.now(), connectionInfo.getClientCertificateExpiration());
+      logger.info(
+          String.format(
+              "[%s] Refresh Operation: Next operation scheduled at %s.",
+              instanceName,
+              Instant.now()
+                  .plus(secondsToRefresh, ChronoUnit.SECONDS)
+                  .truncatedTo(ChronoUnit.SECONDS)
+                  .toString()));
 
       synchronized (connectionInfoLock) {
         current = Futures.immediateFuture(connectionInfo);
-        next =
-            executor.schedule(
-                this::performRefresh,
-                refreshCalculator.calculateSecondsUntilNextRefresh(
-                    Instant.now(), connectionInfo.getClientCertificateExpiration()),
-                TimeUnit.SECONDS);
+        next = executor.schedule(this::performRefresh, secondsToRefresh, TimeUnit.SECONDS);
+        forceRefreshRunning = false;
       }
 
       return connectionInfo;
     } catch (CertificateException | ExecutionException | InterruptedException e) {
+      logger.info(
+          String.format(
+              "[%s] Refresh Operation: Failed! Starting next refresh operation immediately.",
+              instanceName),
+          e);
       // For known exceptions, schedule a refresh immediately.
       synchronized (connectionInfoLock) {
         next = executor.submit(this::performRefresh);
       }
       throw e;
     } catch (RuntimeException e) {
+      logger.info(String.format("[%s] Refresh Operation: Failed!", instanceName), e);
       // If the exception is an ApiException, schedule a refresh immediately
       // before re-throwing the exception.
       Throwable cause = e.getCause();
       if (cause instanceof ApiException) {
+        logger.info(
+            String.format("[%s] Starting next refresh operation immediately.", instanceName), e);
         synchronized (connectionInfoLock) {
           next = executor.submit(this::performRefresh);
         }
@@ -135,15 +169,26 @@ class DefaultConnectionInfoCache implements ConnectionInfoCache {
   @Override
   public void forceRefresh() {
     synchronized (connectionInfoLock) {
+      // Don't force a refresh until the current forceRefresh operation
+      // has produced a successful refresh.
+      if (forceRefreshRunning) {
+        logger.info(
+            String.format(
+                "[%s] Force Refresh: ignore this call as a refresh operation is currently in progress.",
+                instanceName));
+        return;
+      }
+
+      forceRefreshRunning = true;
       // If a scheduled refresh hasn't started, perform one immediately.
       next.cancel(false);
-      if (next.isCancelled()) {
-        current = executor.submit(this::performRefresh);
-        next = current;
-      } else {
-        // Otherwise it's already running, so just move next to current.
-        current = next;
-      }
+      logger.info(
+          String.format(
+              "[%s] Force Refresh: the next refresh operation was cancelled."
+                  + " Scheduling new refresh operation immediately.",
+              instanceName));
+      current = executor.submit(this::performRefresh);
+      next = current;
     }
   }
 }

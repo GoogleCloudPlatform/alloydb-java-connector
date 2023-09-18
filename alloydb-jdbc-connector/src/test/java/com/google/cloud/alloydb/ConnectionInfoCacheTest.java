@@ -45,6 +45,7 @@ public class ConnectionInfoCacheTest {
   private static final String TEST_INSTANCE_ID = "some-instance-id";
   private static final Instant ONE_HOUR_FROM_NOW = Instant.now().plus(1, ChronoUnit.HOURS);
   private static final Instant TWO_HOURS_FROM_NOW = ONE_HOUR_FROM_NOW.plus(1, ChronoUnit.HOURS);
+  private static final Instant THREE_HOURS_FROM_NOW = TWO_HOURS_FROM_NOW.plus(1, ChronoUnit.HOURS);
   private InstanceName instanceName;
   private KeyPair keyPair;
   private SpyRateLimiter spyRateLimiter;
@@ -326,6 +327,67 @@ public class ConnectionInfoCacheTest {
                 .truncatedTo(ChronoUnit.SECONDS))
         .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
 
+    connectionInfoCache.forceRefresh();
+
+    // After the force refresh, new refresh data is available.
+    connectionInfo = connectionInfoCache.getConnectionInfo();
+    assertThat(
+            connectionInfo
+                .getClientCertificate()
+                .getNotAfter()
+                .toInstant()
+                .truncatedTo(ChronoUnit.SECONDS))
+        .isEqualTo(TWO_HOURS_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
+  }
+
+  @Test
+  public void testForceRefresh_refreshCalledOnlyOnceDuringMultipleCalls() {
+    ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
+
+    InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
+    List<X509Certificate> certificateChain =
+        Arrays.asList(
+            testCertificates.getIntermediateCertificate(), testCertificates.getRootCertificate());
+    connectionInfoRepo.addResponses(
+        () ->
+            new ConnectionInfo(
+                TEST_INSTANCE_IP,
+                TEST_INSTANCE_ID,
+                testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
+                certificateChain),
+        () ->
+            new ConnectionInfo(
+                TEST_INSTANCE_IP,
+                TEST_INSTANCE_ID,
+                testCertificates.getEphemeralCertificate(keyPair.getPublic(), TWO_HOURS_FROM_NOW),
+                certificateChain),
+        () ->
+            new ConnectionInfo(
+                TEST_INSTANCE_IP,
+                TEST_INSTANCE_ID,
+                testCertificates.getEphemeralCertificate(keyPair.getPublic(), THREE_HOURS_FROM_NOW),
+                certificateChain));
+    DefaultConnectionInfoCache connectionInfoCache =
+        new DefaultConnectionInfoCache(
+            executor,
+            connectionInfoRepo,
+            instanceName,
+            keyPair,
+            new RefreshCalculator(),
+            spyRateLimiter);
+
+    // Before force refresh, the first refresh data is available.
+    ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
+    assertThat(
+            connectionInfo
+                .getClientCertificate()
+                .getNotAfter()
+                .toInstant()
+                .truncatedTo(ChronoUnit.SECONDS))
+        .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
+
+    connectionInfoCache.forceRefresh();
+    // This second call should be ignored as there is a refresh operation in progress.
     connectionInfoCache.forceRefresh();
 
     // After the force refresh, new refresh data is available.
