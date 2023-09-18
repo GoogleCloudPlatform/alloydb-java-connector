@@ -55,4 +55,8 @@ class InMemoryConnectionInfoRepo implements ConnectionInfoRepository {
   public final void addResponses(Callable<ConnectionInfo>... callables) {
     registeredCallables.addAll(Arrays.asList(callables));
   }
+
+  public final int getIndex() {
+    return this.index.get();
+  }
 }

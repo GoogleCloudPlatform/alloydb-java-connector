@@ -41,6 +41,7 @@ import org.junit.Test;
 
 public class ConnectionInfoCacheTest {
 
+  private static final int DEFAULT_WAIT = 100;
   private static final String TEST_INSTANCE_IP = "10.0.0.1";
   private static final String TEST_INSTANCE_ID = "some-instance-id";
   private static final Instant ONE_HOUR_FROM_NOW = Instant.now().plus(1, ChronoUnit.HOURS);
@@ -288,7 +289,7 @@ public class ConnectionInfoCacheTest {
   }
 
   @Test
-  public void testForceRefresh_schedulesNextRefreshImmediately() {
+  public void testForceRefresh_schedulesNextRefreshImmediately() throws InterruptedException {
     ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
 
     InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
@@ -329,8 +330,20 @@ public class ConnectionInfoCacheTest {
 
     connectionInfoCache.forceRefresh();
 
-    // After the force refresh, new refresh data is available.
+    // Refresh data hasn't changed because we re-use the existing connection info.
     connectionInfo = connectionInfoCache.getConnectionInfo();
+    assertThat(connectionInfoRepo.getIndex()).isEqualTo(1);
+
+    for (int i = 0; i < 10; i++) {
+      connectionInfo = connectionInfoCache.getConnectionInfo();
+      if (connectionInfoRepo.getIndex() > 1) {
+        break;
+      }
+      Thread.sleep(DEFAULT_WAIT);
+    }
+
+    // After a few seconds, new refresh data should be available.
+    assertThat(connectionInfoRepo.getIndex()).isEqualTo(2);
     assertThat(
             connectionInfo
                 .getClientCertificate()
@@ -341,7 +354,8 @@ public class ConnectionInfoCacheTest {
   }
 
   @Test
-  public void testForceRefresh_refreshCalledOnlyOnceDuringMultipleCalls() {
+  public void testForceRefresh_refreshCalledOnlyOnceDuringMultipleCalls()
+      throws InterruptedException {
     ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
 
     InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
@@ -389,9 +403,18 @@ public class ConnectionInfoCacheTest {
     connectionInfoCache.forceRefresh();
     // This second call should be ignored as there is a refresh operation in progress.
     connectionInfoCache.forceRefresh();
+    assertThat(connectionInfoRepo.getIndex()).isEqualTo(1);
 
-    // After the force refresh, new refresh data is available.
-    connectionInfo = connectionInfoCache.getConnectionInfo();
+    for (int i = 0; i < 10; i++) {
+      connectionInfo = connectionInfoCache.getConnectionInfo();
+      if (connectionInfoRepo.getIndex() > 1) {
+        break;
+      }
+      Thread.sleep(DEFAULT_WAIT);
+    }
+
+    // After a few seconds, new refresh data should be available.
+    assertThat(connectionInfoRepo.getIndex()).isEqualTo(2);
     assertThat(
             connectionInfo
                 .getClientCertificate()
