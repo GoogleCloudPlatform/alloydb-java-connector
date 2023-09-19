@@ -30,8 +30,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -41,6 +39,7 @@ import org.junit.Test;
 
 public class ConnectionInfoCacheTest {
 
+  private static final int DEFAULT_WAIT = 100;
   private static final String TEST_INSTANCE_IP = "10.0.0.1";
   private static final String TEST_INSTANCE_ID = "some-instance-id";
   private static final Instant ONE_HOUR_FROM_NOW = Instant.now().plus(1, ChronoUnit.HOURS);
@@ -288,8 +287,8 @@ public class ConnectionInfoCacheTest {
   }
 
   @Test
-  public void testForceRefresh_schedulesNextRefreshImmediately() {
-    ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
+  public void testForceRefresh_schedulesNextRefreshImmediately() throws InterruptedException {
+    DeterministicScheduler executor = new DeterministicScheduler();
 
     InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
     List<X509Certificate> certificateChain =
@@ -317,8 +316,11 @@ public class ConnectionInfoCacheTest {
             new RefreshCalculator(),
             spyRateLimiter);
 
+    executor.runNextPendingCommand(); // Simulate completion of background thread.
+
     // Before force refresh, the first refresh data is available.
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
+    assertThat(connectionInfoRepo.getIndex()).isEqualTo(1);
     assertThat(
             connectionInfo
                 .getClientCertificate()
@@ -329,8 +331,21 @@ public class ConnectionInfoCacheTest {
 
     connectionInfoCache.forceRefresh();
 
+    // Refresh data hasn't changed because we re-use the existing connection info.
+    connectionInfo = connectionInfoCache.getConnectionInfo();
+    assertThat(
+            connectionInfo
+                .getClientCertificate()
+                .getNotAfter()
+                .toInstant()
+                .truncatedTo(ChronoUnit.SECONDS))
+        .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
+
+    executor.runUntilIdle(); // Simulate completion of background thread.
+
     // After the force refresh, new refresh data is available.
     connectionInfo = connectionInfoCache.getConnectionInfo();
+    assertThat(connectionInfoRepo.getIndex()).isEqualTo(2);
     assertThat(
             connectionInfo
                 .getClientCertificate()
@@ -341,8 +356,9 @@ public class ConnectionInfoCacheTest {
   }
 
   @Test
-  public void testForceRefresh_refreshCalledOnlyOnceDuringMultipleCalls() {
-    ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
+  public void testForceRefresh_refreshCalledOnlyOnceDuringMultipleCalls()
+      throws InterruptedException {
+    DeterministicScheduler executor = new DeterministicScheduler();
 
     InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
     List<X509Certificate> certificateChain =
@@ -376,8 +392,11 @@ public class ConnectionInfoCacheTest {
             new RefreshCalculator(),
             spyRateLimiter);
 
+    executor.runNextPendingCommand(); // Simulate completion of background thread.
+
     // Before force refresh, the first refresh data is available.
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
+    assertThat(connectionInfoRepo.getIndex()).isEqualTo(1);
     assertThat(
             connectionInfo
                 .getClientCertificate()
@@ -387,11 +406,14 @@ public class ConnectionInfoCacheTest {
         .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
 
     connectionInfoCache.forceRefresh();
-    // This second call should be ignored as there is a refresh operation in progress.
+    // This second call is ignored as there is a refresh operation in progress.
     connectionInfoCache.forceRefresh();
+
+    executor.runUntilIdle(); // Simulate completion of background thread.
 
     // After the force refresh, new refresh data is available.
     connectionInfo = connectionInfoCache.getConnectionInfo();
+    assertThat(connectionInfoRepo.getIndex()).isEqualTo(2);
     assertThat(
             connectionInfo
                 .getClientCertificate()
