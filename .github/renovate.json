@@ -138,6 +138,12 @@
         "^s4u/setup-maven-action"
       ],
       "groupName": "dependencies for github"
+    },
+    {
+      "matchPackagePatterns": [
+        "^com.google.errorprone"
+      ],
+      "groupName": "com.google.errorprone dependencies"
     }
   ]
 }
