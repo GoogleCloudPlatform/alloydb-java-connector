@@ -227,7 +227,7 @@ jobs:
           java-version: 8
 
       - name: Setup Maven Action
-        uses: s4u/setup-maven-action@c1ef1c9458a52c0b6ac714574c4694a9fcf00d45
+        uses: s4u/setup-maven-action@57ca7f1a813fd21035f9399bc015664601217110
         with:
           java-version: 8
 
