@@ -39,7 +39,6 @@ import org.junit.Test;
 
 public class ConnectionInfoCacheTest {
 
-  private static final int DEFAULT_WAIT = 100;
   private static final String TEST_INSTANCE_IP = "10.0.0.1";
   private static final String TEST_INSTANCE_ID = "some-instance-id";
   private static final Instant ONE_HOUR_FROM_NOW = Instant.now().plus(1, ChronoUnit.HOURS);

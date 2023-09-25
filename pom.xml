@@ -135,6 +135,7 @@
                   <version>${error-prone.version}</version>
                 </path>
               </annotationProcessorPaths>
+              <failOnWarning>true</failOnWarning>
             </configuration>
           </plugin>
         </plugins>

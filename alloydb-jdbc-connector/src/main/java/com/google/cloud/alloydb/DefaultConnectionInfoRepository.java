@@ -105,7 +105,6 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
         GenerateClientCertificateRequest.newBuilder()
             .setParent(getParent(instanceName))
             .setCertDuration(Duration.newBuilder().setSeconds(3600 /* 1 hour */))
-            .setPemCsr(str.toString())
             .build();
 
     return alloyDBAdminClient.generateClientCertificate(request);
