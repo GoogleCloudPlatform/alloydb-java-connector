@@ -32,8 +32,10 @@ public enum ConnectorRegistry implements Closeable {
 
   @SuppressWarnings("ImmutableEnumChecker")
   private final ScheduledExecutorService executor;
+
   @SuppressWarnings("ImmutableEnumChecker")
   private final AlloyDBAdminClient alloyDBAdminClient;
+
   @SuppressWarnings("ImmutableEnumChecker")
   private final Connector connector;
 
