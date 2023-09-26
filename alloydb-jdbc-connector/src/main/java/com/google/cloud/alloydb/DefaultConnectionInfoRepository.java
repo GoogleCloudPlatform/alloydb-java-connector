@@ -22,6 +22,7 @@ import com.google.cloud.alloydb.v1beta.ClusterName;
 import com.google.cloud.alloydb.v1beta.GenerateClientCertificateRequest;
 import com.google.cloud.alloydb.v1beta.GenerateClientCertificateResponse;
 import com.google.cloud.alloydb.v1beta.InstanceName;
+import com.google.common.io.BaseEncoding;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
 import java.io.ByteArrayInputStream;
@@ -83,7 +84,7 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
         GenerateClientCertificateRequest.newBuilder()
             .setParent(getParent(instanceName))
             .setCertDuration(Duration.newBuilder().setSeconds(3600 /* 1 hour */))
-            .setPublicKey(keyPair.getPublic().toString())
+            .setPublicKey(generatePublicKeyCert(keyPair))
             .build();
 
     return alloyDBAdminClient.generateClientCertificate(request);
@@ -93,6 +94,14 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
     return ClusterName.of(
             instanceName.getProject(), instanceName.getLocation(), instanceName.getCluster())
         .toString();
+  }
+
+  private String generatePublicKeyCert(KeyPair keyPair) {
+    // Format the public key into a PEM encoded Certificate.
+    return "-----BEGIN RSA PUBLIC KEY-----\n"
+        + BaseEncoding.base64().withSeparator("\n", 64).encode(keyPair.getPublic().getEncoded())
+        + "\n"
+        + "-----END RSA PUBLIC KEY-----\n";
   }
 
   private X509Certificate parseCertificate(ByteString cert) throws CertificateException {
