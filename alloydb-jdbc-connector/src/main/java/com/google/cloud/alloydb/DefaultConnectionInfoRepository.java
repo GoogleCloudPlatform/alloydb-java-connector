@@ -18,6 +18,7 @@ package com.google.cloud.alloydb;
 
 import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.alloydb.v1beta.AlloyDBAdminClient;
+import com.google.cloud.alloydb.v1beta.ClusterName;
 import com.google.cloud.alloydb.v1beta.GenerateClientCertificateRequest;
 import com.google.cloud.alloydb.v1beta.GenerateClientCertificateResponse;
 import com.google.cloud.alloydb.v1beta.InstanceName;
@@ -101,6 +102,7 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
       throw new RuntimeException(e);
     }
 
+    @SuppressWarnings("deprecation")
     GenerateClientCertificateRequest request =
         GenerateClientCertificateRequest.newBuilder()
             .setParent(getParent(instanceName))
@@ -112,9 +114,9 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
   }
 
   private String getParent(InstanceName instanceName) {
-    return String.format(
-        "projects/%s/locations/%s/clusters/%s",
-        instanceName.getProject(), instanceName.getLocation(), instanceName.getCluster());
+    return ClusterName.of(
+            instanceName.getProject(), instanceName.getLocation(), instanceName.getCluster())
+        .toString();
   }
 
   private PKCS10CertificationRequest createPKCS10(KeyPair keyPair)

@@ -30,8 +30,13 @@ import java.util.concurrent.ScheduledExecutorService;
 public enum ConnectorRegistry implements Closeable {
   INSTANCE;
 
+  @SuppressWarnings("ImmutableEnumChecker")
   private final ScheduledExecutorService executor;
+
+  @SuppressWarnings("ImmutableEnumChecker")
   private final AlloyDBAdminClient alloyDBAdminClient;
+
+  @SuppressWarnings("ImmutableEnumChecker")
   private final Connector connector;
 
   ConnectorRegistry() {
