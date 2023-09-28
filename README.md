@@ -58,6 +58,7 @@ list of dependencies.
 
 [pg-driver]: https://mvnrepository.com/artifact/org.postgresql/postgresql
 
+<!-- {x-release-please-start-version} -->
 #### Maven
 
 Include the following in the project's `pom.xml`:
@@ -77,6 +78,7 @@ Include the following in the project's `pom.xml`:
   <version>42.6.0</version>
 </dependency>
 ```
+<!-- {x-release-please-end} -->
 
 #### Gradle
 
