@@ -58,11 +58,11 @@ list of dependencies.
 
 [pg-driver]: https://mvnrepository.com/artifact/org.postgresql/postgresql
 
-<!-- {x-release-please-start-version} -->
 #### Maven
 
 Include the following in the project's `pom.xml`:
 
+<!-- {x-release-please-start-version} -->
 ```maven-pom
 <!-- Add the connector with the latest version -->
 <dependency>
@@ -70,7 +70,10 @@ Include the following in the project's `pom.xml`:
   <artifactId>alloydb-jdbc-connector</artifactId>
   <version>0.1.0</version>
 </dependency>
+```
+<!-- {x-release-please-end} -->
 
+```
 <!-- Add the driver with the latest version -->
 <dependency>
   <groupId>org.postgresql</groupId>
@@ -78,7 +81,6 @@ Include the following in the project's `pom.xml`:
   <version>42.6.0</version>
 </dependency>
 ```
-<!-- {x-release-please-end} -->
 
 #### Gradle
 
