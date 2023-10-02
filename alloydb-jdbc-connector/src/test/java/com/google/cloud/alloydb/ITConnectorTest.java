@@ -17,8 +17,8 @@ package com.google.cloud.alloydb;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.cloud.alloydb.v1beta.AlloyDBAdminClient;
-import com.google.cloud.alloydb.v1beta.InstanceName;
+import com.google.cloud.alloydb.v1.AlloyDBAdminClient;
+import com.google.cloud.alloydb.v1.InstanceName;
 import com.google.common.base.Objects;
 import java.io.IOException;
 import java.net.ConnectException;

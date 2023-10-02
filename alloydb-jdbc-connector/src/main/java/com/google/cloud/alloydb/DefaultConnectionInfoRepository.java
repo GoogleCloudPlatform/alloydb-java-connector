@@ -17,16 +17,15 @@
 package com.google.cloud.alloydb;
 
 import com.google.api.gax.rpc.ApiException;
-import com.google.cloud.alloydb.v1beta.AlloyDBAdminClient;
-import com.google.cloud.alloydb.v1beta.ClusterName;
-import com.google.cloud.alloydb.v1beta.GenerateClientCertificateRequest;
-import com.google.cloud.alloydb.v1beta.GenerateClientCertificateResponse;
-import com.google.cloud.alloydb.v1beta.InstanceName;
+import com.google.cloud.alloydb.v1.AlloyDBAdminClient;
+import com.google.cloud.alloydb.v1.ClusterName;
+import com.google.cloud.alloydb.v1.GenerateClientCertificateRequest;
+import com.google.cloud.alloydb.v1.GenerateClientCertificateResponse;
+import com.google.cloud.alloydb.v1.InstanceName;
+import com.google.common.io.BaseEncoding;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.StringWriter;
 import java.security.KeyPair;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -36,21 +35,13 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
-import org.bouncycastle.operator.ContentSigner;
-import org.bouncycastle.operator.OperatorCreationException;
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.bouncycastle.pkcs.PKCS10CertificationRequest;
-import org.bouncycastle.pkcs.PKCS10CertificationRequestBuilder;
-import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
-import org.bouncycastle.util.io.pem.PemObject;
 
 class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
 
-  private static final String CERTIFICATE_REQUEST = "CERTIFICATE REQUEST";
-  private static final String SHA_256_WITH_RSA = "SHA256WithRSA";
+  private static final String OPENSSL_PUBLIC_KEY_BEGIN = "-----BEGIN RSA PUBLIC KEY-----";
+  private static final String OPENSSL_PUBLIC_KEY_END = "-----END RSA PUBLIC KEY-----";
   private static final String X_509 = "X.509";
+  private static final int PEM_LINE_LENGTH = 64;
   private final ExecutorService executor;
   private final AlloyDBAdminClient alloyDBAdminClient;
 
@@ -62,15 +53,15 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
   @Override
   public ConnectionInfo getConnectionInfo(InstanceName instanceName, KeyPair keyPair)
       throws ExecutionException, InterruptedException, CertificateException, ApiException {
-    Future<com.google.cloud.alloydb.v1beta.ConnectionInfo> infoFuture =
+    Future<com.google.cloud.alloydb.v1.ConnectionInfo> infoFuture =
         executor.submit(() -> getConnectionInfo(instanceName));
     Future<GenerateClientCertificateResponse> clientCertificateResponseFuture =
         executor.submit(() -> getGenerateClientCertificateResponse(instanceName, keyPair));
 
-    com.google.cloud.alloydb.v1beta.ConnectionInfo info = infoFuture.get();
+    com.google.cloud.alloydb.v1.ConnectionInfo info = infoFuture.get();
 
     GenerateClientCertificateResponse certificateResponse = clientCertificateResponseFuture.get();
-    ByteString pemCertificateBytes = certificateResponse.getPemCertificateBytes();
+    ByteString pemCertificateBytes = certificateResponse.getPemCertificateChainBytes(0);
     X509Certificate clientCertificate = parseCertificate(pemCertificateBytes);
 
     List<ByteString> certificateChainBytes =
@@ -84,30 +75,17 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
         info.getIpAddress(), info.getInstanceUid(), clientCertificate, certificateChain);
   }
 
-  private com.google.cloud.alloydb.v1beta.ConnectionInfo getConnectionInfo(
-      InstanceName instanceName) {
+  private com.google.cloud.alloydb.v1.ConnectionInfo getConnectionInfo(InstanceName instanceName) {
     return alloyDBAdminClient.getConnectionInfo(instanceName);
   }
 
   private GenerateClientCertificateResponse getGenerateClientCertificateResponse(
       InstanceName instanceName, KeyPair keyPair) {
-    StringWriter str = new StringWriter();
-    try {
-      PKCS10CertificationRequest certRequest = createPKCS10(keyPair);
-      PemObject pemObject = new PemObject(CERTIFICATE_REQUEST, certRequest.getEncoded());
-      JcaPEMWriter pemWriter = new JcaPEMWriter(str);
-      pemWriter.writeObject(pemObject);
-      pemWriter.close();
-    } catch (OperatorCreationException | IOException e) {
-      throw new RuntimeException(e);
-    }
-
-    @SuppressWarnings("deprecation")
     GenerateClientCertificateRequest request =
         GenerateClientCertificateRequest.newBuilder()
             .setParent(getParent(instanceName))
             .setCertDuration(Duration.newBuilder().setSeconds(3600 /* 1 hour */))
-            .setPemCsr(str.toString())
+            .setPublicKey(generatePublicKeyCert(keyPair))
             .build();
 
     return alloyDBAdminClient.generateClientCertificate(request);
@@ -119,17 +97,16 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
         .toString();
   }
 
-  private PKCS10CertificationRequest createPKCS10(KeyPair keyPair)
-      throws OperatorCreationException, IOException {
-    X500Name subject = new X500Name("CN=alloydb-proxy");
-
-    PKCS10CertificationRequestBuilder requestBuilder =
-        new JcaPKCS10CertificationRequestBuilder(subject, keyPair.getPublic());
-
-    ContentSigner signer =
-        new JcaContentSignerBuilder(SHA_256_WITH_RSA).build(keyPair.getPrivate());
-
-    return requestBuilder.build(signer);
+  private String generatePublicKeyCert(KeyPair keyPair) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(OPENSSL_PUBLIC_KEY_BEGIN).append("\n");
+    String base64Key =
+        BaseEncoding.base64()
+            .withSeparator("\n", PEM_LINE_LENGTH)
+            .encode(keyPair.getPublic().getEncoded());
+    sb.append(base64Key).append("\n");
+    sb.append(OPENSSL_PUBLIC_KEY_END).append("\n");
+    return sb.toString();
   }
 
   private X509Certificate parseCertificate(ByteString cert) throws CertificateException {

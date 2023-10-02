@@ -15,7 +15,7 @@
  */
 package com.google.cloud.alloydb;
 
-import com.google.cloud.alloydb.v1beta.InstanceName;
+import com.google.cloud.alloydb.v1.InstanceName;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;

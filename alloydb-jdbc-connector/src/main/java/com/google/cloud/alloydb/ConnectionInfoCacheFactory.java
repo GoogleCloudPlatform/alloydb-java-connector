@@ -15,7 +15,7 @@
  */
 package com.google.cloud.alloydb;
 
-import com.google.cloud.alloydb.v1beta.InstanceName;
+import com.google.cloud.alloydb.v1.InstanceName;
 import java.security.KeyPair;
 import java.util.concurrent.ScheduledExecutorService;
 
