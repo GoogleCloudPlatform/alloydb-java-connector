@@ -73,7 +73,7 @@ Include the following in the project's `pom.xml`:
 ```
 <!-- {x-release-please-end} -->
 
-```
+```maven-pom
 <!-- Add the driver with the latest version -->
 <dependency>
   <groupId>org.postgresql</groupId>
@@ -86,9 +86,14 @@ Include the following in the project's `pom.xml`:
 
 Include the following the project's `gradle.build`
 
+<!-- {x-release-please-start-version} -->
 ```gradle
 // Add connector with the latest version
 implementation group: 'com.google.cloud.alloydb', name: 'alloydb-jdbc-connector', version: '0.1.0'
+```
+<!-- {x-release-please-end} -->
+
+```gradle
 // Add driver with the latest version
 implementation group: 'org.postgresql', name: 'postgresql', version: '42.6.0'
 ```
