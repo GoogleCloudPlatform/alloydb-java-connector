@@ -14,7 +14,7 @@
   "commitMessagePrefix": "deps: ",
   "semanticCommits": "enabled",
   "dependencyDashboard": true,
-  "dependencyDashboardLabels": ["type:process"],
+  "dependencyDashboardLabels": ["type: process"],
   "packageRules": [
     {
       "matchPackagePatterns": [
