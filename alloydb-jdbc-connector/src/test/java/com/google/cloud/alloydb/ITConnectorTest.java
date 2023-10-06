@@ -92,9 +92,10 @@ public class ITConnectorTest {
         new ConnectionInfo(
             "127.0.0.1", // localhost doesn't do TLS
             "some-instance",
-            testCertificates.getEphemeralCertificate(
-                clientConnectorKeyPair.getPublic(), Instant.now()),
+            testCertificates.getCaCertificate(),
             Arrays.asList(
+                testCertificates.getEphemeralCertificate(
+                    clientConnectorKeyPair.getPublic(), Instant.now()),
                 testCertificates.getIntermediateCertificate(),
                 testCertificates.getRootCertificate())));
     StubConnectionInfoCacheFactory connectionInfoCacheFactory =

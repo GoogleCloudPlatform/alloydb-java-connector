@@ -26,7 +26,9 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
@@ -118,6 +120,16 @@ public class TestCertificates {
   /** Returns the root CA certificate */
   public X509Certificate getRootCertificate() {
     return rootCertificate;
+  }
+
+  /** Returns the cluster CA certificate */
+  public X509Certificate getCaCertificate() {
+    return rootCertificate;
+  }
+
+  /** Returns the certificate chain */
+  public List<X509Certificate> getCertificateChain(X509Certificate ephemeralCertificate) {
+    return Arrays.asList(ephemeralCertificate, intermediateCertificate, rootCertificate);
   }
 
   /** Creates a certificate with the given subject and signed by the root CA cert. */

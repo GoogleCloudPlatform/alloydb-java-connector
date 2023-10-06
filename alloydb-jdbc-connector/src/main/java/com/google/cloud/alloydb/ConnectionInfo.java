@@ -25,17 +25,17 @@ class ConnectionInfo {
 
   private final String ipAddress;
   private final String instanceUid;
-  private final X509Certificate clientCertificate;
+  private final X509Certificate caCertificate;
   private final List<X509Certificate> certificateChain;
 
   ConnectionInfo(
       String ipAddress,
       String instanceUid,
-      X509Certificate clientCertificate,
+      X509Certificate caCertificate,
       List<X509Certificate> certificateChain) {
     this.ipAddress = ipAddress;
     this.instanceUid = instanceUid;
-    this.clientCertificate = clientCertificate;
+    this.caCertificate = caCertificate;
     this.certificateChain = certificateChain;
   }
 
@@ -47,12 +47,12 @@ class ConnectionInfo {
     return instanceUid;
   }
 
-  X509Certificate getClientCertificate() {
-    return clientCertificate;
+  X509Certificate getCaCertificate() {
+    return caCertificate;
   }
 
   Instant getClientCertificateExpiration() {
-    return clientCertificate.getNotAfter().toInstant();
+    return certificateChain.get(0).getNotAfter().toInstant();
   }
 
   List<X509Certificate> getCertificateChain() {
@@ -71,13 +71,13 @@ class ConnectionInfo {
     ConnectionInfo that = (ConnectionInfo) o;
     return Objects.equal(ipAddress, that.ipAddress)
         && Objects.equal(instanceUid, that.instanceUid)
-        && Objects.equal(clientCertificate, that.clientCertificate)
+        && Objects.equal(caCertificate, that.caCertificate)
         && Objects.equal(certificateChain, that.certificateChain);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(ipAddress, instanceUid, clientCertificate, certificateChain);
+    return Objects.hashCode(ipAddress, instanceUid, caCertificate, certificateChain);
   }
 
   @Override
@@ -89,8 +89,8 @@ class ConnectionInfo {
         + ", instanceUid='"
         + instanceUid
         + '\''
-        + ", clientCertificate="
-        + clientCertificate
+        + ", caCertificate="
+        + caCertificate
         + ", certificateChain="
         + certificateChain
         + '}';

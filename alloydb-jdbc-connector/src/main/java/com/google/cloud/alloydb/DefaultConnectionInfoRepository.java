@@ -25,7 +25,6 @@ import com.google.cloud.alloydb.v1.InstanceName;
 import com.google.common.io.BaseEncoding;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
-import java.io.ByteArrayInputStream;
 import java.security.KeyPair;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -61,8 +60,8 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
     com.google.cloud.alloydb.v1.ConnectionInfo info = infoFuture.get();
 
     GenerateClientCertificateResponse certificateResponse = clientCertificateResponseFuture.get();
-    ByteString pemCertificateBytes = certificateResponse.getPemCertificateChainBytes(0);
-    X509Certificate clientCertificate = parseCertificate(pemCertificateBytes);
+    ByteString caCertificateBytes = certificateResponse.getCaCertBytes();
+    X509Certificate caCertificate = parseCertificate(caCertificateBytes);
 
     List<ByteString> certificateChainBytes =
         certificateResponse.getPemCertificateChainList().asByteStringList();
@@ -72,7 +71,7 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
     }
 
     return new ConnectionInfo(
-        info.getIpAddress(), info.getInstanceUid(), clientCertificate, certificateChain);
+        info.getIpAddress(), info.getInstanceUid(), caCertificate, certificateChain);
   }
 
   private com.google.cloud.alloydb.v1.ConnectionInfo getConnectionInfo(InstanceName instanceName) {
@@ -110,8 +109,7 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
   }
 
   private X509Certificate parseCertificate(ByteString cert) throws CertificateException {
-    ByteArrayInputStream certStream = new ByteArrayInputStream(cert.toByteArray());
     CertificateFactory x509CertificateFactory = CertificateFactory.getInstance(X_509);
-    return (X509Certificate) x509CertificateFactory.generateCertificate(certStream);
+    return (X509Certificate) x509CertificateFactory.generateCertificate(cert.newInput());
   }
 }

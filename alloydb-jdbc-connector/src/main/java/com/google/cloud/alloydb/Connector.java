@@ -75,17 +75,16 @@ class Connector {
   }
 
   private static SSLSocket buildSocket(
-      X509Certificate clientCertificate,
+      X509Certificate caCertificate,
       List<X509Certificate> certificateChain,
       PrivateKey privateKey) {
     try {
       // First initialize a KeyManager with the ephemeral certificate
       // (including the chain of trust to the root CA cert) and the connector's private key.
-      KeyManager[] keyManagers =
-          initializeKeyManager(clientCertificate, certificateChain, privateKey);
+      KeyManager[] keyManagers = initializeKeyManager(certificateChain, privateKey);
 
       // Next, initialize a TrustManager with the root CA certificate.
-      TrustManager[] trustManagers = initializeTrustManager(certificateChain);
+      TrustManager[] trustManagers = initializeTrustManager(caCertificate);
 
       // Now, create a TLS 1.3 SSLContext initialized with the KeyManager and the TrustManager,
       // and create the SSL Socket.
@@ -97,26 +96,21 @@ class Connector {
     }
   }
 
-  private static TrustManager[] initializeTrustManager(List<X509Certificate> certificateChain)
+  private static TrustManager[] initializeTrustManager(X509Certificate caCertificate)
       throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
     KeyStore trustedKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
     trustedKeyStore.load(
         null, // don't load the key store from an input stream
         null // there is no password
         );
-    trustedKeyStore.setCertificateEntry(
-        ROOT_CA_CERT,
-        certificateChain.get(certificateChain.size() - 1) // root CA cert is last in the chain
-        );
+    trustedKeyStore.setCertificateEntry(ROOT_CA_CERT, caCertificate);
     TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(X_509);
     trustManagerFactory.init(trustedKeyStore);
     return trustManagerFactory.getTrustManagers();
   }
 
   private static KeyManager[] initializeKeyManager(
-      X509Certificate clientCertificate,
-      List<X509Certificate> certificateChain,
-      PrivateKey privateKey)
+      List<X509Certificate> certificateChain, PrivateKey privateKey)
       throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException,
           UnrecoverableKeyException {
     KeyStore clientAuthenticationKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
@@ -125,7 +119,6 @@ class Connector {
         null // there is no password
         );
     List<Certificate> chain = new ArrayList<>();
-    chain.add(clientCertificate);
     chain.addAll(certificateChain);
     Certificate[] chainArray = chain.toArray(new Certificate[] {});
     PrivateKeyEntry privateKeyEntry = new PrivateKeyEntry(privateKey, chainArray);
@@ -157,7 +150,7 @@ class Connector {
     try {
       SSLSocket socket =
           buildSocket(
-              connectionInfo.getClientCertificate(),
+              connectionInfo.getCaCertificate(),
               connectionInfo.getCertificateChain(),
               this.clientConnectorKeyPair.getPrivate());
 

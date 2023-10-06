@@ -25,6 +25,8 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -72,13 +74,15 @@ public class ITDefaultConnectionInfoRepositoryTest {
   public void testGetConnectionInfo()
       throws ExecutionException, InterruptedException, CertificateException {
     InstanceName instanceName = InstanceName.parse(instanceUri);
+    Instant expected = Instant.now().plus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.SECONDS);
     ConnectionInfo connectionInfo =
         defaultConnectionInfoRepository.getConnectionInfo(instanceName, keyPair);
 
     assertThat(connectionInfo.getInstanceUid()).isNotEmpty();
     assertThat(connectionInfo.getIpAddress()).isNotEmpty();
-    assertThat(connectionInfo.getClientCertificate()).isNotNull();
+    assertThat(connectionInfo.getCaCertificate()).isNotNull();
     assertThat(connectionInfo.getCertificateChain()).hasSize(2);
+    assertThat(connectionInfo.getClientCertificateExpiration()).isEqualTo(expected);
   }
 
   @Test

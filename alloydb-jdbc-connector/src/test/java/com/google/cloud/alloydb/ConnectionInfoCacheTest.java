@@ -28,7 +28,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -68,10 +67,10 @@ public class ConnectionInfoCacheTest {
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-                Arrays.asList(
-                    testCertificates.getIntermediateCertificate(),
-                    testCertificates.getRootCertificate())));
+                testCertificates.getCaCertificate(),
+                testCertificates.getCertificateChain(
+                    testCertificates.getEphemeralCertificate(
+                        keyPair.getPublic(), ONE_HOUR_FROM_NOW))));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
             executor,
@@ -86,37 +85,33 @@ public class ConnectionInfoCacheTest {
 
     assertThat(connectionInfo.getIpAddress()).isEqualTo(TEST_INSTANCE_IP);
     assertThat(connectionInfo.getInstanceUid()).isEqualTo(TEST_INSTANCE_ID);
-    assertThat(
-            connectionInfo
-                .getClientCertificate()
-                .getNotAfter()
-                .toInstant()
-                .truncatedTo(ChronoUnit.SECONDS))
+    assertThat(connectionInfo.getClientCertificateExpiration().truncatedTo(ChronoUnit.SECONDS))
         .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
     List<X509Certificate> certificateChain = connectionInfo.getCertificateChain();
-    assertThat(certificateChain).hasSize(2);
+    assertThat(certificateChain).hasSize(3);
   }
 
   @Test
   public void testGetConnectionInfo_schedulesNextOperation() {
     DeterministicScheduler executor = new DeterministicScheduler();
     InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
-    List<X509Certificate> certificateChain =
-        Arrays.asList(
-            testCertificates.getIntermediateCertificate(), testCertificates.getRootCertificate());
     connectionInfoRepo.addResponses(
         () ->
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-                certificateChain),
+                testCertificates.getCaCertificate(),
+                testCertificates.getCertificateChain(
+                    testCertificates.getEphemeralCertificate(
+                        keyPair.getPublic(), ONE_HOUR_FROM_NOW))),
         () ->
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), TWO_HOURS_FROM_NOW),
-                certificateChain));
+                testCertificates.getCaCertificate(),
+                testCertificates.getCertificateChain(
+                    testCertificates.getEphemeralCertificate(
+                        keyPair.getPublic(), TWO_HOURS_FROM_NOW))));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
             executor,
@@ -129,12 +124,7 @@ public class ConnectionInfoCacheTest {
     executor.runNextPendingCommand(); // Simulate completion of background thread.
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
 
-    assertThat(
-            connectionInfo
-                .getClientCertificate()
-                .getNotAfter()
-                .toInstant()
-                .truncatedTo(ChronoUnit.SECONDS))
+    assertThat(connectionInfo.getClientCertificateExpiration().truncatedTo(ChronoUnit.SECONDS))
         .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
 
     executor.tick(1, TimeUnit.HOURS); // Advance time to just after next refresh
@@ -142,12 +132,7 @@ public class ConnectionInfoCacheTest {
 
     ConnectionInfo nextConnectionInfo = connectionInfoCache.getConnectionInfo();
 
-    assertThat(
-            nextConnectionInfo
-                .getClientCertificate()
-                .getNotAfter()
-                .toInstant()
-                .truncatedTo(ChronoUnit.SECONDS))
+    assertThat(nextConnectionInfo.getClientCertificateExpiration().truncatedTo(ChronoUnit.SECONDS))
         .isEqualTo(TWO_HOURS_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
   }
 
@@ -155,9 +140,6 @@ public class ConnectionInfoCacheTest {
   public void testGetConnectionInfo_scheduledNextOperationImmediately_onApiException() {
     DeterministicScheduler executor = new DeterministicScheduler();
     InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
-    List<X509Certificate> certificateChain =
-        Arrays.asList(
-            testCertificates.getIntermediateCertificate(), testCertificates.getRootCertificate());
     connectionInfoRepo.addResponses(
         () -> {
           throw new ApiException(
@@ -180,8 +162,11 @@ public class ConnectionInfoCacheTest {
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-                certificateChain));
+                testCertificates.getCaCertificate(),
+                testCertificates.getCertificateChain(
+                    testCertificates.getEphemeralCertificate(
+                        keyPair.getPublic(), ONE_HOUR_FROM_NOW))));
+
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
             executor,
@@ -199,12 +184,7 @@ public class ConnectionInfoCacheTest {
 
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
 
-    assertThat(
-            connectionInfo
-                .getClientCertificate()
-                .getNotAfter()
-                .toInstant()
-                .truncatedTo(ChronoUnit.SECONDS))
+    assertThat(connectionInfo.getClientCertificateExpiration().truncatedTo(ChronoUnit.SECONDS))
         .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
   }
 
@@ -212,9 +192,6 @@ public class ConnectionInfoCacheTest {
   public void testGetConnectionInfo_scheduledNextOperationImmediately_onCertificateException() {
     DeterministicScheduler executor = new DeterministicScheduler();
     InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
-    List<X509Certificate> certificateChain =
-        Arrays.asList(
-            testCertificates.getIntermediateCertificate(), testCertificates.getRootCertificate());
     connectionInfoRepo.addResponses(
         () -> {
           throw new CertificateException();
@@ -223,8 +200,11 @@ public class ConnectionInfoCacheTest {
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-                certificateChain));
+                testCertificates.getCaCertificate(),
+                testCertificates.getCertificateChain(
+                    testCertificates.getEphemeralCertificate(
+                        keyPair.getPublic(), ONE_HOUR_FROM_NOW))));
+
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
             executor,
@@ -246,12 +226,7 @@ public class ConnectionInfoCacheTest {
 
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
 
-    assertThat(
-            connectionInfo
-                .getClientCertificate()
-                .getNotAfter()
-                .toInstant()
-                .truncatedTo(ChronoUnit.SECONDS))
+    assertThat(connectionInfo.getClientCertificateExpiration().truncatedTo(ChronoUnit.SECONDS))
         .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
   }
 
@@ -264,10 +239,10 @@ public class ConnectionInfoCacheTest {
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-                Arrays.asList(
-                    testCertificates.getIntermediateCertificate(),
-                    testCertificates.getRootCertificate())));
+                testCertificates.getCaCertificate(),
+                testCertificates.getCertificateChain(
+                    testCertificates.getEphemeralCertificate(
+                        keyPair.getPublic(), ONE_HOUR_FROM_NOW))));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
             executor,
@@ -290,22 +265,23 @@ public class ConnectionInfoCacheTest {
     DeterministicScheduler executor = new DeterministicScheduler();
 
     InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
-    List<X509Certificate> certificateChain =
-        Arrays.asList(
-            testCertificates.getIntermediateCertificate(), testCertificates.getRootCertificate());
     connectionInfoRepo.addResponses(
         () ->
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-                certificateChain),
+                testCertificates.getCaCertificate(),
+                testCertificates.getCertificateChain(
+                    testCertificates.getEphemeralCertificate(
+                        keyPair.getPublic(), ONE_HOUR_FROM_NOW))),
         () ->
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), TWO_HOURS_FROM_NOW),
-                certificateChain));
+                testCertificates.getCaCertificate(),
+                testCertificates.getCertificateChain(
+                    testCertificates.getEphemeralCertificate(
+                        keyPair.getPublic(), TWO_HOURS_FROM_NOW))));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
             executor,
@@ -320,24 +296,14 @@ public class ConnectionInfoCacheTest {
     // Before force refresh, the first refresh data is available.
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
     assertThat(connectionInfoRepo.getIndex()).isEqualTo(1);
-    assertThat(
-            connectionInfo
-                .getClientCertificate()
-                .getNotAfter()
-                .toInstant()
-                .truncatedTo(ChronoUnit.SECONDS))
+    assertThat(connectionInfo.getClientCertificateExpiration().truncatedTo(ChronoUnit.SECONDS))
         .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
 
     connectionInfoCache.forceRefresh();
 
     // Refresh data hasn't changed because we re-use the existing connection info.
     connectionInfo = connectionInfoCache.getConnectionInfo();
-    assertThat(
-            connectionInfo
-                .getClientCertificate()
-                .getNotAfter()
-                .toInstant()
-                .truncatedTo(ChronoUnit.SECONDS))
+    assertThat(connectionInfo.getClientCertificateExpiration().truncatedTo(ChronoUnit.SECONDS))
         .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
 
     executor.runUntilIdle(); // Simulate completion of background thread.
@@ -345,12 +311,7 @@ public class ConnectionInfoCacheTest {
     // After the force refresh, new refresh data is available.
     connectionInfo = connectionInfoCache.getConnectionInfo();
     assertThat(connectionInfoRepo.getIndex()).isEqualTo(2);
-    assertThat(
-            connectionInfo
-                .getClientCertificate()
-                .getNotAfter()
-                .toInstant()
-                .truncatedTo(ChronoUnit.SECONDS))
+    assertThat(connectionInfo.getClientCertificateExpiration().truncatedTo(ChronoUnit.SECONDS))
         .isEqualTo(TWO_HOURS_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
   }
 
@@ -360,28 +321,31 @@ public class ConnectionInfoCacheTest {
     DeterministicScheduler executor = new DeterministicScheduler();
 
     InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
-    List<X509Certificate> certificateChain =
-        Arrays.asList(
-            testCertificates.getIntermediateCertificate(), testCertificates.getRootCertificate());
     connectionInfoRepo.addResponses(
         () ->
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-                certificateChain),
+                testCertificates.getCaCertificate(),
+                testCertificates.getCertificateChain(
+                    testCertificates.getEphemeralCertificate(
+                        keyPair.getPublic(), ONE_HOUR_FROM_NOW))),
         () ->
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), TWO_HOURS_FROM_NOW),
-                certificateChain),
+                testCertificates.getCaCertificate(),
+                testCertificates.getCertificateChain(
+                    testCertificates.getEphemeralCertificate(
+                        keyPair.getPublic(), TWO_HOURS_FROM_NOW))),
         () ->
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), THREE_HOURS_FROM_NOW),
-                certificateChain));
+                testCertificates.getCaCertificate(),
+                testCertificates.getCertificateChain(
+                    testCertificates.getEphemeralCertificate(
+                        keyPair.getPublic(), THREE_HOURS_FROM_NOW))));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
             executor,
@@ -396,12 +360,7 @@ public class ConnectionInfoCacheTest {
     // Before force refresh, the first refresh data is available.
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
     assertThat(connectionInfoRepo.getIndex()).isEqualTo(1);
-    assertThat(
-            connectionInfo
-                .getClientCertificate()
-                .getNotAfter()
-                .toInstant()
-                .truncatedTo(ChronoUnit.SECONDS))
+    assertThat(connectionInfo.getClientCertificateExpiration().truncatedTo(ChronoUnit.SECONDS))
         .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
 
     connectionInfoCache.forceRefresh();
@@ -413,12 +372,7 @@ public class ConnectionInfoCacheTest {
     // After the force refresh, new refresh data is available.
     connectionInfo = connectionInfoCache.getConnectionInfo();
     assertThat(connectionInfoRepo.getIndex()).isEqualTo(2);
-    assertThat(
-            connectionInfo
-                .getClientCertificate()
-                .getNotAfter()
-                .toInstant()
-                .truncatedTo(ChronoUnit.SECONDS))
+    assertThat(connectionInfo.getClientCertificateExpiration().truncatedTo(ChronoUnit.SECONDS))
         .isEqualTo(TWO_HOURS_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
   }
 
