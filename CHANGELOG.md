@@ -1,5 +1,50 @@
 # Changelog
 
+## [0.1.2](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v0.1.1...v0.1.2) (2023-10-11)
+
+
+### Bug Fixes
+
+* re-use existing connection info during force refresh ([#180](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/180)) ([75d667a](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/75d667a6037d8dc69b7a06f15df93895deac0bf1))
+* remove race condition bug in refresh logic and increase threadpo… ([#170](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/170)) ([7d44e0d](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/7d44e0df6131b822208fd274321b5ad8d26b3622))
+
+
+### Dependencies
+
+* Update actions/checkout action to v4 ([#164](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/164)) ([0abd188](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/0abd188d2177ca7860be99e84f505a998cc9cd55))
+* Update actions/setup-java action to v3.13.0 ([#190](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/190)) ([07a1643](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/07a16433e4ea98dadc59c9997c33afeb1ce8c543))
+* Update com.google.errorprone dependencies to v2.22.0 ([#197](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/197)) ([8ae8acf](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/8ae8acfd76eedfca94ea1223a3dfaa8b8329fd25))
+* Update dependencies for github ([#198](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/198)) ([17aba0d](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/17aba0d28cfb9b52b2d7f703ba87ac04f5e20df8))
+* Update dependency com.google.cloud:google-cloud-alloydb-bom to v0.13.0 ([#168](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/168)) ([3c7af98](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/3c7af98b0dfddebdc42864c433ac08d8daee9f05))
+* Update dependency com.google.cloud:google-cloud-alloydb-bom to v0.16.0 ([#210](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/210)) ([9388234](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/93882344115eca2a8592070d8ab3e3c257fb3820))
+* Update dependency com.google.cloud:google-cloud-shared-config to v1.5.8 ([#222](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/222)) ([f02d422](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/f02d422f47ece5f767be323a2f96960f92e8720f))
+* Update dependency com.google.cloud:google-cloud-shared-dependencies to v3.16.0 ([#195](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/195)) ([38ca011](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/38ca01152922e7cff125161662cae39131d0100b))
+* Update dependency com.google.cloud:google-cloud-shared-dependencies to v3.16.1 ([#201](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/201)) ([bec5ac0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/bec5ac01b1839cb6d30476499909e3f6478bc0bf))
+* Update dependency com.google.cloud:google-cloud-shared-dependencies to v3.17.0 ([#224](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/224)) ([7e4377d](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/7e4377de2c0b145863c6cafd03a40443cc5a352a))
+* Update dependency cryptography to v41.0.4 ([#187](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/187)) ([e13794a](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/e13794a29b0d1f680d8670e4a2dc0a52cca3b918))
+* Update dependency google-api-core to v2.12.0 ([#200](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/200)) ([95cf3fa](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/95cf3fa63d63f8aa72a9b9f2c95352a39f7a7068))
+* Update dependency google-auth to v2.23.1 ([#204](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/204)) ([7dbc9c6](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/7dbc9c66b7a63fe2717f774d91ad191d98aca929))
+* Update dependency google-cloud-storage to v2.11.0 ([#188](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/188)) ([ba15fdc](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/ba15fdcd89c2fc198d20e4350ba013afadcd8b0b))
+* Update dependency typing-extensions to v4.8.0 ([#179](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/179)) ([d72f517](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/d72f517046fde03eb43c1a0591bec9d5b1964faa))
+* Update dependency urllib3 to v2.0.5 ([#189](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/189)) ([11c6ba7](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/11c6ba793f4e11a67262fdd7b44f277ccb37fe7d))
+* Update dependency urllib3 to v2.0.6 ([#213](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/213)) ([d9020bc](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/d9020bcd70d26e7f79dfa481bcea6311d76481e9))
+* Update dependency zipp to v3.17.0 ([#181](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/181)) ([752fe7d](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/752fe7dd9207118ff51687df8026cb777c6ae46a))
+* Update github/codeql-action action to v2.21.5 ([#162](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/162)) ([a71d3cd](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/a71d3cd0b96fdcef038aecd66981620101fba8d5))
+* Update github/codeql-action action to v2.21.6 ([#171](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/171)) ([18f07de](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/18f07de8b8b7fe328334386ee24381be1cf24e75))
+* Update github/codeql-action action to v2.21.7 ([#177](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/177)) ([8889f5f](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/8889f5f5bed5603ef5a754e3cd702271e8c3e918))
+* Update github/codeql-action action to v2.21.8 ([#186](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/186)) ([e3fcb7b](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/e3fcb7b3cab317dad39c83f2ffbfa5d5bb5d3f9a))
+* Update github/codeql-action action to v2.21.9 ([#205](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/205)) ([aaa67df](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/aaa67df4042299c368f6274f7826fe4928ae76e0))
+* Update github/codeql-action action to v2.22.0 ([#223](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/223)) ([5cd17ae](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/5cd17aede05bdbde4abed2e4262ded845427bb69))
+* Update github/codeql-action action to v2.22.1 ([#226](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/226)) ([a2ab894](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/a2ab894c5e13d6e53ce314f0bf2681db8c736c56))
+* Update ossf/scorecard-action action to v2.3.0 ([#225](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/225)) ([3254eec](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/3254eec8903b1b0c27ce51c89460384ea945e5e3))
+* Update python dependencies for kokoro ([#209](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/209)) ([245adb9](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/245adb9bac8fd02ba7dee545cedaa980e3ae11dd))
+* Update s4u/setup-maven-action digest to 57ca7f1 ([#196](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/196)) ([7207b51](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/7207b51fb08f0491ac1d0ac9aaa09ecbab069940))
+
+
+### Documentation
+
+* add test covering Auto IAM Authn on direct path ([#174](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/174)) ([cf00f22](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/cf00f22d1229f3b5cba60033cb2985480e2ece3b)), closes [#178](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/178)
+
 ## [0.1.1](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v0.1.0...v0.1.1) (2023-09-12)
 
 
