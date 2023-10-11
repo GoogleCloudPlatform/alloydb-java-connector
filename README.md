@@ -68,7 +68,7 @@ Include the following in the project's `pom.xml`:
 <dependency>
   <groupId>com.google.cloud</groupId>
   <artifactId>alloydb-jdbc-connector</artifactId>
-  <version>0.1.2</version>
+  <version>0.1.3-SNAPSHOT</version>
 </dependency>
 ```
 <!-- {x-release-please-end} -->
@@ -89,7 +89,7 @@ Include the following the project's `gradle.build`
 <!-- {x-release-please-start-version} -->
 ```gradle
 // Add connector with the latest version
-implementation group: 'com.google.cloud.alloydb', name: 'alloydb-jdbc-connector', version: '0.1.2'
+implementation group: 'com.google.cloud.alloydb', name: 'alloydb-jdbc-connector', version: '0.1.3-SNAPSHOT'
 ```
 <!-- {x-release-please-end} -->
 
