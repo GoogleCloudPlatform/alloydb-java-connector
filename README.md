@@ -62,7 +62,7 @@ list of dependencies.
 
 Include the following in the project's `pom.xml`:
 
-<!-- {x-release-please-start-version} -->
+<!-- {x-version-update-start:alloydb-jdbc-connector:released} -->
 ```maven-pom
 <!-- Add the connector with the latest version -->
 <dependency>
@@ -71,7 +71,7 @@ Include the following in the project's `pom.xml`:
   <version>0.1.3-SNAPSHOT</version>
 </dependency>
 ```
-<!-- {x-release-please-end} -->
+<!-- {x-version-update-end} -->
 
 ```maven-pom
 <!-- Add the driver with the latest version -->
@@ -86,12 +86,12 @@ Include the following in the project's `pom.xml`:
 
 Include the following the project's `gradle.build`
 
-<!-- {x-release-please-start-version} -->
+<!-- {x-version-update-start:alloydb-jdbc-connector:released} -->
 ```gradle
 // Add connector with the latest version
 implementation group: 'com.google.cloud.alloydb', name: 'alloydb-jdbc-connector', version: '0.1.3-SNAPSHOT'
 ```
-<!-- {x-release-please-end} -->
+<!-- {x-version-update-end} -->
 
 ```gradle
 // Add driver with the latest version
