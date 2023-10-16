@@ -68,7 +68,9 @@ public class ITConnectorTest {
               new DefaultConnectionInfoCacheFactory(),
               new ConcurrentHashMap<>());
 
-      socket = (SSLSocket) connector.connect(InstanceName.parse(instanceName));
+      ConnectionConfig config =
+          new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
+      socket = (SSLSocket) connector.connect(config);
 
       assertThat(socket.getKeepAlive()).isTrue();
       assertThat(socket.getTcpNoDelay()).isTrue();
@@ -111,7 +113,9 @@ public class ITConnectorTest {
               clientConnectorKeyPair,
               connectionInfoCacheFactory,
               new ConcurrentHashMap<>());
-      socket = (SSLSocket) connector.connect(InstanceName.parse(instanceName));
+      ConnectionConfig config =
+          new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
+      socket = (SSLSocket) connector.connect(config);
     } catch (ConnectException ignore) {
       // The socket connect will fail because it's trying to connect to localhost with TLS certs.
       // So ignore the exception here.

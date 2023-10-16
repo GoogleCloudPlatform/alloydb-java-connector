@@ -15,7 +15,6 @@
  */
 package com.google.cloud.alloydb;
 
-import com.google.cloud.alloydb.v1beta.InstanceName;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -24,19 +23,17 @@ import java.util.Properties;
 @SuppressWarnings("unused") // Used indirectly through the Postgres Driver
 public class SocketFactory extends javax.net.SocketFactory {
 
-  private static final String ALLOYDB_INSTANCE_NAME = "alloydbInstanceName";
-  private final InstanceName instanceName;
   private final Connector connector;
+  private final ConnectionConfig config;
 
   public SocketFactory(Properties properties) {
-    String instanceName = properties.getProperty(ALLOYDB_INSTANCE_NAME);
-    this.instanceName = InstanceName.parse(instanceName);
     this.connector = ConnectorRegistry.INSTANCE.getConnector();
+    this.config = ConnectionConfig.fromConnectionProperties(properties);
   }
 
   @Override
   public Socket createSocket() throws IOException {
-    return this.connector.connect(instanceName);
+    return this.connector.connect(this.config);
   }
 
   /*
