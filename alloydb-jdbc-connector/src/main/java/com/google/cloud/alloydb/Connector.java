@@ -137,16 +137,16 @@ class Connector {
     return keyManagerFactory.getKeyManagers();
   }
 
-  Socket connect(InstanceName instanceName) throws IOException {
+  Socket connect(ConnectionConfig config) throws IOException {
     ConnectionInfoCache connectionInfoCache =
         instances.computeIfAbsent(
-            instanceName,
+            config.getInstanceName(),
             k -> {
               DefaultRateLimiter rateLimiter = new DefaultRateLimiter(RATE_LIMIT_PER_SEC);
               return connectionInfoCacheFactory.create(
                   this.executor,
                   this.connectionInfoRepo,
-                  instanceName,
+                  config.getInstanceName(),
                   this.clientConnectorKeyPair,
                   new RefreshCalculator(),
                   rateLimiter);
