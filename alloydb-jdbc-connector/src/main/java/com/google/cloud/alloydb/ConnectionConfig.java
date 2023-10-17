@@ -39,10 +39,6 @@ public class ConnectionConfig {
     return instanceName;
   }
 
-  public static Builder newBuilder() {
-    return new Builder();
-  }
-
   /** The builder for the ConnectionConfig. */
   public static class Builder {
     private InstanceName instanceName;
