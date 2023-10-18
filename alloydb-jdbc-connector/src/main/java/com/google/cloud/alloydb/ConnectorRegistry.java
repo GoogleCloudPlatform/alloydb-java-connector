@@ -15,9 +15,7 @@
  */
 package com.google.cloud.alloydb;
 
-import com.google.cloud.alloydb.v1beta.AlloyDBAdminClient;
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -34,9 +32,6 @@ public enum ConnectorRegistry implements Closeable {
   private final ScheduledExecutorService executor;
 
   @SuppressWarnings("ImmutableEnumChecker")
-  private final AlloyDBAdminClient alloyDBAdminClient;
-
-  @SuppressWarnings("ImmutableEnumChecker")
   private final Connector connector;
 
   ConnectorRegistry() {
@@ -45,15 +40,9 @@ public enum ConnectorRegistry implements Closeable {
     // configure 3 or fewer instances, requiring 6 threads during refresh. By setting
     // this to 8, it's enough threads for most users, plus a safety factor of 2.
     this.executor = Executors.newScheduledThreadPool(8);
-    try {
-      alloyDBAdminClient = AlloyDBAdminClient.create();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
     this.connector =
         new Connector(
             executor,
-            new DefaultConnectionInfoRepository(executor, alloyDBAdminClient),
             RsaKeyPairGenerator.generateKeyPair(),
             new DefaultConnectionInfoCacheFactory(),
             new ConcurrentHashMap<>());
@@ -66,6 +55,5 @@ public enum ConnectorRegistry implements Closeable {
   @Override
   public void close() {
     this.executor.shutdown();
-    this.alloyDBAdminClient.close();
   }
 }

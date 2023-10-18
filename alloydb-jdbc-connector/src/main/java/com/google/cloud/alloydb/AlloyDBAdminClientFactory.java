@@ -15,6 +15,7 @@
  */
 package com.google.cloud.alloydb;
 
+import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.cloud.alloydb.v1beta.AlloyDBAdminClient;
 import com.google.cloud.alloydb.v1beta.AlloyDBAdminSettings;
@@ -30,7 +31,8 @@ class AlloyDBAdminClientFactory {
 
   private static final String DEFAULT_ENDPOINT = "alloydb.googleapis.com:443";
 
-  static AlloyDBAdminClient create() throws IOException {
+  static AlloyDBAdminClient create(FixedCredentialsProvider credentialsProvider)
+      throws IOException {
     AlloyDBAdminSettings.Builder settingsBuilder = AlloyDBAdminSettings.newBuilder();
 
     Map<String, String> headers =
@@ -42,6 +44,7 @@ class AlloyDBAdminClientFactory {
         settingsBuilder
             .setEndpoint(DEFAULT_ENDPOINT)
             .setHeaderProvider(FixedHeaderProvider.create(headers))
+            .setCredentialsProvider(credentialsProvider)
             .build();
 
     return AlloyDBAdminClient.create(alloyDBAdminSettings);

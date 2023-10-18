@@ -58,12 +58,9 @@ public class ITConnectorTest {
     ScheduledThreadPoolExecutor executor = null;
     try {
       executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
-      ConnectionInfoRepository connectionInfoRepository =
-          new DefaultConnectionInfoRepository(executor, alloydbAdminClient);
       Connector connector =
           new Connector(
               executor,
-              connectionInfoRepository,
               RsaKeyPairGenerator.generateKeyPair(),
               new DefaultConnectionInfoCacheFactory(),
               new ConcurrentHashMap<>());
@@ -102,19 +99,17 @@ public class ITConnectorTest {
     StubConnectionInfoCacheFactory connectionInfoCacheFactory =
         new StubConnectionInfoCacheFactory(stubConnectionInfoCache);
     SSLSocket socket = null;
-    ScheduledThreadPoolExecutor executor = null;
-
-    try (AlloyDBAdminClient alloyDBAdminClient = AlloyDBAdminClientFactory.create()) {
-      executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
-      Connector connector =
-          new Connector(
-              executor,
-              new DefaultConnectionInfoRepository(executor, alloyDBAdminClient),
-              clientConnectorKeyPair,
-              connectionInfoCacheFactory,
-              new ConcurrentHashMap<>());
-      ConnectionConfig config =
-          new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
+    ScheduledThreadPoolExecutor executor =
+        (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
+    Connector connector =
+        new Connector(
+            executor,
+            clientConnectorKeyPair,
+            connectionInfoCacheFactory,
+            new ConcurrentHashMap<>());
+    ConnectionConfig config =
+        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
+    try {
       socket = (SSLSocket) connector.connect(config);
     } catch (ConnectException ignore) {
       // The socket connect will fail because it's trying to connect to localhost with TLS certs.
@@ -134,8 +129,6 @@ public class ITConnectorTest {
   @Test
   public void testEquals() {
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
-    DefaultConnectionInfoRepository connectionInfoRepo =
-        new DefaultConnectionInfoRepository(executor, alloydbAdminClient);
     KeyPair clientConnectorKeyPair = RsaKeyPairGenerator.generateKeyPair();
     DefaultConnectionInfoCacheFactory connectionInfoCacheFactory =
         new DefaultConnectionInfoCacheFactory();
@@ -143,7 +136,6 @@ public class ITConnectorTest {
     Connector a =
         new Connector(
             executor,
-            connectionInfoRepo,
             clientConnectorKeyPair,
             connectionInfoCacheFactory,
             new ConcurrentHashMap<>());
@@ -152,7 +144,6 @@ public class ITConnectorTest {
         .isNotEqualTo(
             new Connector(
                 new ScheduledThreadPoolExecutor(1), // Different
-                connectionInfoRepo,
                 clientConnectorKeyPair,
                 connectionInfoCacheFactory,
                 new ConcurrentHashMap<>()));
@@ -161,16 +152,6 @@ public class ITConnectorTest {
         .isNotEqualTo(
             new Connector(
                 executor,
-                new DefaultConnectionInfoRepository(executor, alloydbAdminClient), // Different
-                clientConnectorKeyPair,
-                connectionInfoCacheFactory,
-                new ConcurrentHashMap<>()));
-
-    assertThat(a)
-        .isNotEqualTo(
-            new Connector(
-                executor,
-                connectionInfoRepo,
                 RsaKeyPairGenerator.generateKeyPair(), // Different
                 connectionInfoCacheFactory,
                 new ConcurrentHashMap<>()));
@@ -179,7 +160,6 @@ public class ITConnectorTest {
         .isNotEqualTo(
             new Connector(
                 executor,
-                connectionInfoRepo,
                 clientConnectorKeyPair,
                 new DefaultConnectionInfoCacheFactory(),
                 new ConcurrentHashMap<>()));
@@ -188,28 +168,17 @@ public class ITConnectorTest {
   @Test
   public void testHashCode() {
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
-    DefaultConnectionInfoRepository connectionInfoRepo =
-        new DefaultConnectionInfoRepository(executor, alloydbAdminClient);
     KeyPair clientConnectorKeyPair = RsaKeyPairGenerator.generateKeyPair();
     DefaultConnectionInfoCacheFactory connectionInfoCacheFactory =
         new DefaultConnectionInfoCacheFactory();
     ConcurrentHashMap<InstanceName, ConnectionInfoCache> instances = new ConcurrentHashMap<>();
 
     Connector a =
-        new Connector(
-            executor,
-            connectionInfoRepo,
-            clientConnectorKeyPair,
-            connectionInfoCacheFactory,
-            instances);
+        new Connector(executor, clientConnectorKeyPair, connectionInfoCacheFactory, instances);
 
     assertThat(a.hashCode())
         .isEqualTo(
             Objects.hashCode(
-                executor,
-                connectionInfoRepo,
-                clientConnectorKeyPair,
-                connectionInfoCacheFactory,
-                instances));
+                executor, clientConnectorKeyPair, connectionInfoCacheFactory, instances));
   }
 }

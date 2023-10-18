@@ -15,6 +15,8 @@
  */
 package com.google.cloud.alloydb;
 
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.cloud.alloydb.v1beta.AlloyDBAdminClient;
 import com.google.cloud.alloydb.v1beta.InstanceName;
 import com.google.common.base.Objects;
 import java.io.IOException;
@@ -56,19 +58,16 @@ class Connector {
   private static final String ROOT_CA_CERT = "rootCaCert";
   private static final String CLIENT_CERT = "clientCert";
   private final ScheduledExecutorService executor;
-  private final ConnectionInfoRepository connectionInfoRepo;
   private final KeyPair clientConnectorKeyPair;
   private final ConnectionInfoCacheFactory connectionInfoCacheFactory;
   private final ConcurrentHashMap<InstanceName, ConnectionInfoCache> instances;
 
   Connector(
       ScheduledExecutorService executor,
-      ConnectionInfoRepository connectionInfoRepo,
       KeyPair clientConnectorKeyPair,
       ConnectionInfoCacheFactory connectionInfoCacheFactory,
       ConcurrentHashMap<InstanceName, ConnectionInfoCache> instances) {
     this.executor = executor;
-    this.connectionInfoRepo = connectionInfoRepo;
     this.clientConnectorKeyPair = clientConnectorKeyPair;
     this.connectionInfoCacheFactory = connectionInfoCacheFactory;
     this.instances = instances;
@@ -142,14 +141,24 @@ class Connector {
         instances.computeIfAbsent(
             config.getInstanceName(),
             k -> {
-              DefaultRateLimiter rateLimiter = new DefaultRateLimiter(RATE_LIMIT_PER_SEC);
-              return connectionInfoCacheFactory.create(
-                  this.executor,
-                  this.connectionInfoRepo,
-                  config.getInstanceName(),
-                  this.clientConnectorKeyPair,
-                  new RefreshCalculator(),
-                  rateLimiter);
+              try {
+                DefaultRateLimiter rateLimiter = new DefaultRateLimiter(RATE_LIMIT_PER_SEC);
+                FixedCredentialsProvider credentialsProvider =
+                    CredentialsProviderFactory.create(config);
+                AlloyDBAdminClient alloyDBAdminClient =
+                    AlloyDBAdminClientFactory.create(credentialsProvider);
+                ConnectionInfoRepository connectionInfoRepo =
+                    new DefaultConnectionInfoRepository(this.executor, alloyDBAdminClient);
+                return connectionInfoCacheFactory.create(
+                    this.executor,
+                    connectionInfoRepo,
+                    config.getInstanceName(),
+                    this.clientConnectorKeyPair,
+                    new RefreshCalculator(),
+                    rateLimiter);
+              } catch (IOException e) {
+                throw new RuntimeException(e);
+              }
             });
 
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
@@ -191,7 +200,6 @@ class Connector {
     }
     Connector that = (Connector) o;
     return Objects.equal(executor, that.executor)
-        && Objects.equal(connectionInfoRepo, that.connectionInfoRepo)
         && Objects.equal(clientConnectorKeyPair, that.clientConnectorKeyPair)
         && Objects.equal(connectionInfoCacheFactory, that.connectionInfoCacheFactory)
         && Objects.equal(instances, that.instances);
@@ -200,10 +208,6 @@ class Connector {
   @Override
   public int hashCode() {
     return Objects.hashCode(
-        executor,
-        connectionInfoRepo,
-        clientConnectorKeyPair,
-        connectionInfoCacheFactory,
-        instances);
+        executor, clientConnectorKeyPair, connectionInfoCacheFactory, instances);
   }
 }
