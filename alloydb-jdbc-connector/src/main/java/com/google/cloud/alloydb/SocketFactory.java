@@ -27,13 +27,13 @@ public class SocketFactory extends javax.net.SocketFactory {
   private final ConnectionConfig config;
 
   public SocketFactory(Properties properties) {
-    this.connector = ConnectorRegistry.INSTANCE.getConnector();
     this.config = ConnectionConfig.fromConnectionProperties(properties);
+    this.connector = ConnectorRegistry.INSTANCE.getConnector(config);
   }
 
   @Override
   public Socket createSocket() throws IOException {
-    return this.connector.connect(this.config);
+    return this.connector.connect(this.config.getInstanceName());
   }
 
   /*

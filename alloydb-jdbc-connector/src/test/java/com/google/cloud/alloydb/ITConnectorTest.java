@@ -17,6 +17,7 @@ package com.google.cloud.alloydb;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.cloud.alloydb.v1beta.AlloyDBAdminClient;
 import com.google.cloud.alloydb.v1beta.InstanceName;
 import com.google.common.base.Objects;
@@ -44,7 +45,10 @@ public class ITConnectorTest {
   public void setUp() throws IOException {
     instanceName = System.getenv("ALLOYDB_INSTANCE_NAME");
     // Create the client once and close it later.
-    alloydbAdminClient = AlloyDBAdminClient.create();
+    ConnectionConfig config =
+        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
+    FixedCredentialsProvider credentialsProvider = CredentialsProviderFactory.create(config);
+    alloydbAdminClient = AlloyDBAdminClientFactory.create(credentialsProvider);
   }
 
   @After
@@ -58,16 +62,17 @@ public class ITConnectorTest {
     ScheduledThreadPoolExecutor executor = null;
     try {
       executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
+      ConnectionInfoRepository connectionInfoRepository =
+          new DefaultConnectionInfoRepository(executor, alloydbAdminClient);
       Connector connector =
           new Connector(
               executor,
+              connectionInfoRepository,
               RsaKeyPairGenerator.generateKeyPair(),
               new DefaultConnectionInfoCacheFactory(),
               new ConcurrentHashMap<>());
 
-      ConnectionConfig config =
-          new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
-      socket = (SSLSocket) connector.connect(config);
+      socket = (SSLSocket) connector.connect(InstanceName.parse(instanceName));
 
       assertThat(socket.getKeepAlive()).isTrue();
       assertThat(socket.getTcpNoDelay()).isTrue();
@@ -99,18 +104,18 @@ public class ITConnectorTest {
     StubConnectionInfoCacheFactory connectionInfoCacheFactory =
         new StubConnectionInfoCacheFactory(stubConnectionInfoCache);
     SSLSocket socket = null;
-    ScheduledThreadPoolExecutor executor =
-        (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
-    Connector connector =
-        new Connector(
-            executor,
-            clientConnectorKeyPair,
-            connectionInfoCacheFactory,
-            new ConcurrentHashMap<>());
-    ConnectionConfig config =
-        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
+    ScheduledThreadPoolExecutor executor = null;
+
     try {
-      socket = (SSLSocket) connector.connect(config);
+      executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
+      Connector connector =
+          new Connector(
+              executor,
+              new DefaultConnectionInfoRepository(executor, alloydbAdminClient),
+              clientConnectorKeyPair,
+              connectionInfoCacheFactory,
+              new ConcurrentHashMap<>());
+      socket = (SSLSocket) connector.connect(InstanceName.parse(instanceName));
     } catch (ConnectException ignore) {
       // The socket connect will fail because it's trying to connect to localhost with TLS certs.
       // So ignore the exception here.
@@ -129,6 +134,8 @@ public class ITConnectorTest {
   @Test
   public void testEquals() {
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+    DefaultConnectionInfoRepository connectionInfoRepo =
+        new DefaultConnectionInfoRepository(executor, alloydbAdminClient);
     KeyPair clientConnectorKeyPair = RsaKeyPairGenerator.generateKeyPair();
     DefaultConnectionInfoCacheFactory connectionInfoCacheFactory =
         new DefaultConnectionInfoCacheFactory();
@@ -136,6 +143,7 @@ public class ITConnectorTest {
     Connector a =
         new Connector(
             executor,
+            connectionInfoRepo,
             clientConnectorKeyPair,
             connectionInfoCacheFactory,
             new ConcurrentHashMap<>());
@@ -144,6 +152,7 @@ public class ITConnectorTest {
         .isNotEqualTo(
             new Connector(
                 new ScheduledThreadPoolExecutor(1), // Different
+                connectionInfoRepo,
                 clientConnectorKeyPair,
                 connectionInfoCacheFactory,
                 new ConcurrentHashMap<>()));
@@ -152,6 +161,16 @@ public class ITConnectorTest {
         .isNotEqualTo(
             new Connector(
                 executor,
+                new DefaultConnectionInfoRepository(executor, alloydbAdminClient), // Different
+                clientConnectorKeyPair,
+                connectionInfoCacheFactory,
+                new ConcurrentHashMap<>()));
+
+    assertThat(a)
+        .isNotEqualTo(
+            new Connector(
+                executor,
+                connectionInfoRepo,
                 RsaKeyPairGenerator.generateKeyPair(), // Different
                 connectionInfoCacheFactory,
                 new ConcurrentHashMap<>()));
@@ -160,6 +179,7 @@ public class ITConnectorTest {
         .isNotEqualTo(
             new Connector(
                 executor,
+                connectionInfoRepo,
                 clientConnectorKeyPair,
                 new DefaultConnectionInfoCacheFactory(),
                 new ConcurrentHashMap<>()));
@@ -168,17 +188,28 @@ public class ITConnectorTest {
   @Test
   public void testHashCode() {
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+    DefaultConnectionInfoRepository connectionInfoRepo =
+        new DefaultConnectionInfoRepository(executor, alloydbAdminClient);
     KeyPair clientConnectorKeyPair = RsaKeyPairGenerator.generateKeyPair();
     DefaultConnectionInfoCacheFactory connectionInfoCacheFactory =
         new DefaultConnectionInfoCacheFactory();
     ConcurrentHashMap<InstanceName, ConnectionInfoCache> instances = new ConcurrentHashMap<>();
 
     Connector a =
-        new Connector(executor, clientConnectorKeyPair, connectionInfoCacheFactory, instances);
+        new Connector(
+            executor,
+            connectionInfoRepo,
+            clientConnectorKeyPair,
+            connectionInfoCacheFactory,
+            instances);
 
     assertThat(a.hashCode())
         .isEqualTo(
             Objects.hashCode(
-                executor, clientConnectorKeyPair, connectionInfoCacheFactory, instances));
+                executor,
+                connectionInfoRepo,
+                clientConnectorKeyPair,
+                connectionInfoCacheFactory,
+                instances));
   }
 }
