@@ -43,6 +43,7 @@ public enum ConnectorRegistry implements Closeable {
     // configure 3 or fewer instances, requiring 6 threads during refresh. By setting
     // this to 8, it's enough threads for most users, plus a safety factor of 2.
     this.executor = Executors.newScheduledThreadPool(8);
+    this.registeredConnectors = new ConcurrentHashMap<>();
   }
 
   Connector getConnector(ConnectionConfig config) {
