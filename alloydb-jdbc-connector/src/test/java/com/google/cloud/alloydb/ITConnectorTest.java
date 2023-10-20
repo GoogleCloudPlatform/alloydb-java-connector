@@ -48,7 +48,8 @@ public class ITConnectorTest {
     ConnectionConfig config =
         new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
     FixedCredentialsProvider credentialsProvider = CredentialsProviderFactory.create(config);
-    alloydbAdminClient = AlloyDBAdminClientFactory.create(credentialsProvider);
+    alloydbAdminClient =
+        AlloyDBAdminClientFactory.create(credentialsProvider, config.getAdminServiceEndpoint());
   }
 
   @After

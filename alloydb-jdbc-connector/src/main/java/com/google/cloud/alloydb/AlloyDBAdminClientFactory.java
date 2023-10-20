@@ -31,9 +31,13 @@ class AlloyDBAdminClientFactory {
 
   private static final String DEFAULT_ENDPOINT = "alloydb.googleapis.com:443";
 
-  static AlloyDBAdminClient create(FixedCredentialsProvider credentialsProvider)
+  static AlloyDBAdminClient create(FixedCredentialsProvider credentialsProvider, String endpoint)
       throws IOException {
     AlloyDBAdminSettings.Builder settingsBuilder = AlloyDBAdminSettings.newBuilder();
+
+    if (endpoint == null || endpoint.isEmpty()) {
+      endpoint = DEFAULT_ENDPOINT;
+    }
 
     Map<String, String> headers =
         ImmutableMap.<String, String>builder()
@@ -42,7 +46,7 @@ class AlloyDBAdminClientFactory {
 
     AlloyDBAdminSettings alloyDBAdminSettings =
         settingsBuilder
-            .setEndpoint(DEFAULT_ENDPOINT)
+            .setEndpoint(endpoint)
             .setHeaderProvider(FixedHeaderProvider.create(headers))
             .setCredentialsProvider(credentialsProvider)
             .build();

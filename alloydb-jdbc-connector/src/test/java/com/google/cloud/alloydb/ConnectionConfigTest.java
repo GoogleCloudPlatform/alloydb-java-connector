@@ -35,12 +35,14 @@ public class ConnectionConfigTest {
     final String wantTargetPrincipal = "test@example.com";
     final List<String> wantDelegates = Arrays.asList("test1@example.com", "test2@example.com");
     final String delegates = wantDelegates.stream().collect(Collectors.joining(","));
+    final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";
 
     Properties props = new Properties();
     props.setProperty(ConnectionConfig.ALLOYDB_INSTANCE_NAME, INSTANCE_NAME);
     props.setProperty(ConnectionConfig.ALLOYDB_NAMED_CONNECTION, wantNamedConnection);
     props.setProperty(ConnectionConfig.ALLOYDB_TARGET_PRINCIPAL, wantTargetPrincipal);
     props.setProperty(ConnectionConfig.ALLOYDB_DELEGATES, delegates);
+    props.setProperty(ConnectionConfig.ALLOYDB_ADMIN_SERVICE_ENDPOINT, wantAdminServiceEndpoint);
 
     ConnectionConfig config = ConnectionConfig.fromConnectionProperties(props);
 
@@ -48,6 +50,7 @@ public class ConnectionConfigTest {
     assertThat(config.getNamedConnection()).isEqualTo(wantNamedConnection);
     assertThat(config.getTargetPrincipal()).isEqualTo(wantTargetPrincipal);
     assertThat(config.getDelegates()).isEqualTo(wantDelegates);
+    assertThat(config.getAdminServiceEndpoint()).isEqualTo(wantAdminServiceEndpoint);
   }
 
   @Test
@@ -56,6 +59,7 @@ public class ConnectionConfigTest {
     final String wantNamedConnection = "my-connection";
     final String wantTargetPrincipal = "test@example.com";
     final List<String> wantDelegates = Arrays.asList("test1@example.com", "test2@example.com");
+    final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";
 
     ConnectionConfig config =
         new ConnectionConfig.Builder()
@@ -63,11 +67,13 @@ public class ConnectionConfigTest {
             .withNamedConnection(wantNamedConnection)
             .withTargetPrincipal(wantTargetPrincipal)
             .withDelegates(wantDelegates)
+            .withAdminServiceEndpoint(wantAdminServiceEndpoint)
             .build();
 
     assertThat(config.getInstanceName()).isEqualTo(wantInstance);
     assertThat(config.getNamedConnection()).isEqualTo(wantNamedConnection);
     assertThat(config.getTargetPrincipal()).isEqualTo(wantTargetPrincipal);
     assertThat(config.getDelegates()).isEqualTo(wantDelegates);
+    assertThat(config.getAdminServiceEndpoint()).isEqualTo(wantAdminServiceEndpoint);
   }
 }
