@@ -60,7 +60,8 @@ public class ITDefaultConnectionInfoRepositoryTest {
     ConnectionConfig config =
         new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceUri)).build();
     FixedCredentialsProvider credentialsProvider = CredentialsProviderFactory.create(config);
-    alloyDBAdminClient = AlloyDBAdminClientFactory.create(credentialsProvider);
+    alloyDBAdminClient =
+        AlloyDBAdminClientFactory.create(credentialsProvider, config.getAdminServiceEndpoint());
 
     defaultConnectionInfoRepository =
         new DefaultConnectionInfoRepository(executor, alloyDBAdminClient);

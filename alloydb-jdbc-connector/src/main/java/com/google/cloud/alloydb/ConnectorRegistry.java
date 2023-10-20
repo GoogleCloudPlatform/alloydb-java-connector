@@ -54,7 +54,8 @@ public enum ConnectorRegistry implements Closeable {
             FixedCredentialsProvider credentialsProvider =
                 CredentialsProviderFactory.create(config);
             AlloyDBAdminClient alloyDBAdminClient =
-                AlloyDBAdminClientFactory.create(credentialsProvider);
+                AlloyDBAdminClientFactory.create(
+                    credentialsProvider, config.getAdminServiceEndpoint());
 
             return new Connector(
                 executor,

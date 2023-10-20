@@ -27,9 +27,11 @@ public class ConnectionConfig {
   public static final String ALLOYDB_TARGET_PRINCIPAL = "alloydbTargetPrincipal";
   public static final String ALLOYDB_DELEGATES = "alloydbDelegates";
   public static final String ALLOYDB_NAMED_CONNECTION = "alloydbNamedConnection";
+  public static final String ALLOYDB_ADMIN_SERVICE_ENDPOINT = "alloydbAdminServiceEndpoint";
   public static final String DEFAULT_NAMED_CONNECTION = "default";
   private final InstanceName instanceName;
   private final String namedConnection;
+  private final String adminServiceEndpoint;
   private final String targetPrincipal;
   private final List<String> delegates;
 
@@ -38,6 +40,8 @@ public class ConnectionConfig {
     final String instanceNameStr = props.getProperty(ALLOYDB_INSTANCE_NAME, "");
     final InstanceName instanceName = InstanceName.parse(instanceNameStr);
     final String namedConnection = props.getProperty(ConnectionConfig.ALLOYDB_NAMED_CONNECTION);
+    final String adminServiceEndpoint =
+        props.getProperty(ConnectionConfig.ALLOYDB_ADMIN_SERVICE_ENDPOINT);
     final String targetPrincipal = props.getProperty(ConnectionConfig.ALLOYDB_TARGET_PRINCIPAL);
     final String delegatesStr = props.getProperty(ConnectionConfig.ALLOYDB_DELEGATES);
     final List<String> delegates;
@@ -47,18 +51,21 @@ public class ConnectionConfig {
       delegates = Collections.emptyList();
     }
 
-    return new ConnectionConfig(instanceName, namedConnection, targetPrincipal, delegates);
+    return new ConnectionConfig(
+        instanceName, namedConnection, targetPrincipal, delegates, adminServiceEndpoint);
   }
 
   private ConnectionConfig(
       InstanceName instanceName,
       String namedConnection,
       String targetPrincipal,
-      List<String> delegates) {
+      List<String> delegates,
+      String adminServiceEndpoint) {
     this.instanceName = instanceName;
     this.namedConnection = namedConnection;
     this.targetPrincipal = targetPrincipal;
     this.delegates = delegates;
+    this.adminServiceEndpoint = adminServiceEndpoint;
   }
 
   public InstanceName getInstanceName() {
@@ -80,10 +87,15 @@ public class ConnectionConfig {
     return delegates;
   }
 
+  public String getAdminServiceEndpoint() {
+    return adminServiceEndpoint;
+  }
+
   /** The builder for the ConnectionConfig. */
   public static class Builder {
     private InstanceName instanceName;
     private String namedConnection;
+    private String adminServiceEndpoint;
     private String targetPrincipal;
     private List<String> delegates;
 
@@ -107,8 +119,14 @@ public class ConnectionConfig {
       return this;
     }
 
+    public Builder withAdminServiceEndpoint(String adminServiceEndpoint) {
+      this.adminServiceEndpoint = adminServiceEndpoint;
+      return this;
+    }
+
     public ConnectionConfig build() {
-      return new ConnectionConfig(instanceName, namedConnection, targetPrincipal, delegates);
+      return new ConnectionConfig(
+          instanceName, namedConnection, targetPrincipal, delegates, adminServiceEndpoint);
     }
   }
 }
