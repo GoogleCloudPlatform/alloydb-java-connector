@@ -18,7 +18,10 @@ package com.google.cloud.alloydb;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.alloydb.v1beta.InstanceName;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 import org.junit.Test;
 
 public class ConnectionConfigTest {
@@ -28,21 +31,43 @@ public class ConnectionConfigTest {
 
   @Test
   public void testConfigFromProps() {
+    final String wantNamedConnection = "my-connection";
+    final String wantTargetPrincipal = "test@example.com";
+    final List<String> wantDelegates = Arrays.asList("test1@example.com", "test2@example.com");
+    final String delegates = wantDelegates.stream().collect(Collectors.joining(","));
 
     Properties props = new Properties();
     props.setProperty(ConnectionConfig.ALLOYDB_INSTANCE_NAME, INSTANCE_NAME);
+    props.setProperty(ConnectionConfig.ALLOYDB_NAMED_CONNECTION, wantNamedConnection);
+    props.setProperty(ConnectionConfig.ALLOYDB_TARGET_PRINCIPAL, wantTargetPrincipal);
+    props.setProperty(ConnectionConfig.ALLOYDB_DELEGATES, delegates);
 
     ConnectionConfig config = ConnectionConfig.fromConnectionProperties(props);
 
     assertThat(config.getInstanceName().toString()).isEqualTo(INSTANCE_NAME);
+    assertThat(config.getNamedConnection()).isEqualTo(wantNamedConnection);
+    assertThat(config.getTargetPrincipal()).isEqualTo(wantTargetPrincipal);
+    assertThat(config.getDelegates()).isEqualTo(wantDelegates);
   }
 
   @Test
   public void testConfigFromBuilder() {
     final InstanceName wantInstance = InstanceName.parse(INSTANCE_NAME);
+    final String wantNamedConnection = "my-connection";
+    final String wantTargetPrincipal = "test@example.com";
+    final List<String> wantDelegates = Arrays.asList("test1@example.com", "test2@example.com");
 
-    ConnectionConfig config = new ConnectionConfig.Builder().withInstanceName(wantInstance).build();
+    ConnectionConfig config =
+        new ConnectionConfig.Builder()
+            .withInstanceName(wantInstance)
+            .withNamedConnection(wantNamedConnection)
+            .withTargetPrincipal(wantTargetPrincipal)
+            .withDelegates(wantDelegates)
+            .build();
 
     assertThat(config.getInstanceName()).isEqualTo(wantInstance);
+    assertThat(config.getNamedConnection()).isEqualTo(wantNamedConnection);
+    assertThat(config.getTargetPrincipal()).isEqualTo(wantTargetPrincipal);
+    assertThat(config.getDelegates()).isEqualTo(wantDelegates);
   }
 }

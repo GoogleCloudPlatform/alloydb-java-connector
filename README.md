@@ -157,6 +157,76 @@ performance from a connection pool.
 [e2e]: https://github.com/GoogleCloudPlatform/alloydb-java-connector/blob/main/alloydb-jdbc-connector/src/test/java/com/google/cloud/alloydb/ITSocketFactoryTest.java
 [pool-sizing]: https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing
 
+### Service Account Impersonation
+
+The Java Connector supports service account impersonation with the
+`alloydbTargetPrincipal` JDBC connection property. When enabled,
+all API requests are made impersonating the supplied service account.
+The IAM principal must have the IAM role "Service Account Token Creator"
+(i.e., `roles/iam.serviceAccounts.serviceAccountTokenCreator`) on the
+service account provided in the `alloydbTargetPrincipal` property.
+
+#### Example
+
+``` java
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
+public class ExampleApplication {
+
+  private HikariDataSource dataSource;
+
+  HikariDataSource getDataSource() {
+    HikariConfig config = new HikariConfig();
+
+    // There is no need to set a host on the JDBC URL
+    // since the Connector will resolve the correct IP address.
+    config.setJdbcUrl("jdbc:postgresql:///postgres");
+    config.setUsername(System.getenv("ALLOYDB_USER"));
+    config.setPassword(System.getenv("ALLOYDB_PASS"));
+
+    // Tell the driver to use the AlloyDB Java Connector's SocketFactory
+    // when connecting to an instance/
+    config.addDataSourceProperty("socketFactory",
+        "com.google.cloud.alloydb.SocketFactory");
+    // Tell the Java Connector which instance to connect to.
+    config.addDataSourceProperty("alloydbInstanceName",
+        System.getenv("ALLOYDB_INSTANCE_NAME"));
+    config.addDataSourceProperty("alloydbTargetPrincipal", 
+        System.getenv("ALLOYDB_IMPERSONATED_USER"));
+
+    this.dataSource = new HikariDataSource(config);
+  }
+
+  // Use DataSource as usual ...
+
+}
+```
+
+#### Delegated Service Account Impersonation
+
+In addition, the `alloydbDelegates` property controls impersonation delegation.
+The value is a comma-separated list of service accounts containing chained
+list of delegates required to grant the final access_token. If set,
+the sequence of identities must have "Service Account Token Creator" capability
+granted to the preceding identity. For example, if set to
+`"serviceAccountB,serviceAccountC"`, the IAM principal must have the
+Token Creator role on serviceAccountB. Then serviceAccountB must have the
+Token Creator role on serviceAccountC. Finally, serviceAccountC must have the
+Token Creator role on `alloydbTargetPrincipal`. If unset, the IAM principal
+must have the Token Creator role on `alloydbTargetPrincipal`.
+
+```java
+config.addDataSourceProperty("alloydbTargetPrincipal",
+    "TARGET_SERVICE_ACCOUNT");
+config.addDataSourceProperty("alloydbDelegates", 
+    "SERVICE_ACCOUNT_1,SERVICE_ACCOUNT_2");
+```
+
+In this example, the IAM principal impersonates SERVICE_ACCOUNT_1 which
+impersonates SERVICE_ACCOUNT_2 which then impersonates the
+TARGET_SERVICE_ACCOUNT.
+
 ## Support policy
 
 ### Major version lifecycle

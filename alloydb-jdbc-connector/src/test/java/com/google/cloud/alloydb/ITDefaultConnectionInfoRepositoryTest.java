@@ -19,6 +19,7 @@ package com.google.cloud.alloydb;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
+import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.cloud.alloydb.v1beta.AlloyDBAdminClient;
 import com.google.cloud.alloydb.v1beta.InstanceName;
 import java.security.KeyPair;
@@ -56,7 +57,10 @@ public class ITDefaultConnectionInfoRepositoryTest {
 
     keyPair = generator.generateKeyPair();
     executor = Executors.newSingleThreadExecutor();
-    alloyDBAdminClient = AlloyDBAdminClientFactory.create();
+    ConnectionConfig config =
+        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceUri)).build();
+    FixedCredentialsProvider credentialsProvider = CredentialsProviderFactory.create(config);
+    alloyDBAdminClient = AlloyDBAdminClientFactory.create(credentialsProvider);
 
     defaultConnectionInfoRepository =
         new DefaultConnectionInfoRepository(executor, alloyDBAdminClient);

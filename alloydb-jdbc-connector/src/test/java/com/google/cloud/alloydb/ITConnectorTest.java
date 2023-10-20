@@ -17,6 +17,7 @@ package com.google.cloud.alloydb;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.cloud.alloydb.v1beta.AlloyDBAdminClient;
 import com.google.cloud.alloydb.v1beta.InstanceName;
 import com.google.common.base.Objects;
@@ -44,7 +45,10 @@ public class ITConnectorTest {
   public void setUp() throws IOException {
     instanceName = System.getenv("ALLOYDB_INSTANCE_NAME");
     // Create the client once and close it later.
-    alloydbAdminClient = AlloyDBAdminClient.create();
+    ConnectionConfig config =
+        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
+    FixedCredentialsProvider credentialsProvider = CredentialsProviderFactory.create(config);
+    alloydbAdminClient = AlloyDBAdminClientFactory.create(credentialsProvider);
   }
 
   @After
@@ -68,9 +72,7 @@ public class ITConnectorTest {
               new DefaultConnectionInfoCacheFactory(),
               new ConcurrentHashMap<>());
 
-      ConnectionConfig config =
-          new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
-      socket = (SSLSocket) connector.connect(config);
+      socket = (SSLSocket) connector.connect(InstanceName.parse(instanceName));
 
       assertThat(socket.getKeepAlive()).isTrue();
       assertThat(socket.getTcpNoDelay()).isTrue();
@@ -104,18 +106,16 @@ public class ITConnectorTest {
     SSLSocket socket = null;
     ScheduledThreadPoolExecutor executor = null;
 
-    try (AlloyDBAdminClient alloyDBAdminClient = AlloyDBAdminClientFactory.create()) {
+    try {
       executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
       Connector connector =
           new Connector(
               executor,
-              new DefaultConnectionInfoRepository(executor, alloyDBAdminClient),
+              new DefaultConnectionInfoRepository(executor, alloydbAdminClient),
               clientConnectorKeyPair,
               connectionInfoCacheFactory,
               new ConcurrentHashMap<>());
-      ConnectionConfig config =
-          new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
-      socket = (SSLSocket) connector.connect(config);
+      socket = (SSLSocket) connector.connect(InstanceName.parse(instanceName));
     } catch (ConnectException ignore) {
       // The socket connect will fail because it's trying to connect to localhost with TLS certs.
       // So ignore the exception here.

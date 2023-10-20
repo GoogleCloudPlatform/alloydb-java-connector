@@ -25,6 +25,7 @@ import com.google.cloud.alloydb.v1beta.InstanceName;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.security.KeyPair;
@@ -46,7 +47,7 @@ import org.bouncycastle.pkcs.PKCS10CertificationRequestBuilder;
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
 import org.bouncycastle.util.io.pem.PemObject;
 
-class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
+class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Closeable {
 
   private static final String CERTIFICATE_REQUEST = "CERTIFICATE REQUEST";
   private static final String SHA_256_WITH_RSA = "SHA256WithRSA";
@@ -82,6 +83,11 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository {
 
     return new ConnectionInfo(
         info.getIpAddress(), info.getInstanceUid(), clientCertificate, certificateChain);
+  }
+
+  @Override
+  public void close() {
+    this.alloyDBAdminClient.close();
   }
 
   private com.google.cloud.alloydb.v1beta.ConnectionInfo getConnectionInfo(
