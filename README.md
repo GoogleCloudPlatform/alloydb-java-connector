@@ -220,7 +220,7 @@ must have the Token Creator role on `alloydbTargetPrincipal`.
 config.addDataSourceProperty("alloydbTargetPrincipal",
     "TARGET_SERVICE_ACCOUNT");
 config.addDataSourceProperty("alloydbDelegates", 
-    "SERVICE_ACCOUNT_1, SERVICE_ACCOUNT_2");
+    "SERVICE_ACCOUNT_1,SERVICE_ACCOUNT_2");
 ```
 
 In this example, the IAM principal impersonates SERVICE_ACCOUNT_1 which
