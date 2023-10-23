@@ -83,7 +83,7 @@ public class ITDefaultConnectionInfoRepositoryTest {
     assertThat(connectionInfo.getInstanceUid()).isNotEmpty();
     assertThat(connectionInfo.getIpAddress()).isNotEmpty();
     assertThat(connectionInfo.getClientCertificate()).isNotNull();
-    assertThat(connectionInfo.getCertificateChain()).hasSize(2);
+    assertThat(connectionInfo.getCertificateChain()).hasSize(3);
   }
 
   @Test
