@@ -227,6 +227,35 @@ In this example, the IAM principal impersonates SERVICE_ACCOUNT_1 which
 impersonates SERVICE_ACCOUNT_2 which then impersonates the
 TARGET_SERVICE_ACCOUNT.
 
+### Admin API Service Endpoint
+
+The Java Connector supports setting the Admin API Service Endpoint with the
+`alloydbAdminServiceEndpoint` JDBC connection property. This feature is
+used by applications that need to connect to a Google Cloud API other
+than the GCP public API.
+
+The `alloydbAdminServiceEndpoint` property specifies a network address that
+the AlloyDB Admin API service uses to service the actual API requests,
+for example `"googleapis.example.com:443"`.
+
+If this option is not set, the connector will use the default service address
+as follows:
+
+```
+DEFAULT_ENDPOINT = "alloydb.googleapis.com:443"
+```
+
+For more information, see the [underlying client library documentation][client-docs].
+
+[client-docs]: https://cloud.google.com/java/docs/reference/google-cloud-alloydb/latest/com.google.cloud.alloydb.v1beta#alloydbadminclient_1
+
+### Example
+
+```java
+config.addDataSourceProperty("alloydbAdminServiceEndpoint",
+    "NEW_API_SERVICE_ENDPOINT");
+```
+
 ## Support policy
 
 ### Major version lifecycle
