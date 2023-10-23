@@ -245,7 +245,9 @@ as follows:
 DEFAULT_ENDPOINT = "alloydb.googleapis.com:443"
 ```
 
-For more information, see the [underlying client library documentation](https://cloud.google.com/java/docs/reference/google-cloud-alloydb/latest/com.google.cloud.alloydb.v1beta#alloydbadminclient_1).
+For more information, see the [underlying client library documentation][client-docs].
+
+[client-docs]: https://cloud.google.com/java/docs/reference/google-cloud-alloydb/latest/com.google.cloud.alloydb.v1beta#alloydbadminclient_1
 
 ### Example
 
