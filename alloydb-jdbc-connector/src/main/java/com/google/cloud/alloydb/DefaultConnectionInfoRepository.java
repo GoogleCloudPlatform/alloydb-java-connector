@@ -16,13 +16,15 @@
 
 package com.google.cloud.alloydb;
 
-import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.alloydb.v1.AlloyDBAdminClient;
 import com.google.cloud.alloydb.v1.ClusterName;
 import com.google.cloud.alloydb.v1.GenerateClientCertificateRequest;
 import com.google.cloud.alloydb.v1.GenerateClientCertificateResponse;
 import com.google.cloud.alloydb.v1.InstanceName;
 import com.google.common.io.BaseEncoding;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
 import java.io.ByteArrayInputStream;
@@ -33,9 +35,6 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 
 class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Closeable {
 
@@ -43,41 +42,48 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Close
   private static final String OPENSSL_PUBLIC_KEY_END = "-----END RSA PUBLIC KEY-----";
   private static final String X_509 = "X.509";
   private static final int PEM_LINE_LENGTH = 64;
-  private final ExecutorService executor;
+  private final ListeningScheduledExecutorService executor;
   private final AlloyDBAdminClient alloyDBAdminClient;
 
-  DefaultConnectionInfoRepository(ExecutorService executor, AlloyDBAdminClient alloyDBAdminClient) {
+  DefaultConnectionInfoRepository(
+      ListeningScheduledExecutorService executor, AlloyDBAdminClient alloyDBAdminClient) {
     this.executor = executor;
     this.alloyDBAdminClient = alloyDBAdminClient;
   }
 
   @Override
-  public ConnectionInfo getConnectionInfo(InstanceName instanceName, KeyPair keyPair)
-      throws ExecutionException, InterruptedException, CertificateException, ApiException {
-    Future<com.google.cloud.alloydb.v1.ConnectionInfo> infoFuture =
+  public ListenableFuture<ConnectionInfo> getConnectionInfo(
+      InstanceName instanceName, KeyPair keyPair) {
+    ListenableFuture<com.google.cloud.alloydb.v1.ConnectionInfo> infoFuture =
         executor.submit(() -> getConnectionInfo(instanceName));
-    Future<GenerateClientCertificateResponse> clientCertificateResponseFuture =
+    ListenableFuture<GenerateClientCertificateResponse> clientCertificateResponseFuture =
         executor.submit(() -> getGenerateClientCertificateResponse(instanceName, keyPair));
 
-    com.google.cloud.alloydb.v1.ConnectionInfo info = infoFuture.get();
+    return Futures.whenAllComplete(infoFuture, clientCertificateResponseFuture)
+        .call(
+            () -> {
+              com.google.cloud.alloydb.v1.ConnectionInfo info = Futures.getDone(infoFuture);
+              GenerateClientCertificateResponse certificateResponse =
+                  Futures.getDone(clientCertificateResponseFuture);
 
-    GenerateClientCertificateResponse certificateResponse = clientCertificateResponseFuture.get();
-    List<ByteString> certificateChainBytes =
-        certificateResponse.getPemCertificateChainList().asByteStringList();
-    List<X509Certificate> certificateChain = new ArrayList<>();
-    for (ByteString certificateChainByte : certificateChainBytes) {
-      certificateChain.add(parseCertificate(certificateChainByte));
-    }
-    X509Certificate clientCertificate = certificateChain.get(0);
-    ByteString caCertificateBytes = certificateResponse.getCaCertBytes();
-    X509Certificate caCertificate = parseCertificate(caCertificateBytes);
+              List<ByteString> certificateChainBytes =
+                  certificateResponse.getPemCertificateChainList().asByteStringList();
+              List<X509Certificate> certificateChain = new ArrayList<>();
+              for (ByteString certificateChainByte : certificateChainBytes) {
+                certificateChain.add(parseCertificate(certificateChainByte));
+              }
+              X509Certificate clientCertificate = certificateChain.get(0);
+              ByteString caCertificateBytes = certificateResponse.getCaCertBytes();
+              X509Certificate caCertificate = parseCertificate(caCertificateBytes);
 
-    return new ConnectionInfo(
-        info.getIpAddress(),
-        info.getInstanceUid(),
-        clientCertificate,
-        certificateChain,
-        caCertificate);
+              return new ConnectionInfo(
+                  info.getIpAddress(),
+                  info.getInstanceUid(),
+                  clientCertificate,
+                  certificateChain,
+                  caCertificate);
+            },
+            executor);
   }
 
   @Override

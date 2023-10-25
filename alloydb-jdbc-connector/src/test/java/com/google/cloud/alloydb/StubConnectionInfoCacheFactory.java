@@ -33,8 +33,7 @@ public class StubConnectionInfoCacheFactory implements ConnectionInfoCacheFactor
       ConnectionInfoRepository connectionInfoRepo,
       InstanceName instanceName,
       KeyPair clientConnectorKeyPair,
-      RefreshCalculator refreshCalculator,
-      RateLimiter rateLimiter) {
+      long minRefreshDelayMs) {
     return stubConnectionInfoCache;
   }
 }

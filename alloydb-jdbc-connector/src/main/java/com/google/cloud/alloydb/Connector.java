@@ -51,7 +51,7 @@ class Connector {
 
   private static final String TLS_1_3 = "TLSv1.3";
   private static final String X_509 = "X.509";
-  private static final double RATE_LIMIT_PER_SEC = 1.0 / 30.0;
+  private static final long MIN_RATE_LIMIT_MS = 30000;
   private static final int SERVER_SIDE_PROXY_PORT = 5433;
   private static final String ROOT_CA_CERT = "rootCaCert";
   private static final String CLIENT_CERT = "clientCert";
@@ -135,14 +135,12 @@ class Connector {
         instances.computeIfAbsent(
             instanceName,
             k -> {
-              DefaultRateLimiter rateLimiter = new DefaultRateLimiter(RATE_LIMIT_PER_SEC);
               return connectionInfoCacheFactory.create(
                   this.executor,
                   this.connectionInfoRepo,
                   instanceName,
                   this.clientConnectorKeyPair,
-                  new RefreshCalculator(),
-                  rateLimiter);
+                  MIN_RATE_LIMIT_MS);
             });
 
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();

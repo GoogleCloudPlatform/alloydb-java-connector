@@ -27,19 +27,19 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Handles periodic refresh operations for an instance. */
 class Refresher {
-  private static final Logger logger = Logger.getLogger(Refresher.class.getName());
+  private static final Logger logger = LoggerFactory.getLogger(Refresher.class);
 
   private final ListeningScheduledExecutorService executor;
 
   private final Object connectionInfoGuard = new Object();
   private final AsyncRateLimiter rateLimiter;
 
-  private final RefreshCalculator refreshCalculator = new RefreshCalculator();
+  private final RefreshCalculator refreshCalculator;
   private final Supplier<ListenableFuture<ConnectionInfo>> refreshOperation;
   private final String name;
 
@@ -55,21 +55,32 @@ class Refresher {
   @GuardedBy("connectionInfoGuard")
   private Throwable currentRefreshFailure;
 
+  Refresher(
+      String name,
+      ListeningScheduledExecutorService executor,
+      Supplier<ListenableFuture<ConnectionInfo>> refreshOperation,
+      AsyncRateLimiter rateLimiter) {
+    this(name, executor, new RefreshCalculator(), refreshOperation, rateLimiter);
+  }
+
   /**
-   * Create a new refresher.
+   * Create a new refresher with a special RefreshCalculator
    *
    * @param name the name of what is being refreshed, for logging.
    * @param executor the executor to schedule refresh tasks.
+   * @param refreshCalculator the refresh calculator to determine when to start the next refresh.
    * @param refreshOperation The supplier that refreshes the data.
    * @param rateLimiter The rate limiter.
    */
   Refresher(
       String name,
       ListeningScheduledExecutorService executor,
+      RefreshCalculator refreshCalculator,
       Supplier<ListenableFuture<ConnectionInfo>> refreshOperation,
       AsyncRateLimiter rateLimiter) {
     this.name = name;
     this.executor = executor;
+    this.refreshCalculator = refreshCalculator;
     this.refreshOperation = refreshOperation;
     this.rateLimiter = rateLimiter;
     synchronized (connectionInfoGuard) {
@@ -138,7 +149,7 @@ class Refresher {
         next.cancel(false);
       }
 
-      logger.fine(
+      logger.debug(
           String.format(
               "[%s] Force Refresh: the next refresh operation was cancelled."
                   + " Scheduling new refresh operation immediately.",
@@ -160,11 +171,11 @@ class Refresher {
       refreshRunning = true;
     }
 
-    logger.fine(String.format("[%s] Refresh Operation: Acquiring rate limiter permit.", name));
+    logger.debug(String.format("[%s] Refresh Operation: Acquiring rate limiter permit.", name));
     ListenableFuture<?> delay = rateLimiter.acquireAsync(executor);
     delay.addListener(
         () ->
-            logger.fine(
+            logger.debug(
                 String.format("[%s] Refresh Operation: Rate limiter permit acquired.", name)),
         executor);
 
@@ -183,14 +194,14 @@ class Refresher {
       // This will throw an exception if the refresh attempt has failed.
       ConnectionInfo info = connectionInfoFuture.get();
 
-      logger.fine(
+      logger.debug(
           String.format(
               "[%s] Refresh Operation: Completed refresh with new certificate expiration at %s.",
               name, info.getExpiration().toString()));
       long secondsToRefresh =
           refreshCalculator.calculateSecondsUntilNextRefresh(Instant.now(), info.getExpiration());
 
-      logger.fine(
+      logger.debug(
           String.format(
               "[%s] Refresh Operation: Next operation scheduled at %s.",
               name,
@@ -216,8 +227,7 @@ class Refresher {
       }
 
     } catch (ExecutionException | InterruptedException e) {
-      logger.log(
-          Level.FINE,
+      logger.info(
           String.format(
               "[%s] Refresh Operation: Failed! Starting next refresh operation immediately.", name),
           e);

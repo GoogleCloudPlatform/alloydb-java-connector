@@ -17,11 +17,11 @@
 package com.google.cloud.alloydb;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertThrows;
 
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.cloud.alloydb.v1.InstanceName;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.security.KeyPair;
@@ -31,10 +31,9 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import org.bouncycastle.operator.OperatorCreationException;
-import org.jmock.lib.concurrent.DeterministicScheduler;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -43,12 +42,11 @@ public class ConnectionInfoCacheTest {
   private static final String TEST_INSTANCE_IP = "10.0.0.1";
   private static final String TEST_INSTANCE_ID = "some-instance-id";
   private static final Instant ONE_HOUR_FROM_NOW = Instant.now().plus(1, ChronoUnit.HOURS);
-  private static final Instant TWO_HOURS_FROM_NOW = ONE_HOUR_FROM_NOW.plus(1, ChronoUnit.HOURS);
-  private static final Instant THREE_HOURS_FROM_NOW = TWO_HOURS_FROM_NOW.plus(1, ChronoUnit.HOURS);
   private InstanceName instanceName;
   private KeyPair keyPair;
-  private SpyRateLimiter spyRateLimiter;
   private TestCertificates testCertificates;
+  private static final long TEST_TIMEOUT_MS = 1000L;
+  ListeningScheduledExecutorService executor;
 
   @Before
   public void setUp() throws CertificateException, IOException, OperatorCreationException {
@@ -56,13 +54,20 @@ public class ConnectionInfoCacheTest {
         InstanceName.parse(
             "projects/<PROJECT>/locations/<REGION>/clusters/<CLUSTER>/instances/<INSTANCE>");
     keyPair = RsaKeyPairGenerator.generateKeyPair();
-    spyRateLimiter = new SpyRateLimiter();
     testCertificates = new TestCertificates();
+    ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(4);
+    exec.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+    exec.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
+    executor = MoreExecutors.listeningDecorator(exec);
+  }
+
+  @After
+  public void after() {
+    executor.shutdown();
   }
 
   @Test
   public void testGetConnectionInfo_returnsConnectionInfo() {
-    DeterministicScheduler executor = new DeterministicScheduler();
     InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
     connectionInfoRepo.addResponses(
         () ->
@@ -80,10 +85,8 @@ public class ConnectionInfoCacheTest {
             connectionInfoRepo,
             instanceName,
             keyPair,
-            new RefreshCalculator(),
-            spyRateLimiter);
+            TEST_TIMEOUT_MS);
 
-    executor.runNextPendingCommand(); // Simulate completion of background thread.
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
 
     assertThat(connectionInfo.getIpAddress()).isEqualTo(TEST_INSTANCE_IP);
@@ -100,64 +103,8 @@ public class ConnectionInfoCacheTest {
   }
 
   @Test
-  public void testGetConnectionInfo_schedulesNextOperation() {
-    DeterministicScheduler executor = new DeterministicScheduler();
-    InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
-    List<X509Certificate> certificateChain =
-        Arrays.asList(
-            testCertificates.getIntermediateCertificate(), testCertificates.getRootCertificate());
-    connectionInfoRepo.addResponses(
-        () ->
-            new ConnectionInfo(
-                TEST_INSTANCE_IP,
-                TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-                certificateChain,
-                testCertificates.getRootCertificate()),
-        () ->
-            new ConnectionInfo(
-                TEST_INSTANCE_IP,
-                TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), TWO_HOURS_FROM_NOW),
-                certificateChain,
-                testCertificates.getRootCertificate()));
-    DefaultConnectionInfoCache connectionInfoCache =
-        new DefaultConnectionInfoCache(
-            MoreExecutors.listeningDecorator(executor),
-            connectionInfoRepo,
-            instanceName,
-            keyPair,
-            new RefreshCalculator(),
-            spyRateLimiter);
-
-    executor.runNextPendingCommand(); // Simulate completion of background thread.
-    ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
-
-    assertThat(
-            connectionInfo
-                .getClientCertificate()
-                .getNotAfter()
-                .toInstant()
-                .truncatedTo(ChronoUnit.SECONDS))
-        .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
-
-    executor.tick(1, TimeUnit.HOURS); // Advance time to just after next refresh
-    executor.runUntilIdle(); // Simulate completion of background thread.
-
-    ConnectionInfo nextConnectionInfo = connectionInfoCache.getConnectionInfo();
-
-    assertThat(
-            nextConnectionInfo
-                .getClientCertificate()
-                .getNotAfter()
-                .toInstant()
-                .truncatedTo(ChronoUnit.SECONDS))
-        .isEqualTo(TWO_HOURS_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
-  }
-
-  @Test
   public void testGetConnectionInfo_scheduledNextOperationImmediately_onApiException() {
-    DeterministicScheduler executor = new DeterministicScheduler();
+
     InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
     List<X509Certificate> certificateChain =
         Arrays.asList(
@@ -193,14 +140,13 @@ public class ConnectionInfoCacheTest {
             connectionInfoRepo,
             instanceName,
             keyPair,
-            new RefreshCalculator(),
-            spyRateLimiter);
+            TEST_TIMEOUT_MS);
 
-    executor.runNextPendingCommand(); // Simulate completion of background thread.
-    assertThrows(RuntimeException.class, connectionInfoCache::getConnectionInfo);
-
-    executor.tick(1, TimeUnit.SECONDS); // Advance time just a little
-    executor.runUntilIdle(); // Simulate completion of background thread.
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
 
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
 
@@ -215,7 +161,7 @@ public class ConnectionInfoCacheTest {
 
   @Test
   public void testGetConnectionInfo_scheduledNextOperationImmediately_onCertificateException() {
-    DeterministicScheduler executor = new DeterministicScheduler();
+
     InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
     List<X509Certificate> certificateChain =
         Arrays.asList(
@@ -237,209 +183,22 @@ public class ConnectionInfoCacheTest {
             connectionInfoRepo,
             instanceName,
             keyPair,
-            new RefreshCalculator(),
-            spyRateLimiter);
+            TEST_TIMEOUT_MS);
 
-    executor.runNextPendingCommand(); // Simulate completion of background thread.
-    RuntimeException runtimeException =
-        assertThrows(RuntimeException.class, connectionInfoCache::getConnectionInfo);
-
-    // The RuntimeException wraps an ExecutionException which wraps the original exception.
-    assertThat(runtimeException.getCause().getCause()).isInstanceOf(CertificateException.class);
-
-    executor.tick(1, TimeUnit.SECONDS); // Advance time just a little
-    executor.runUntilIdle(); // Simulate completion of background thread.
-
-    ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
-
-    assertThat(
-            connectionInfo
-                .getClientCertificate()
-                .getNotAfter()
-                .toInstant()
-                .truncatedTo(ChronoUnit.SECONDS))
-        .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
-  }
-
-  @Test
-  public void testGetConnectionInfo_isRateLimited() {
-    DeterministicScheduler executor = new DeterministicScheduler();
-    InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
-    connectionInfoRepo.addResponses(
-        () ->
-            new ConnectionInfo(
-                TEST_INSTANCE_IP,
-                TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-                Arrays.asList(
-                    testCertificates.getIntermediateCertificate(),
-                    testCertificates.getRootCertificate()),
-                testCertificates.getRootCertificate()));
-    DefaultConnectionInfoCache connectionInfoCache =
-        new DefaultConnectionInfoCache(
-            MoreExecutors.listeningDecorator(executor),
-            connectionInfoRepo,
-            instanceName,
-            keyPair,
-            new RefreshCalculator(),
-            spyRateLimiter);
-
-    assertThat(spyRateLimiter.wasRateLimited.get()).isFalse();
-
-    executor.runNextPendingCommand(); // Simulate completion of background thread.
-    connectionInfoCache.getConnectionInfo();
-
-    assertThat(spyRateLimiter.wasRateLimited.get()).isTrue();
-  }
-
-  @Test
-  public void testForceRefresh_schedulesNextRefreshImmediately() throws InterruptedException {
-    DeterministicScheduler executor = new DeterministicScheduler();
-
-    InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
-    List<X509Certificate> certificateChain =
-        Arrays.asList(
-            testCertificates.getIntermediateCertificate(), testCertificates.getRootCertificate());
-    connectionInfoRepo.addResponses(
-        () ->
-            new ConnectionInfo(
-                TEST_INSTANCE_IP,
-                TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-                certificateChain,
-                testCertificates.getRootCertificate()),
-        () ->
-            new ConnectionInfo(
-                TEST_INSTANCE_IP,
-                TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), TWO_HOURS_FROM_NOW),
-                certificateChain,
-                testCertificates.getRootCertificate()));
-    DefaultConnectionInfoCache connectionInfoCache =
-        new DefaultConnectionInfoCache(
-            MoreExecutors.listeningDecorator(executor),
-            connectionInfoRepo,
-            instanceName,
-            keyPair,
-            new RefreshCalculator(),
-            spyRateLimiter);
-
-    executor.runNextPendingCommand(); // Simulate completion of background thread.
-
-    // Before force refresh, the first refresh data is available.
-    ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
-    assertThat(connectionInfoRepo.getIndex()).isEqualTo(1);
-    assertThat(
-            connectionInfo
-                .getClientCertificate()
-                .getNotAfter()
-                .toInstant()
-                .truncatedTo(ChronoUnit.SECONDS))
-        .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
-
-    connectionInfoCache.forceRefresh();
-
-    // Refresh data hasn't changed because we re-use the existing connection info.
-    connectionInfo = connectionInfoCache.getConnectionInfo();
-    assertThat(
-            connectionInfo
-                .getClientCertificate()
-                .getNotAfter()
-                .toInstant()
-                .truncatedTo(ChronoUnit.SECONDS))
-        .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
-
-    executor.runUntilIdle(); // Simulate completion of background thread.
-
-    // After the force refresh, new refresh data is available.
-    connectionInfo = connectionInfoCache.getConnectionInfo();
-    assertThat(connectionInfoRepo.getIndex()).isEqualTo(2);
-    assertThat(
-            connectionInfo
-                .getClientCertificate()
-                .getNotAfter()
-                .toInstant()
-                .truncatedTo(ChronoUnit.SECONDS))
-        .isEqualTo(TWO_HOURS_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
-  }
-
-  @Test
-  public void testForceRefresh_refreshCalledOnlyOnceDuringMultipleCalls()
-      throws InterruptedException {
-    DeterministicScheduler executor = new DeterministicScheduler();
-
-    InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
-    List<X509Certificate> certificateChain =
-        Arrays.asList(
-            testCertificates.getIntermediateCertificate(), testCertificates.getRootCertificate());
-    connectionInfoRepo.addResponses(
-        () ->
-            new ConnectionInfo(
-                TEST_INSTANCE_IP,
-                TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-                certificateChain,
-                testCertificates.getRootCertificate()),
-        () ->
-            new ConnectionInfo(
-                TEST_INSTANCE_IP,
-                TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), TWO_HOURS_FROM_NOW),
-                certificateChain,
-                testCertificates.getRootCertificate()),
-        () ->
-            new ConnectionInfo(
-                TEST_INSTANCE_IP,
-                TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), THREE_HOURS_FROM_NOW),
-                certificateChain,
-                testCertificates.getRootCertificate()));
-    DefaultConnectionInfoCache connectionInfoCache =
-        new DefaultConnectionInfoCache(
-            MoreExecutors.listeningDecorator(executor),
-            connectionInfoRepo,
-            instanceName,
-            keyPair,
-            new RefreshCalculator(),
-            spyRateLimiter);
-
-    executor.runNextPendingCommand(); // Simulate completion of background thread.
-
-    // Before force refresh, the first refresh data is available.
-    ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
-    assertThat(connectionInfoRepo.getIndex()).isEqualTo(1);
-    assertThat(
-            connectionInfo
-                .getClientCertificate()
-                .getNotAfter()
-                .toInstant()
-                .truncatedTo(ChronoUnit.SECONDS))
-        .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
-
-    connectionInfoCache.forceRefresh();
-    // This second call is ignored as there is a refresh operation in progress.
-    connectionInfoCache.forceRefresh();
-
-    executor.runUntilIdle(); // Simulate completion of background thread.
-
-    // After the force refresh, new refresh data is available.
-    connectionInfo = connectionInfoCache.getConnectionInfo();
-    assertThat(connectionInfoRepo.getIndex()).isEqualTo(2);
-    assertThat(
-            connectionInfo
-                .getClientCertificate()
-                .getNotAfter()
-                .toInstant()
-                .truncatedTo(ChronoUnit.SECONDS))
-        .isEqualTo(TWO_HOURS_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
-  }
-
-  private static class SpyRateLimiter implements RateLimiter {
-    public final AtomicBoolean wasRateLimited = new AtomicBoolean(false);
-
-    @Override
-    public void acquire() {
-      wasRateLimited.set(true);
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
     }
+
+    ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
+
+    assertThat(
+            connectionInfo
+                .getClientCertificate()
+                .getNotAfter()
+                .toInstant()
+                .truncatedTo(ChronoUnit.SECONDS))
+        .isEqualTo(ONE_HOUR_FROM_NOW.truncatedTo(ChronoUnit.SECONDS));
   }
 }

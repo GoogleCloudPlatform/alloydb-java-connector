@@ -74,9 +74,7 @@ public class ITConnectorTest {
   @Test
   public void testConnect_createsSocketConnection() throws IOException {
     SSLSocket socket = null;
-    ListeningScheduledExecutorService executor = null;
     try {
-      executor = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(2));
       ConnectionInfoRepository connectionInfoRepository =
           new DefaultConnectionInfoRepository(executor, alloydbAdminClient);
       Connector connector =
@@ -94,9 +92,6 @@ public class ITConnectorTest {
     } finally {
       if (socket != null) {
         socket.close();
-      }
-      if (executor != null) {
-        executor.shutdown();
       }
     }
   }
@@ -152,6 +147,8 @@ public class ITConnectorTest {
     KeyPair clientConnectorKeyPair = RsaKeyPairGenerator.generateKeyPair();
     DefaultConnectionInfoCacheFactory connectionInfoCacheFactory =
         new DefaultConnectionInfoCacheFactory();
+    ListeningScheduledExecutorService exec =
+        MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor());
 
     Connector a =
         new Connector(
@@ -164,7 +161,7 @@ public class ITConnectorTest {
     assertThat(a)
         .isNotEqualTo(
             new Connector(
-                MoreExecutors.listeningDecorator(new ScheduledThreadPoolExecutor(1)), // Different
+                exec, // Different
                 connectionInfoRepo,
                 clientConnectorKeyPair,
                 connectionInfoCacheFactory,

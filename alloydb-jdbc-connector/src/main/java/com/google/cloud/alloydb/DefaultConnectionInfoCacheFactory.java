@@ -31,14 +31,8 @@ class DefaultConnectionInfoCacheFactory implements ConnectionInfoCacheFactory {
       ConnectionInfoRepository connectionInfoRepo,
       InstanceName instanceName,
       KeyPair clientConnectorKeyPair,
-      RefreshCalculator refreshCalculator,
-      RateLimiter rateLimiter) {
+      long minRefreshDelayMs) {
     return new DefaultConnectionInfoCache(
-        executor,
-        connectionInfoRepo,
-        instanceName,
-        clientConnectorKeyPair,
-        refreshCalculator,
-        rateLimiter);
+        executor, connectionInfoRepo, instanceName, clientConnectorKeyPair, minRefreshDelayMs);
   }
 }
