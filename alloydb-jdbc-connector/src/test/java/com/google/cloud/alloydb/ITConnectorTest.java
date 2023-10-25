@@ -21,6 +21,8 @@ import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.cloud.alloydb.v1.AlloyDBAdminClient;
 import com.google.cloud.alloydb.v1.InstanceName;
 import com.google.common.base.Objects;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.security.KeyPair;
@@ -40,9 +42,11 @@ public class ITConnectorTest {
 
   private String instanceName;
   private AlloyDBAdminClient alloydbAdminClient;
+  private ListeningScheduledExecutorService executor;
 
   @Before
   public void setUp() throws IOException {
+    executor = newTestExecutor();
     instanceName = System.getenv("ALLOYDB_INSTANCE_NAME");
     // Create the client once and close it later.
     ConnectionConfig config =
@@ -55,14 +59,24 @@ public class ITConnectorTest {
   @After
   public void tearDown() {
     alloydbAdminClient.close();
+    executor.shutdown();
+  }
+
+  private ListeningScheduledExecutorService newTestExecutor() {
+    ScheduledThreadPoolExecutor executor =
+        (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
+    executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+    executor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
+    return MoreExecutors.listeningDecorator(
+        MoreExecutors.getExitingScheduledExecutorService(executor));
   }
 
   @Test
   public void testConnect_createsSocketConnection() throws IOException {
     SSLSocket socket = null;
-    ScheduledThreadPoolExecutor executor = null;
+    ListeningScheduledExecutorService executor = null;
     try {
-      executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
+      executor = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(2));
       ConnectionInfoRepository connectionInfoRepository =
           new DefaultConnectionInfoRepository(executor, alloydbAdminClient);
       Connector connector =
@@ -106,10 +120,8 @@ public class ITConnectorTest {
     StubConnectionInfoCacheFactory connectionInfoCacheFactory =
         new StubConnectionInfoCacheFactory(stubConnectionInfoCache);
     SSLSocket socket = null;
-    ScheduledThreadPoolExecutor executor = null;
 
     try {
-      executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
       Connector connector =
           new Connector(
               executor,
@@ -135,7 +147,6 @@ public class ITConnectorTest {
 
   @Test
   public void testEquals() {
-    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
     DefaultConnectionInfoRepository connectionInfoRepo =
         new DefaultConnectionInfoRepository(executor, alloydbAdminClient);
     KeyPair clientConnectorKeyPair = RsaKeyPairGenerator.generateKeyPair();
@@ -153,7 +164,7 @@ public class ITConnectorTest {
     assertThat(a)
         .isNotEqualTo(
             new Connector(
-                new ScheduledThreadPoolExecutor(1), // Different
+                MoreExecutors.listeningDecorator(new ScheduledThreadPoolExecutor(1)), // Different
                 connectionInfoRepo,
                 clientConnectorKeyPair,
                 connectionInfoCacheFactory,
@@ -189,7 +200,6 @@ public class ITConnectorTest {
 
   @Test
   public void testHashCode() {
-    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
     DefaultConnectionInfoRepository connectionInfoRepo =
         new DefaultConnectionInfoRepository(executor, alloydbAdminClient);
     KeyPair clientConnectorKeyPair = RsaKeyPairGenerator.generateKeyPair();

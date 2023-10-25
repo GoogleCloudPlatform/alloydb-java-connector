@@ -16,8 +16,8 @@
 package com.google.cloud.alloydb;
 
 import com.google.cloud.alloydb.v1.InstanceName;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import java.security.KeyPair;
-import java.util.concurrent.ScheduledExecutorService;
 
 public class StubConnectionInfoCacheFactory implements ConnectionInfoCacheFactory {
 
@@ -29,7 +29,7 @@ public class StubConnectionInfoCacheFactory implements ConnectionInfoCacheFactor
 
   @Override
   public ConnectionInfoCache create(
-      ScheduledExecutorService executor,
+      ListeningScheduledExecutorService executor,
       ConnectionInfoRepository connectionInfoRepo,
       InstanceName instanceName,
       KeyPair clientConnectorKeyPair,

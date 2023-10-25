@@ -16,13 +16,13 @@
 package com.google.cloud.alloydb;
 
 import com.google.cloud.alloydb.v1.InstanceName;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import java.security.KeyPair;
-import java.util.concurrent.ScheduledExecutorService;
 
 interface ConnectionInfoCacheFactory {
 
   ConnectionInfoCache create(
-      ScheduledExecutorService executor,
+      ListeningScheduledExecutorService executor,
       ConnectionInfoRepository connectionInfoRepo,
       InstanceName instanceName,
       KeyPair clientConnectorKeyPair,

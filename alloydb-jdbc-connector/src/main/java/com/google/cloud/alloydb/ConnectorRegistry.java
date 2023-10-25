@@ -17,11 +17,12 @@ package com.google.cloud.alloydb;
 
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.cloud.alloydb.v1.AlloyDBAdminClient;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * ConnectorRegistry is a singleton that creates a single Executor, KeyPair, and AlloyDB Admin
@@ -32,7 +33,7 @@ public enum ConnectorRegistry implements Closeable {
   INSTANCE;
 
   @SuppressWarnings("ImmutableEnumChecker")
-  private final ScheduledExecutorService executor;
+  private final ListeningScheduledExecutorService executor;
 
   @SuppressWarnings("ImmutableEnumChecker")
   private ConcurrentHashMap<String, Connector> registeredConnectors;
@@ -42,7 +43,7 @@ public enum ConnectorRegistry implements Closeable {
     // there should be enough free threads so that there will not be a deadlock. Most users
     // configure 3 or fewer instances, requiring 6 threads during refresh. By setting
     // this to 8, it's enough threads for most users, plus a safety factor of 2.
-    this.executor = Executors.newScheduledThreadPool(8);
+    this.executor = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(8));
     this.registeredConnectors = new ConcurrentHashMap<>();
   }
 
