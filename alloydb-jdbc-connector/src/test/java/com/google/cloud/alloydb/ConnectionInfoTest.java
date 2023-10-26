@@ -56,7 +56,8 @@ public class ConnectionInfoTest {
             testCertificates.getEphemeralCertificate(testKeyPair.getPublic(), expected),
             Arrays.asList(
                 testCertificates.getIntermediateCertificate(),
-                testCertificates.getRootCertificate()));
+                testCertificates.getRootCertificate()),
+            testCertificates.getRootCertificate());
 
     assertThat(connectionInfo.getClientCertificateExpiration()).isEqualTo(expected);
   }
@@ -74,7 +75,8 @@ public class ConnectionInfoTest {
             ephemeralCertificate,
             Arrays.asList(
                 testCertificates.getIntermediateCertificate(),
-                testCertificates.getRootCertificate()));
+                testCertificates.getRootCertificate()),
+            testCertificates.getRootCertificate());
 
     //noinspection EqualsWithItself
     assertThat(c1.equals(c1)).isTrue();
@@ -87,7 +89,8 @@ public class ConnectionInfoTest {
                 ephemeralCertificate,
                 Arrays.asList(
                     testCertificates.getIntermediateCertificate(),
-                    testCertificates.getRootCertificate())));
+                    testCertificates.getRootCertificate()),
+                testCertificates.getRootCertificate()));
     assertThat(c1)
         .isNotEqualTo(
             new ConnectionInfo(
@@ -96,7 +99,8 @@ public class ConnectionInfoTest {
                 ephemeralCertificate,
                 Arrays.asList(
                     testCertificates.getIntermediateCertificate(),
-                    testCertificates.getRootCertificate())));
+                    testCertificates.getRootCertificate()),
+                testCertificates.getRootCertificate()));
     assertThat(c1)
         .isNotEqualTo(
             new ConnectionInfo(
@@ -106,7 +110,8 @@ public class ConnectionInfoTest {
                     testKeyPair.getPublic(), Instant.now().plus(1, ChronoUnit.DAYS)),
                 Arrays.asList(
                     testCertificates.getIntermediateCertificate(),
-                    testCertificates.getRootCertificate())));
+                    testCertificates.getRootCertificate()),
+                testCertificates.getRootCertificate()));
     assertThat(c1)
         .isNotEqualTo(
             new ConnectionInfo(
@@ -114,7 +119,8 @@ public class ConnectionInfoTest {
                 INSTANCE_UID,
                 testCertificates.getEphemeralCertificate(
                     testKeyPair.getPublic(), Instant.now().plus(1, ChronoUnit.DAYS)),
-                Collections.emptyList()));
+                Collections.emptyList(),
+                testCertificates.getRootCertificate()));
 
     ConnectionInfo c2 =
         new ConnectionInfo(
@@ -123,7 +129,8 @@ public class ConnectionInfoTest {
             ephemeralCertificate,
             Arrays.asList(
                 testCertificates.getIntermediateCertificate(),
-                testCertificates.getRootCertificate()));
+                testCertificates.getRootCertificate()),
+            testCertificates.getRootCertificate());
     assertThat(c1).isEqualTo(c2);
   }
 
@@ -137,7 +144,8 @@ public class ConnectionInfoTest {
             testCertificates.getEphemeralCertificate(testKeyPair.getPublic(), Instant.now()),
             Arrays.asList(
                 testCertificates.getIntermediateCertificate(),
-                testCertificates.getRootCertificate()));
+                testCertificates.getRootCertificate()),
+            testCertificates.getRootCertificate());
 
     assertThat(c1.hashCode()).isEqualTo(getHashCode(c1));
   }
@@ -147,6 +155,7 @@ public class ConnectionInfoTest {
         connectionInfo.getIpAddress(),
         connectionInfo.getInstanceUid(),
         connectionInfo.getClientCertificate(),
-        connectionInfo.getCertificateChain());
+        connectionInfo.getCertificateChain(),
+        connectionInfo.getCaCertificate());
   }
 }

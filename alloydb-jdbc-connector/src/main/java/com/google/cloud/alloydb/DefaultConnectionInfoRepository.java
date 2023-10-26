@@ -69,9 +69,15 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Close
       certificateChain.add(parseCertificate(certificateChainByte));
     }
     X509Certificate clientCertificate = certificateChain.get(0);
+    ByteString caCertificateBytes = certificateResponse.getCaCertBytes();
+    X509Certificate caCertificate = parseCertificate(caCertificateBytes);
 
     return new ConnectionInfo(
-        info.getIpAddress(), info.getInstanceUid(), clientCertificate, certificateChain);
+        info.getIpAddress(),
+        info.getInstanceUid(),
+        clientCertificate,
+        certificateChain,
+        caCertificate);
   }
 
   @Override
