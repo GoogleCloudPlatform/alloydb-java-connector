@@ -101,7 +101,8 @@ public class ITConnectorTest {
                 clientConnectorKeyPair.getPublic(), Instant.now()),
             Arrays.asList(
                 testCertificates.getIntermediateCertificate(),
-                testCertificates.getRootCertificate())));
+                testCertificates.getRootCertificate()),
+            testCertificates.getRootCertificate()));
     StubConnectionInfoCacheFactory connectionInfoCacheFactory =
         new StubConnectionInfoCacheFactory(stubConnectionInfoCache);
     SSLSocket socket = null;

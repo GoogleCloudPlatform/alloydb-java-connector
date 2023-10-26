@@ -71,7 +71,8 @@ public class ConnectionInfoCacheTest {
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
                 Arrays.asList(
                     testCertificates.getIntermediateCertificate(),
-                    testCertificates.getRootCertificate())));
+                    testCertificates.getRootCertificate()),
+                testCertificates.getRootCertificate()));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
             executor,
@@ -110,13 +111,15 @@ public class ConnectionInfoCacheTest {
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-                certificateChain),
+                certificateChain,
+                testCertificates.getRootCertificate()),
         () ->
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), TWO_HOURS_FROM_NOW),
-                certificateChain));
+                certificateChain,
+                testCertificates.getRootCertificate()));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
             executor,
@@ -181,7 +184,8 @@ public class ConnectionInfoCacheTest {
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-                certificateChain));
+                certificateChain,
+                testCertificates.getRootCertificate()));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
             executor,
@@ -224,7 +228,8 @@ public class ConnectionInfoCacheTest {
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-                certificateChain));
+                certificateChain,
+                testCertificates.getRootCertificate()));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
             executor,
@@ -267,7 +272,8 @@ public class ConnectionInfoCacheTest {
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
                 Arrays.asList(
                     testCertificates.getIntermediateCertificate(),
-                    testCertificates.getRootCertificate())));
+                    testCertificates.getRootCertificate()),
+                testCertificates.getRootCertificate()));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
             executor,
@@ -299,13 +305,15 @@ public class ConnectionInfoCacheTest {
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-                certificateChain),
+                certificateChain,
+                testCertificates.getRootCertificate()),
         () ->
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), TWO_HOURS_FROM_NOW),
-                certificateChain));
+                certificateChain,
+                testCertificates.getRootCertificate()));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
             executor,
@@ -369,19 +377,22 @@ public class ConnectionInfoCacheTest {
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
-                certificateChain),
+                certificateChain,
+                testCertificates.getRootCertificate()),
         () ->
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), TWO_HOURS_FROM_NOW),
-                certificateChain),
+                certificateChain,
+                testCertificates.getRootCertificate()),
         () ->
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_ID,
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), THREE_HOURS_FROM_NOW),
-                certificateChain));
+                certificateChain,
+                testCertificates.getRootCertificate()));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
             executor,

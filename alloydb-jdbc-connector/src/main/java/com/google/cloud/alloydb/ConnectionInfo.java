@@ -27,16 +27,19 @@ class ConnectionInfo {
   private final String instanceUid;
   private final X509Certificate clientCertificate;
   private final List<X509Certificate> certificateChain;
+  private final X509Certificate caCertificate;
 
   ConnectionInfo(
       String ipAddress,
       String instanceUid,
       X509Certificate clientCertificate,
-      List<X509Certificate> certificateChain) {
+      List<X509Certificate> certificateChain,
+      X509Certificate caCertificate) {
     this.ipAddress = ipAddress;
     this.instanceUid = instanceUid;
     this.clientCertificate = clientCertificate;
     this.certificateChain = certificateChain;
+    this.caCertificate = caCertificate;
   }
 
   String getIpAddress() {
@@ -59,6 +62,10 @@ class ConnectionInfo {
     return certificateChain;
   }
 
+  X509Certificate getCaCertificate() {
+    return caCertificate;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -72,12 +79,14 @@ class ConnectionInfo {
     return Objects.equal(ipAddress, that.ipAddress)
         && Objects.equal(instanceUid, that.instanceUid)
         && Objects.equal(clientCertificate, that.clientCertificate)
-        && Objects.equal(certificateChain, that.certificateChain);
+        && Objects.equal(certificateChain, that.certificateChain)
+        && Objects.equal(caCertificate, that.caCertificate);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(ipAddress, instanceUid, clientCertificate, certificateChain);
+    return Objects.hashCode(
+        ipAddress, instanceUid, clientCertificate, certificateChain, caCertificate);
   }
 
   @Override
@@ -93,6 +102,8 @@ class ConnectionInfo {
         + clientCertificate
         + ", certificateChain="
         + certificateChain
+        + ", caCertificate="
+        + caCertificate
         + '}';
   }
 }
