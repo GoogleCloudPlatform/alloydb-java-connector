@@ -17,10 +17,13 @@
 package com.google.cloud.alloydb;
 
 import com.google.cloud.alloydb.v1beta.InstanceName;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 public class ConnectionConfig {
   public static final String ALLOYDB_INSTANCE_NAME = "alloydbInstanceName";
@@ -64,7 +67,7 @@ public class ConnectionConfig {
     this.instanceName = instanceName;
     this.namedConnection = namedConnection;
     this.targetPrincipal = targetPrincipal;
-    this.delegates = delegates;
+    this.delegates = (delegates != null) ? delegates : Collections.emptyList();
     this.adminServiceEndpoint = adminServiceEndpoint;
   }
 
@@ -73,10 +76,18 @@ public class ConnectionConfig {
   }
 
   public String getNamedConnection() {
-    if (namedConnection == null || namedConnection.isEmpty()) {
-      return DEFAULT_NAMED_CONNECTION;
+    if (namedConnection != null && !namedConnection.isEmpty()) {
+      return namedConnection;
     }
-    return namedConnection;
+
+    // Build the connection name with the properties that make the
+    // connection unique. Returns "default" if all properties are null.
+    List<String> attrs = new ArrayList<String>();
+    attrs.add(DEFAULT_NAMED_CONNECTION);
+    attrs.add(targetPrincipal);
+    attrs.addAll(delegates);
+    attrs.add(adminServiceEndpoint);
+    return attrs.stream().filter(Objects::nonNull).collect(Collectors.joining("+"));
   }
 
   public String getTargetPrincipal() {

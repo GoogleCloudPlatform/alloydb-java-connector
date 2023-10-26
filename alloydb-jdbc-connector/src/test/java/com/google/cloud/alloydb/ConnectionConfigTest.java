@@ -76,4 +76,42 @@ public class ConnectionConfigTest {
     assertThat(config.getDelegates()).isEqualTo(wantDelegates);
     assertThat(config.getAdminServiceEndpoint()).isEqualTo(wantAdminServiceEndpoint);
   }
+
+  @Test
+  public void testNamedConnection_getUniqueName() {
+    final InstanceName wantInstance = InstanceName.parse(INSTANCE_NAME);
+    final String wantTargetPrincipal = "test@example.com";
+    final List<String> wantDelegates = Arrays.asList("test1@example.com", "test2@example.com");
+    final String delegates = wantDelegates.stream().collect(Collectors.joining("+"));
+    final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";
+    final String wantNamedConnection =
+        String.format(
+            "%s+%s+%s+%s",
+            ConnectionConfig.DEFAULT_NAMED_CONNECTION,
+            wantTargetPrincipal,
+            delegates,
+            wantAdminServiceEndpoint);
+
+    ConnectionConfig config =
+        new ConnectionConfig.Builder()
+            .withInstanceName(wantInstance)
+            .withTargetPrincipal(wantTargetPrincipal)
+            .withDelegates(wantDelegates)
+            .withAdminServiceEndpoint(wantAdminServiceEndpoint)
+            .build();
+
+    assertThat(config.getNamedConnection()).isEqualTo(wantNamedConnection);
+  }
+
+  @Test
+  public void testNamedConnection_getDefault() {
+    final String wantNamedConnection = ConnectionConfig.DEFAULT_NAMED_CONNECTION;
+
+    Properties props = new Properties();
+    props.setProperty(ConnectionConfig.ALLOYDB_INSTANCE_NAME, INSTANCE_NAME);
+
+    ConnectionConfig config = ConnectionConfig.fromConnectionProperties(props);
+
+    assertThat(config.getNamedConnection()).isEqualTo(wantNamedConnection);
+  }
 }
