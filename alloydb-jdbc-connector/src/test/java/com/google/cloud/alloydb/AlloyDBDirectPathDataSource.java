@@ -40,6 +40,7 @@ public class AlloyDBDirectPathDataSource extends HikariDataSource {
   public String getPassword() {
     try {
       GoogleCredentials credentials = GoogleCredentials.getApplicationDefault();
+      credentials.refreshIfExpired();
       AccessToken accessToken = credentials.getAccessToken();
       return accessToken.getTokenValue();
     } catch (IOException e) {
