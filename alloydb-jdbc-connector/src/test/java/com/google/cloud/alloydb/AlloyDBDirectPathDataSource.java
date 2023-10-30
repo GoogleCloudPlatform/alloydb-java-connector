@@ -40,8 +40,8 @@ public class AlloyDBDirectPathDataSource extends HikariDataSource {
   public String getPassword() {
     try {
       GoogleCredentials credentials = GoogleCredentials.getApplicationDefault();
-      AccessToken accessToken = credentials.getAccessToken();
       credentials.refreshIfExpired();
+      AccessToken accessToken = credentials.getAccessToken();
       return accessToken.getTokenValue();
     } catch (IOException e) {
       throw new RuntimeException("failed to retrieve OAuth2 access token", e);
