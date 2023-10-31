@@ -15,6 +15,9 @@
   "semanticCommits": "enabled",
   "dependencyDashboard": true,
   "dependencyDashboardLabels": ["type: process"],
+  "ignoreDeps": [
+    "org.graalvm.sdk:graal-sdk"
+  ],
   "packageRules": [
     {
       "matchPackagePatterns": [
