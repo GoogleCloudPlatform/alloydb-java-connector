@@ -17,7 +17,7 @@
 package com.google.cloud.alloydb;
 
 import com.google.api.gax.rpc.ApiException;
-import com.google.cloud.alloydb.v1beta.InstanceName;
+import com.google.cloud.alloydb.v1.InstanceName;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.errorprone.annotations.concurrent.GuardedBy;

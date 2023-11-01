@@ -17,8 +17,8 @@ package com.google.cloud.alloydb;
 
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.rpc.FixedHeaderProvider;
-import com.google.cloud.alloydb.v1beta.AlloyDBAdminClient;
-import com.google.cloud.alloydb.v1beta.AlloyDBAdminSettings;
+import com.google.cloud.alloydb.v1.AlloyDBAdminClient;
+import com.google.cloud.alloydb.v1.AlloyDBAdminSettings;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Map;

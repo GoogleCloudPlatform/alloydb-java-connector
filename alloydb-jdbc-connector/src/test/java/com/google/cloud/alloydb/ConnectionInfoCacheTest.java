@@ -21,7 +21,7 @@ import static org.junit.Assert.assertThrows;
 
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode;
-import com.google.cloud.alloydb.v1beta.InstanceName;
+import com.google.cloud.alloydb.v1.InstanceName;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.cert.CertificateException;

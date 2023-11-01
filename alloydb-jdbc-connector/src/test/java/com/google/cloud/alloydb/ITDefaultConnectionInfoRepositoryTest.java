@@ -20,8 +20,8 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.cloud.alloydb.v1beta.AlloyDBAdminClient;
-import com.google.cloud.alloydb.v1beta.InstanceName;
+import com.google.cloud.alloydb.v1.AlloyDBAdminClient;
+import com.google.cloud.alloydb.v1.InstanceName;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;

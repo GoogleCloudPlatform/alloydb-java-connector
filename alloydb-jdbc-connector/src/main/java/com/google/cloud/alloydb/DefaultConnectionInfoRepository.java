@@ -17,11 +17,11 @@
 package com.google.cloud.alloydb;
 
 import com.google.api.gax.rpc.ApiException;
-import com.google.cloud.alloydb.v1beta.AlloyDBAdminClient;
-import com.google.cloud.alloydb.v1beta.ClusterName;
-import com.google.cloud.alloydb.v1beta.GenerateClientCertificateRequest;
-import com.google.cloud.alloydb.v1beta.GenerateClientCertificateResponse;
-import com.google.cloud.alloydb.v1beta.InstanceName;
+import com.google.cloud.alloydb.v1.AlloyDBAdminClient;
+import com.google.cloud.alloydb.v1.ClusterName;
+import com.google.cloud.alloydb.v1.GenerateClientCertificateRequest;
+import com.google.cloud.alloydb.v1.GenerateClientCertificateResponse;
+import com.google.cloud.alloydb.v1.InstanceName;
 import com.google.common.io.BaseEncoding;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
@@ -54,12 +54,12 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Close
   @Override
   public ConnectionInfo getConnectionInfo(InstanceName instanceName, KeyPair keyPair)
       throws ExecutionException, InterruptedException, CertificateException, ApiException {
-    Future<com.google.cloud.alloydb.v1beta.ConnectionInfo> infoFuture =
+    Future<com.google.cloud.alloydb.v1.ConnectionInfo> infoFuture =
         executor.submit(() -> getConnectionInfo(instanceName));
     Future<GenerateClientCertificateResponse> clientCertificateResponseFuture =
         executor.submit(() -> getGenerateClientCertificateResponse(instanceName, keyPair));
 
-    com.google.cloud.alloydb.v1beta.ConnectionInfo info = infoFuture.get();
+    com.google.cloud.alloydb.v1.ConnectionInfo info = infoFuture.get();
 
     GenerateClientCertificateResponse certificateResponse = clientCertificateResponseFuture.get();
     List<ByteString> certificateChainBytes =
@@ -85,8 +85,7 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Close
     this.alloyDBAdminClient.close();
   }
 
-  private com.google.cloud.alloydb.v1beta.ConnectionInfo getConnectionInfo(
-      InstanceName instanceName) {
+  private com.google.cloud.alloydb.v1.ConnectionInfo getConnectionInfo(InstanceName instanceName) {
     return alloyDBAdminClient.getConnectionInfo(instanceName);
   }
 
