@@ -120,25 +120,7 @@ jobs:
       contents: "read"
       id-token: "write"
       issues: write
-      pull-requests: write
     steps:
-    - name: Remove PR label
-      if: "${{ github.event.action == 'labeled' && github.event.label.name == 'tests: run' }}"
-      uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          try {
-            await github.rest.issues.removeLabel({
-              name: 'tests: run',
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number
-            });
-          } catch (e) {
-            console.log('Failed to remove label. Another job may have already removed it!');
-          }
-
     - name: Checkout code
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
