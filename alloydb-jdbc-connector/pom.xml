@@ -40,6 +40,7 @@
 
   <properties>
     <bouncycastle.version>1.76</bouncycastle.version>
+    <postgresql.version>42.6.0</postgresql.version>
   </properties>
 
   <build>
@@ -101,7 +102,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.6.0</version>
+      <version>${postgresql.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -167,5 +168,33 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- com.google.cloud.alloydb.nativeimage.AlloyDBFeature needs the GraalVM
+      dependencies for compilation. The provided-scope dependencies do not add
+      additional dependencies to library users. -->
+    <dependency>
+      <groupId>org.graalvm.sdk</groupId>
+      <artifactId>graal-sdk</artifactId>
+      <version>22.0.0</version>
+      <scope>provided</scope>
+    </dependency>
+
   </dependencies>
+
+  <profiles>
+    <!-- The native maven plugin leaves provided scope dependencies out of the
+      classpath, so adding these drivers back in for the native profile is a
+      workaround.
+    -->
+    <profile>
+      <id>native</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.postgresql</groupId>
+          <artifactId>postgresql</artifactId>
+          <version>${postgresql.version}</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
 </project>

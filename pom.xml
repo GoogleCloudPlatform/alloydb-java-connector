@@ -60,6 +60,7 @@
     <site.installationModule>alloydb-connector-parent</site.installationModule>
     <project.javadoc.protobufBaseURL>https://googleapis.dev/java/google-api-grpc/latest</project.javadoc.protobufBaseURL>
     <error-prone.version>2.23.0</error-prone.version>
+    <native-image.version>0.9.28</native-image.version>
   </properties>
 
   <dependencyManagement>
@@ -164,8 +165,76 @@
                 <goals>
                   <goal>report</goal>
                 </goals>
+                <configuration>
+                  <excludes>
+                    <!-- Native image test is not part of coverage execution -->
+                    <exclude>com/google/cloud/alloydb/nativeimage/*</exclude>
+                  </excludes>
+                </configuration>
               </execution>
             </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <!-- This profile is used to enable GraalVM native image testing
+      (.kokoro/graalvm-native/linux) -->
+      <id>native</id>
+      <dependencyManagement>
+        <!-- Controlling version for dependencyConvergence enforcer rule -->
+        <dependencies>
+          <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-engine</artifactId>
+            <version>1.10.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-commons</artifactId>
+            <version>1.10.0</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+      <dependencies>
+        <!-- GraalVM native image test needs newer JUnit platform -->
+        <dependency>
+          <groupId>org.junit.vintage</groupId>
+          <artifactId>junit-vintage-engine</artifactId>
+          <version>5.10.0</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.graalvm.buildtools</groupId>
+          <artifactId>junit-platform-native</artifactId>
+          <version>${native-image.version}</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.graalvm.buildtools</groupId>
+            <artifactId>native-maven-plugin</artifactId>
+            <version>${native-image.version}</version>
+            <extensions>true</extensions>
+            <executions>
+              <execution>
+                <id>test-native</id>
+                <goals>
+                  <goal>test</goal>
+                </goals>
+                <phase>test</phase>
+              </execution>
+            </executions>
+            <configuration>
+              <buildArgs>
+                <buildArg>--no-fallback</buildArg>
+                <buildArg>--no-server</buildArg>
+                <buildArg>-Ob</buildArg>
+              </buildArgs>
+            </configuration>
           </plugin>
         </plugins>
       </build>
