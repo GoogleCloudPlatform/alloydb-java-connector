@@ -70,7 +70,7 @@
   <dependencies>
     <dependency>
       <groupId>com.google.api.grpc</groupId>
-      <artifactId>proto-google-cloud-alloydb-v1beta</artifactId>
+      <artifactId>proto-google-cloud-alloydb-v1</artifactId>
     </dependency>
 
     <dependency>

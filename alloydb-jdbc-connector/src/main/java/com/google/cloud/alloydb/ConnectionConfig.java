@@ -16,7 +16,7 @@
 
 package com.google.cloud.alloydb;
 
-import com.google.cloud.alloydb.v1beta.InstanceName;
+import com.google.cloud.alloydb.v1.InstanceName;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
