@@ -58,6 +58,10 @@ class ConnectionInfo {
     return clientCertificate.getNotAfter().toInstant();
   }
 
+  Instant getExpiration() {
+    return getClientCertificateExpiration();
+  }
+
   List<X509Certificate> getCertificateChain() {
     return certificateChain;
   }
