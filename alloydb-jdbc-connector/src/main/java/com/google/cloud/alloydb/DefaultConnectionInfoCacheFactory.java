@@ -16,8 +16,8 @@
 package com.google.cloud.alloydb;
 
 import com.google.cloud.alloydb.v1.InstanceName;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import java.security.KeyPair;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * DefaultConnectionInfoCacheFactory encapsulates the creation of ConnectionInfoCache objects,
@@ -27,7 +27,7 @@ class DefaultConnectionInfoCacheFactory implements ConnectionInfoCacheFactory {
 
   @Override
   public DefaultConnectionInfoCache create(
-      ScheduledExecutorService executor,
+      ListeningScheduledExecutorService executor,
       ConnectionInfoRepository connectionInfoRepo,
       InstanceName instanceName,
       KeyPair clientConnectorKeyPair,

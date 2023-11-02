@@ -17,6 +17,7 @@ package com.google.cloud.alloydb;
 
 import com.google.cloud.alloydb.v1.InstanceName;
 import com.google.common.base.Objects;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -37,7 +38,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledExecutorService;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SNIHostName;
@@ -55,14 +55,14 @@ class Connector {
   private static final int SERVER_SIDE_PROXY_PORT = 5433;
   private static final String ROOT_CA_CERT = "rootCaCert";
   private static final String CLIENT_CERT = "clientCert";
-  private final ScheduledExecutorService executor;
+  private final ListeningScheduledExecutorService executor;
   private final ConnectionInfoRepository connectionInfoRepo;
   private final KeyPair clientConnectorKeyPair;
   private final ConnectionInfoCacheFactory connectionInfoCacheFactory;
   private final ConcurrentHashMap<InstanceName, ConnectionInfoCache> instances;
 
   Connector(
-      ScheduledExecutorService executor,
+      ListeningScheduledExecutorService executor,
       ConnectionInfoRepository connectionInfoRepo,
       KeyPair clientConnectorKeyPair,
       ConnectionInfoCacheFactory connectionInfoCacheFactory,

@@ -22,6 +22,7 @@ import static org.junit.Assert.assertThrows;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.cloud.alloydb.v1.InstanceName;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.cert.CertificateException;
@@ -75,7 +76,7 @@ public class ConnectionInfoCacheTest {
                 testCertificates.getRootCertificate()));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
-            executor,
+            MoreExecutors.listeningDecorator(executor),
             connectionInfoRepo,
             instanceName,
             keyPair,
@@ -122,7 +123,7 @@ public class ConnectionInfoCacheTest {
                 testCertificates.getRootCertificate()));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
-            executor,
+            MoreExecutors.listeningDecorator(executor),
             connectionInfoRepo,
             instanceName,
             keyPair,
@@ -188,7 +189,7 @@ public class ConnectionInfoCacheTest {
                 testCertificates.getRootCertificate()));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
-            executor,
+            MoreExecutors.listeningDecorator(executor),
             connectionInfoRepo,
             instanceName,
             keyPair,
@@ -232,7 +233,7 @@ public class ConnectionInfoCacheTest {
                 testCertificates.getRootCertificate()));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
-            executor,
+            MoreExecutors.listeningDecorator(executor),
             connectionInfoRepo,
             instanceName,
             keyPair,
@@ -276,7 +277,7 @@ public class ConnectionInfoCacheTest {
                 testCertificates.getRootCertificate()));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
-            executor,
+            MoreExecutors.listeningDecorator(executor),
             connectionInfoRepo,
             instanceName,
             keyPair,
@@ -316,7 +317,7 @@ public class ConnectionInfoCacheTest {
                 testCertificates.getRootCertificate()));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
-            executor,
+            MoreExecutors.listeningDecorator(executor),
             connectionInfoRepo,
             instanceName,
             keyPair,
@@ -395,7 +396,7 @@ public class ConnectionInfoCacheTest {
                 testCertificates.getRootCertificate()));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
-            executor,
+            MoreExecutors.listeningDecorator(executor),
             connectionInfoRepo,
             instanceName,
             keyPair,

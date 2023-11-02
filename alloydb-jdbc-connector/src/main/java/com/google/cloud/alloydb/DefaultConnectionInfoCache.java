@@ -19,6 +19,7 @@ package com.google.cloud.alloydb;
 import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.alloydb.v1.InstanceName;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.errorprone.annotations.concurrent.GuardedBy;
 import java.security.KeyPair;
@@ -27,7 +28,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +40,7 @@ class DefaultConnectionInfoCache implements ConnectionInfoCache {
 
   private static final Logger logger = LoggerFactory.getLogger(DefaultConnectionInfoCache.class);
 
-  private final ScheduledExecutorService executor;
+  private final ListeningScheduledExecutorService executor;
   private final ConnectionInfoRepository connectionInfoRepo;
   private final InstanceName instanceName;
   private final KeyPair clientConnectorKeyPair;
@@ -58,7 +58,7 @@ class DefaultConnectionInfoCache implements ConnectionInfoCache {
   private boolean forceRefreshRunning;
 
   DefaultConnectionInfoCache(
-      ScheduledExecutorService executor,
+      ListeningScheduledExecutorService executor,
       ConnectionInfoRepository connectionInfoRepo,
       InstanceName instanceName,
       KeyPair clientConnectorKeyPair,
