@@ -133,7 +133,7 @@ jobs:
         java-version: 17
 
     - name: Set up GraalVM
-      uses: graalvm/setup-graalvm@6c7d417a1ef253f4d667a69e6a5716927746e251 # v1
+      uses: graalvm/setup-graalvm@b8dc5fccfbc65b21dd26e8341e7b21c86547f61b # v1
       with:
         distribution: "graalvm"
         java-version: "17"
