@@ -22,12 +22,14 @@ import static org.junit.Assert.assertThrows;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.cloud.alloydb.v1.AlloyDBAdminClient;
 import com.google.cloud.alloydb.v1.InstanceName;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.junit.After;
 import org.junit.Before;
@@ -39,7 +41,7 @@ public class ITDefaultConnectionInfoRepositoryTest {
   private KeyPair keyPair;
   private AlloyDBAdminClient alloyDBAdminClient;
   private String instanceUri;
-  private ExecutorService executor;
+  private ListeningScheduledExecutorService executor;
 
   @Before
   public void setUp() throws Exception {
@@ -56,7 +58,7 @@ public class ITDefaultConnectionInfoRepositoryTest {
     generator.initialize(2048);
 
     keyPair = generator.generateKeyPair();
-    executor = Executors.newSingleThreadExecutor();
+    executor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor());
     ConnectionConfig config =
         new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceUri)).build();
     FixedCredentialsProvider credentialsProvider = CredentialsProviderFactory.create(config);
@@ -77,8 +79,10 @@ public class ITDefaultConnectionInfoRepositoryTest {
   public void testGetConnectionInfo()
       throws ExecutionException, InterruptedException, CertificateException {
     InstanceName instanceName = InstanceName.parse(instanceUri);
-    ConnectionInfo connectionInfo =
+    ListenableFuture<ConnectionInfo> f =
         defaultConnectionInfoRepository.getConnectionInfo(instanceName, keyPair);
+
+    ConnectionInfo connectionInfo = f.get();
 
     assertThat(connectionInfo.getInstanceUid()).isNotEmpty();
     assertThat(connectionInfo.getIpAddress()).isNotEmpty();
@@ -93,7 +97,7 @@ public class ITDefaultConnectionInfoRepositoryTest {
     Exception exception =
         assertThrows(
             Exception.class,
-            () -> defaultConnectionInfoRepository.getConnectionInfo(instanceName, keyPair));
+            () -> defaultConnectionInfoRepository.getConnectionInfo(instanceName, keyPair).get());
 
     assertThat(exception).hasMessageThat().contains("PERMISSION_DENIED");
   }

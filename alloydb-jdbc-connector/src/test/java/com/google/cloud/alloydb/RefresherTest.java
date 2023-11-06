@@ -20,11 +20,13 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
@@ -52,13 +54,38 @@ public class RefresherTest {
   }
 
   @Test
-  public void testCloudSqlInstanceDataRetrievedSuccessfully() {
+  public void testDataRetrievedSuccessfully() {
     ExampleData data = new ExampleData(Instant.now().plus(1, ChronoUnit.HOURS));
     Refresher r =
         new Refresher(
             "testcase", executorService, () -> Futures.immediateFuture(data), rateLimiter);
     ConnectionInfo gotInfo = r.getConnectionInfo(TEST_TIMEOUT_MS);
     assertThat(gotInfo).isSameInstanceAs(data);
+  }
+
+  private static class SpyRateLimiter extends AsyncRateLimiter {
+    int counter;
+
+    SpyRateLimiter(long delayBetweenAttempts) {
+      super(delayBetweenAttempts);
+    }
+
+    @Override
+    public ListenableFuture<?> acquireAsync(ScheduledExecutorService executor) {
+      counter++;
+      return super.acquireAsync(executor);
+    }
+  }
+
+  @Test
+  public void testRateLimiterInUse() {
+    ExampleData data = new ExampleData(Instant.now().plus(1, ChronoUnit.HOURS));
+    SpyRateLimiter rl = new SpyRateLimiter(10);
+    Refresher r =
+        new Refresher("testcase", executorService, () -> Futures.immediateFuture(data), rl);
+    ConnectionInfo gotInfo = r.getConnectionInfo(TEST_TIMEOUT_MS);
+    assertThat(gotInfo).isSameInstanceAs(data);
+    assertThat(rl.counter).isNotEqualTo(0);
   }
 
   @Test
@@ -93,7 +120,7 @@ public class RefresherTest {
   }
 
   @Test
-  public void testCloudSqlInstanceForcesRefresh() throws Exception {
+  public void testForcesRefresh() throws Exception {
     ExampleData data = new ExampleData(Instant.now().plus(1, ChronoUnit.HOURS));
     AtomicInteger refreshCount = new AtomicInteger();
     final PauseCondition cond = new PauseCondition();
@@ -134,7 +161,7 @@ public class RefresherTest {
   }
 
   @Test
-  public void testCloudSqlInstanceRetriesOnInitialFailures() throws Exception {
+  public void testRetriesOnInitialFailures() throws Exception {
     ExampleData data = new ExampleData(Instant.now().plus(1, ChronoUnit.HOURS));
 
     AtomicInteger refreshCount = new AtomicInteger();
@@ -163,7 +190,7 @@ public class RefresherTest {
   }
 
   @Test
-  public void testCloudSqlRefreshesExpiredData() throws Exception {
+  public void testRefreshesExpiredData() throws Exception {
     ExampleData initialData = new ExampleData(Instant.now().plus(2, ChronoUnit.SECONDS));
     ExampleData data = new ExampleData(Instant.now().plus(1, ChronoUnit.HOURS));
 

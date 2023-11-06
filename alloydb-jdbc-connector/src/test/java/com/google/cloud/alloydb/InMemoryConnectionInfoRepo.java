@@ -16,10 +16,10 @@
 
 package com.google.cloud.alloydb;
 
-import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.alloydb.v1.InstanceName;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.security.KeyPair;
-import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
@@ -38,16 +38,13 @@ class InMemoryConnectionInfoRepo implements ConnectionInfoRepository {
 
   @SuppressWarnings("RedundantThrows")
   @Override
-  public ConnectionInfo getConnectionInfo(InstanceName instanceName, KeyPair publicKey)
-      throws ExecutionException, InterruptedException, CertificateException, ApiException {
+  public ListenableFuture<ConnectionInfo> getConnectionInfo(
+      InstanceName instanceName, KeyPair publicKey) {
     Callable<ConnectionInfo> callable = registeredCallables.get(index.getAndIncrement());
     try {
-      return callable.call();
+      return Futures.immediateFuture(callable.call());
     } catch (Exception e) {
-      if (e instanceof CertificateException) {
-        throw (CertificateException) e;
-      }
-      throw new RuntimeException(e);
+      return Futures.immediateFailedFuture(new ExecutionException(e));
     }
   }
 
