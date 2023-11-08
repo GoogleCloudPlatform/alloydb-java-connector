@@ -49,14 +49,14 @@ public enum ConnectorRegistry implements Closeable {
 
   Connector getConnector(ConnectionConfig config) {
     return registeredConnectors.computeIfAbsent(
-        config.getNamedConnection(),
+        config.getNamedConnector(),
         k -> {
           try {
             FixedCredentialsProvider credentialsProvider =
                 CredentialsProviderFactory.create(config);
             AlloyDBAdminClient alloyDBAdminClient =
                 AlloyDBAdminClientFactory.create(
-                    credentialsProvider, config.getAdminServiceEndpoint());
+                    credentialsProvider, config.getConnectorConfig().getAdminServiceEndpoint());
 
             return new Connector(
                 executor,

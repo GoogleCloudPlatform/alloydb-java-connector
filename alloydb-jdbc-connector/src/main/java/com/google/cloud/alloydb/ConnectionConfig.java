@@ -29,20 +29,18 @@ public class ConnectionConfig {
   public static final String ALLOYDB_INSTANCE_NAME = "alloydbInstanceName";
   public static final String ALLOYDB_TARGET_PRINCIPAL = "alloydbTargetPrincipal";
   public static final String ALLOYDB_DELEGATES = "alloydbDelegates";
-  public static final String ALLOYDB_NAMED_CONNECTION = "alloydbNamedConnection";
+  public static final String ALLOYDB_NAMED_CONNECTOR = "alloydbNamedConnector";
   public static final String ALLOYDB_ADMIN_SERVICE_ENDPOINT = "alloydbAdminServiceEndpoint";
   public static final String DEFAULT_NAMED_CONNECTION = "default";
   private final InstanceName instanceName;
-  private final String namedConnection;
-  private final String adminServiceEndpoint;
-  private final String targetPrincipal;
-  private final List<String> delegates;
+  private final String namedConnector;
+  private final ConnectorConfig connectorConfig;
 
   /** Create a new ConnectionConfig from the well known JDBC Connection properties. */
   public static ConnectionConfig fromConnectionProperties(Properties props) {
     final String instanceNameStr = props.getProperty(ALLOYDB_INSTANCE_NAME, "");
     final InstanceName instanceName = InstanceName.parse(instanceNameStr);
-    final String namedConnection = props.getProperty(ConnectionConfig.ALLOYDB_NAMED_CONNECTION);
+    final String namedConnector = props.getProperty(ConnectionConfig.ALLOYDB_NAMED_CONNECTOR);
     final String adminServiceEndpoint =
         props.getProperty(ConnectionConfig.ALLOYDB_ADMIN_SERVICE_ENDPOINT);
     final String targetPrincipal = props.getProperty(ConnectionConfig.ALLOYDB_TARGET_PRINCIPAL);
@@ -55,89 +53,92 @@ public class ConnectionConfig {
     }
 
     return new ConnectionConfig(
-        instanceName, namedConnection, targetPrincipal, delegates, adminServiceEndpoint);
+        instanceName,
+        namedConnector,
+        new ConnectorConfig.Builder()
+            .withTargetPrincipal(targetPrincipal)
+            .withDelegates(delegates)
+            .withAdminServiceEndpoint(adminServiceEndpoint)
+            .build());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ConnectionConfig)) {
+      return false;
+    }
+    ConnectionConfig config = (ConnectionConfig) o;
+    return Objects.equals(instanceName, config.instanceName)
+        && Objects.equals(namedConnector, config.namedConnector)
+        && Objects.equals(connectorConfig, config.connectorConfig);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(instanceName, namedConnector, connectorConfig);
   }
 
   private ConnectionConfig(
-      InstanceName instanceName,
-      String namedConnection,
-      String targetPrincipal,
-      List<String> delegates,
-      String adminServiceEndpoint) {
+      InstanceName instanceName, String namedConnector, ConnectorConfig connectorConfig) {
     this.instanceName = instanceName;
-    this.namedConnection = namedConnection;
-    this.targetPrincipal = targetPrincipal;
-    this.delegates = (delegates != null) ? delegates : Collections.emptyList();
-    this.adminServiceEndpoint = adminServiceEndpoint;
+    this.namedConnector = namedConnector;
+    this.connectorConfig = connectorConfig;
+  }
+
+  /** Creates a new instance of the ConnectionConfig with an updated connectorConfig. */
+  public ConnectionConfig withConnectorConfig(ConnectorConfig config) {
+    return new ConnectionConfig(instanceName, namedConnector, config);
   }
 
   public InstanceName getInstanceName() {
     return instanceName;
   }
 
-  public String getNamedConnection() {
-    if (namedConnection != null && !namedConnection.isEmpty()) {
-      return namedConnection;
+  public String getNamedConnector() {
+    if (namedConnector != null && !namedConnector.isEmpty()) {
+      return namedConnector;
     }
 
     // Build the connection name with the properties that make the
     // connection unique. Returns "default" if all properties are null.
     List<String> attrs = new ArrayList<String>();
     attrs.add(DEFAULT_NAMED_CONNECTION);
-    attrs.add(targetPrincipal);
-    attrs.addAll(delegates);
-    attrs.add(adminServiceEndpoint);
+    attrs.add(connectorConfig.getTargetPrincipal());
+    attrs.addAll(connectorConfig.getDelegates());
+    attrs.add(connectorConfig.getAdminServiceEndpoint());
     return attrs.stream().filter(Objects::nonNull).collect(Collectors.joining("+"));
   }
 
-  public String getTargetPrincipal() {
-    return targetPrincipal;
-  }
-
-  public List<String> getDelegates() {
-    return delegates;
-  }
-
-  public String getAdminServiceEndpoint() {
-    return adminServiceEndpoint;
+  public ConnectorConfig getConnectorConfig() {
+    return connectorConfig;
   }
 
   /** The builder for the ConnectionConfig. */
   public static class Builder {
     private InstanceName instanceName;
-    private String namedConnection;
-    private String adminServiceEndpoint;
-    private String targetPrincipal;
-    private List<String> delegates;
+    private String namedConnector;
+    private ConnectorConfig connectorConfig = new ConnectorConfig.Builder().build();
 
     public Builder withInstanceName(InstanceName instanceName) {
       this.instanceName = instanceName;
       return this;
     }
 
-    public Builder withNamedConnection(String namedConnection) {
-      this.namedConnection = namedConnection;
+    public Builder withNamedConnector(String namedConnector) {
+      this.namedConnector = namedConnector;
       return this;
     }
 
-    public Builder withTargetPrincipal(String targetPrincipal) {
-      this.targetPrincipal = targetPrincipal;
-      return this;
-    }
-
-    public Builder withDelegates(List<String> delegates) {
-      this.delegates = delegates;
-      return this;
-    }
-
-    public Builder withAdminServiceEndpoint(String adminServiceEndpoint) {
-      this.adminServiceEndpoint = adminServiceEndpoint;
+    public Builder withConnectorConfig(ConnectorConfig connectorConfig) {
+      this.connectorConfig = connectorConfig;
       return this;
     }
 
     public ConnectionConfig build() {
-      return new ConnectionConfig(
-          instanceName, namedConnection, targetPrincipal, delegates, adminServiceEndpoint);
+      return new ConnectionConfig(instanceName, namedConnector, connectorConfig);
     }
   }
 }

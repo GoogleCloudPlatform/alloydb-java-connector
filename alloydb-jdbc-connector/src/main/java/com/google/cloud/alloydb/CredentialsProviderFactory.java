@@ -34,12 +34,13 @@ class CredentialsProviderFactory {
       throw new RuntimeException("failed to retrieve OAuth2 access token", e);
     }
 
-    if (config.getTargetPrincipal() != null && !config.getTargetPrincipal().isEmpty()) {
+    if (config.getConnectorConfig().getTargetPrincipal() != null
+        && !config.getConnectorConfig().getTargetPrincipal().isEmpty()) {
       credentials =
           ImpersonatedCredentials.newBuilder()
               .setSourceCredentials(credentials)
-              .setTargetPrincipal(config.getTargetPrincipal())
-              .setDelegates(config.getDelegates())
+              .setTargetPrincipal(config.getConnectorConfig().getTargetPrincipal())
+              .setDelegates(config.getConnectorConfig().getDelegates())
               .setScopes(Arrays.asList(ALLOYDB_LOGIN, CLOUD_PLATFORM))
               .build();
     }
