@@ -34,12 +34,11 @@ This library provides a [socket factory][socket-factory] for use with the
 1. Configure a connection pool that configures the driver to use the Connector
    as a socket factory
 
-For usage information specific to your database engine and driver, see the pages below:
-
-* [Connecting to AlloyDB using JDBC](docs/jdbc.md)
+For information on configuring a connection, see the [documentation][jdbc-doc].
 
 [socket-factory]: https://docs.oracle.com/javase/8/docs/api/javax/net/SocketFactory.html
 [postgres-driver]: https://jdbc.postgresql.org/
+[jdbc-doc]: docs/jdbc.md
 
 ### Configuring IAM permissions
 
