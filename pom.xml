@@ -100,7 +100,7 @@
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>clirr-maven-plugin</artifactId>
           <configuration>
-            <includes>com/google/cloud/alloydb/ConnectionConfig</includes>
+            <includes>com/google/cloud/alloydb/ConnectorConfig</includes>
             <includes>com/google/cloud/alloydb/SocketFactory</includes>
           </configuration>
         </plugin>
