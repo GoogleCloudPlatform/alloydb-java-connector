@@ -23,17 +23,15 @@ import java.util.Properties;
 @SuppressWarnings("unused") // Used indirectly through the Postgres Driver
 public class SocketFactory extends javax.net.SocketFactory {
 
-  private final Connector connector;
   private final ConnectionConfig config;
 
   public SocketFactory(Properties properties) {
     this.config = ConnectionConfig.fromConnectionProperties(properties);
-    this.connector = ConnectorRegistry.INSTANCE.getConnector(config);
   }
 
   @Override
   public Socket createSocket() throws IOException {
-    return this.connector.connect(this.config.getInstanceName());
+    return InternalConnectorRegistry.INSTANCE.connect(this.config);
   }
 
   /*

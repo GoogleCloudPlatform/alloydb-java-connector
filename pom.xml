@@ -101,6 +101,7 @@
           <artifactId>clirr-maven-plugin</artifactId>
           <configuration>
             <includes>com/google/cloud/alloydb/ConnectorConfig</includes>
+            <includes>com/google/cloud/alloydb/ConnectorRegistry</includes>
             <includes>com/google/cloud/alloydb/SocketFactory</includes>
           </configuration>
         </plugin>

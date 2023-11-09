@@ -17,27 +17,24 @@
 package com.google.cloud.alloydb;
 
 import com.google.cloud.alloydb.v1.InstanceName;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
-public class ConnectionConfig {
+class ConnectionConfig {
   public static final String ALLOYDB_INSTANCE_NAME = "alloydbInstanceName";
   public static final String ALLOYDB_TARGET_PRINCIPAL = "alloydbTargetPrincipal";
   public static final String ALLOYDB_DELEGATES = "alloydbDelegates";
   public static final String ALLOYDB_NAMED_CONNECTOR = "alloydbNamedConnector";
   public static final String ALLOYDB_ADMIN_SERVICE_ENDPOINT = "alloydbAdminServiceEndpoint";
-  public static final String DEFAULT_NAMED_CONNECTION = "default";
   private final InstanceName instanceName;
   private final String namedConnector;
   private final ConnectorConfig connectorConfig;
 
   /** Create a new ConnectionConfig from the well known JDBC Connection properties. */
-  public static ConnectionConfig fromConnectionProperties(Properties props) {
+  static ConnectionConfig fromConnectionProperties(Properties props) {
     final String instanceNameStr = props.getProperty(ALLOYDB_INSTANCE_NAME, "");
     final InstanceName instanceName = InstanceName.parse(instanceNameStr);
     final String namedConnector = props.getProperty(ConnectionConfig.ALLOYDB_NAMED_CONNECTOR);
@@ -89,55 +86,44 @@ public class ConnectionConfig {
   }
 
   /** Creates a new instance of the ConnectionConfig with an updated connectorConfig. */
-  public ConnectionConfig withConnectorConfig(ConnectorConfig config) {
+  ConnectionConfig withConnectorConfig(ConnectorConfig config) {
     return new ConnectionConfig(instanceName, namedConnector, config);
   }
 
-  public InstanceName getInstanceName() {
+  InstanceName getInstanceName() {
     return instanceName;
   }
 
-  public String getNamedConnector() {
-    if (namedConnector != null && !namedConnector.isEmpty()) {
-      return namedConnector;
-    }
-
-    // Build the connection name with the properties that make the
-    // connection unique. Returns "default" if all properties are null.
-    List<String> attrs = new ArrayList<String>();
-    attrs.add(DEFAULT_NAMED_CONNECTION);
-    attrs.add(connectorConfig.getTargetPrincipal());
-    attrs.addAll(connectorConfig.getDelegates());
-    attrs.add(connectorConfig.getAdminServiceEndpoint());
-    return attrs.stream().filter(Objects::nonNull).collect(Collectors.joining("+"));
+  String getNamedConnector() {
+    return namedConnector;
   }
 
-  public ConnectorConfig getConnectorConfig() {
+  ConnectorConfig getConnectorConfig() {
     return connectorConfig;
   }
 
   /** The builder for the ConnectionConfig. */
-  public static class Builder {
+  static class Builder {
     private InstanceName instanceName;
     private String namedConnector;
     private ConnectorConfig connectorConfig = new ConnectorConfig.Builder().build();
 
-    public Builder withInstanceName(InstanceName instanceName) {
+    Builder withInstanceName(InstanceName instanceName) {
       this.instanceName = instanceName;
       return this;
     }
 
-    public Builder withNamedConnector(String namedConnector) {
+    Builder withNamedConnector(String namedConnector) {
       this.namedConnector = namedConnector;
       return this;
     }
 
-    public Builder withConnectorConfig(ConnectorConfig connectorConfig) {
+    Builder withConnectorConfig(ConnectorConfig connectorConfig) {
       this.connectorConfig = connectorConfig;
       return this;
     }
 
-    public ConnectionConfig build() {
+    ConnectionConfig build() {
       return new ConnectionConfig(instanceName, namedConnector, connectorConfig);
     }
   }

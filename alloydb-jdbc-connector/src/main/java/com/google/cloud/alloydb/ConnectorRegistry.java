@@ -15,63 +15,26 @@
  */
 package com.google.cloud.alloydb;
 
-import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.cloud.alloydb.v1.AlloyDBAdminClient;
-import com.google.common.util.concurrent.ListeningScheduledExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
+/** Configure the AlloyDB JDBC Connector. */
+public final class ConnectorRegistry {
 
-/**
- * ConnectorRegistry is a singleton that creates a single Executor, KeyPair, and AlloyDB Admin
- * Client for the lifetime of the SocketFactory. When callers are finished with the Connector, they
- * should use the ConnectorRegistry to shut down all the associated resources.
- */
-public enum ConnectorRegistry implements Closeable {
-  INSTANCE;
-
-  @SuppressWarnings("ImmutableEnumChecker")
-  private final ListeningScheduledExecutorService executor;
-
-  @SuppressWarnings("ImmutableEnumChecker")
-  private ConcurrentHashMap<String, Connector> registeredConnectors;
-
-  ConnectorRegistry() {
-    // During refresh, each instance consumes 2 threads from the thread pool. By using 8 threads,
-    // there should be enough free threads so that there will not be a deadlock. Most users
-    // configure 3 or fewer instances, requiring 6 threads during refresh. By setting
-    // this to 8, it's enough threads for most users, plus a safety factor of 2.
-    this.executor = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(8));
-    this.registeredConnectors = new ConcurrentHashMap<>();
+  /**
+   * Register a named connection so that it can later be referenced by name in a JDBC or R2DBC URL.
+   *
+   * @param name the named connection name.
+   * @param config the full configuration of the connection.
+   */
+  public static void register(String name, ConnectorConfig config) {
+    InternalConnectorRegistry.INSTANCE.register(name, config);
   }
 
-  Connector getConnector(ConnectionConfig config) {
-    return registeredConnectors.computeIfAbsent(
-        config.getNamedConnector(),
-        k -> {
-          try {
-            FixedCredentialsProvider credentialsProvider =
-                CredentialsProviderFactory.create(config);
-            AlloyDBAdminClient alloyDBAdminClient =
-                AlloyDBAdminClientFactory.create(
-                    credentialsProvider, config.getConnectorConfig().getAdminServiceEndpoint());
-
-            return new Connector(
-                executor,
-                new DefaultConnectionInfoRepository(executor, alloyDBAdminClient),
-                RsaKeyPairGenerator.generateKeyPair(),
-                new DefaultConnectionInfoCacheFactory(),
-                new ConcurrentHashMap<>());
-          } catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-        });
-  }
-
-  @Override
-  public void close() {
-    this.executor.shutdown();
+  /**
+   * Close a named connector. This will stop all background credential refresh processes. All future
+   * attempts to connect via this named connection will fail.
+   *
+   * @param name the name of the connector to close.
+   */
+  public static void close(String name) {
+    InternalConnectorRegistry.INSTANCE.close(name);
   }
 }

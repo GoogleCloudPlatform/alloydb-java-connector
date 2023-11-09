@@ -15,7 +15,6 @@
  */
 package com.google.cloud.alloydb;
 
-import com.google.cloud.alloydb.v1.InstanceName;
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import java.io.IOException;
@@ -59,19 +58,31 @@ class Connector {
   private final ConnectionInfoRepository connectionInfoRepo;
   private final KeyPair clientConnectorKeyPair;
   private final ConnectionInfoCacheFactory connectionInfoCacheFactory;
-  private final ConcurrentHashMap<InstanceName, ConnectionInfoCache> instances;
+  private final ConcurrentHashMap<ConnectionConfig, ConnectionInfoCache> instances;
+  private final ConnectorConfig config;
 
   Connector(
+      ConnectorConfig config,
       ListeningScheduledExecutorService executor,
       ConnectionInfoRepository connectionInfoRepo,
       KeyPair clientConnectorKeyPair,
       ConnectionInfoCacheFactory connectionInfoCacheFactory,
-      ConcurrentHashMap<InstanceName, ConnectionInfoCache> instances) {
+      ConcurrentHashMap<ConnectionConfig, ConnectionInfoCache> instances) {
+    this.config = config;
     this.executor = executor;
     this.connectionInfoRepo = connectionInfoRepo;
     this.clientConnectorKeyPair = clientConnectorKeyPair;
     this.connectionInfoCacheFactory = connectionInfoCacheFactory;
     this.instances = instances;
+  }
+
+  public ConnectorConfig getConfig() {
+    return config;
+  }
+
+  public void close() {
+    this.instances.forEach((key, c) -> c.close());
+    this.instances.clear();
   }
 
   private static SSLSocket buildSocket(
@@ -130,19 +141,8 @@ class Connector {
     return keyManagerFactory.getKeyManagers();
   }
 
-  Socket connect(InstanceName instanceName) throws IOException {
-    ConnectionInfoCache connectionInfoCache =
-        instances.computeIfAbsent(
-            instanceName,
-            k -> {
-              return connectionInfoCacheFactory.create(
-                  this.executor,
-                  this.connectionInfoRepo,
-                  instanceName,
-                  this.clientConnectorKeyPair,
-                  MIN_RATE_LIMIT_MS);
-            });
-
+  Socket connect(ConnectionConfig config) throws IOException {
+    ConnectionInfoCache connectionInfoCache = getConnection(config);
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
 
     try {
@@ -172,6 +172,19 @@ class Connector {
     }
   }
 
+  ConnectionInfoCache getConnection(ConnectionConfig config) {
+    return instances.computeIfAbsent(config, k -> createConnectionInfo(config));
+  }
+
+  private ConnectionInfoCache createConnectionInfo(ConnectionConfig config) {
+    return connectionInfoCacheFactory.create(
+        this.executor,
+        this.connectionInfoRepo,
+        config.getInstanceName(),
+        this.clientConnectorKeyPair,
+        MIN_RATE_LIMIT_MS);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -181,7 +194,8 @@ class Connector {
       return false;
     }
     Connector that = (Connector) o;
-    return Objects.equal(executor, that.executor)
+    return Objects.equal(config, that.config)
+        && Objects.equal(executor, that.executor)
         && Objects.equal(connectionInfoRepo, that.connectionInfoRepo)
         && Objects.equal(clientConnectorKeyPair, that.clientConnectorKeyPair)
         && Objects.equal(connectionInfoCacheFactory, that.connectionInfoCacheFactory)
@@ -191,6 +205,7 @@ class Connector {
   @Override
   public int hashCode() {
     return Objects.hashCode(
+        config,
         executor,
         connectionInfoRepo,
         clientConnectorKeyPair,

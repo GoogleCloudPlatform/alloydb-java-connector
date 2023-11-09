@@ -87,49 +87,6 @@ public class ConnectionConfigTest {
   }
 
   @Test
-  public void testNamedConnection_getUniqueName() {
-    final InstanceName wantInstance = InstanceName.parse(INSTANCE_NAME);
-    final String wantTargetPrincipal = "test@example.com";
-    final List<String> wantDelegates = Arrays.asList("test1@example.com", "test2@example.com");
-    final String delegates = wantDelegates.stream().collect(Collectors.joining("+"));
-    final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";
-    final String wantNamedConnection =
-        String.format(
-            "%s+%s+%s+%s",
-            ConnectionConfig.DEFAULT_NAMED_CONNECTION,
-            wantTargetPrincipal,
-            delegates,
-            wantAdminServiceEndpoint);
-
-    ConnectorConfig connectorConfig =
-        new ConnectorConfig.Builder()
-            .withTargetPrincipal(wantTargetPrincipal)
-            .withDelegates(wantDelegates)
-            .withAdminServiceEndpoint(wantAdminServiceEndpoint)
-            .build();
-
-    ConnectionConfig config =
-        new ConnectionConfig.Builder()
-            .withInstanceName(wantInstance)
-            .withConnectorConfig(connectorConfig)
-            .build();
-
-    assertThat(config.getNamedConnector()).isEqualTo(wantNamedConnection);
-  }
-
-  @Test
-  public void testNamedConnection_getDefault() {
-    final String wantNamedConnection = ConnectionConfig.DEFAULT_NAMED_CONNECTION;
-
-    Properties props = new Properties();
-    props.setProperty(ConnectionConfig.ALLOYDB_INSTANCE_NAME, INSTANCE_NAME);
-
-    ConnectionConfig config = ConnectionConfig.fromConnectionProperties(props);
-
-    assertThat(config.getNamedConnector()).isEqualTo(wantNamedConnection);
-  }
-
-  @Test
   public void testWithConnectorConfig() {
     final InstanceName wantInstance = InstanceName.parse(INSTANCE_NAME);
     final String wantNamedConnector = "my-connection";
