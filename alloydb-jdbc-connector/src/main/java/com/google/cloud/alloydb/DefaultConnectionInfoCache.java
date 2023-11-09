@@ -58,4 +58,10 @@ class DefaultConnectionInfoCache implements ConnectionInfoCache {
   public void forceRefresh() {
     refresher.forceRefresh();
   }
+
+  /** Closes the */
+  @Override
+  public void close() {
+    refresher.close();
+  }
 }

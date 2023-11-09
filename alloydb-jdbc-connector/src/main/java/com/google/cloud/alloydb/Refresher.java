@@ -55,6 +55,9 @@ class Refresher {
   @GuardedBy("connectionInfoGuard")
   private Throwable currentRefreshFailure;
 
+  @GuardedBy("connectionInfoGuard")
+  private boolean closed;
+
   Refresher(
       String name,
       ListeningScheduledExecutorService executor,
@@ -103,6 +106,9 @@ class Refresher {
   ConnectionInfo getConnectionInfo(long timeoutMs) {
     ListenableFuture<ConnectionInfo> f;
     synchronized (connectionInfoGuard) {
+      if (closed) {
+        throw new IllegalStateException("Connection closed");
+      }
       f = current;
     }
 
@@ -139,6 +145,9 @@ class Refresher {
    */
   void forceRefresh() {
     synchronized (connectionInfoGuard) {
+      if (closed) {
+        throw new IllegalStateException("Connection closed");
+      }
       // Don't force a refresh until the current refresh operation
       // has produced a successful refresh.
       if (refreshRunning) {
@@ -159,7 +168,7 @@ class Refresher {
   }
 
   /**
-   * Triggers an update of internal information obtained from the Cloud SQL Admin API, returning a
+   * Triggers an update of internal information obtained from the AlloyDB Admin API, returning a
    * future that resolves once a valid T has been acquired. This sets up a chain of futures that
    * will 1. Acquire a rate limiter. 2. Attempt to fetch instance data. 3. Schedule the next attempt
    * to get instance data based on the success/failure of this attempt.
@@ -218,9 +227,11 @@ class Refresher {
 
         // Now update nextInstanceData to perform a refresh after the
         // scheduled delay
-        next =
-            Futures.scheduleAsync(
-                this::startRefreshAttempt, secondsToRefresh, TimeUnit.SECONDS, executor);
+        if (!closed) {
+          next =
+              Futures.scheduleAsync(
+                  this::startRefreshAttempt, secondsToRefresh, TimeUnit.SECONDS, executor);
+        }
 
         // Resolves to an T immediately
         return current;
@@ -233,11 +244,32 @@ class Refresher {
           e);
       synchronized (connectionInfoGuard) {
         currentRefreshFailure = e;
-        next = this.startRefreshAttempt();
-
+        if (!closed) {
+          next = this.startRefreshAttempt();
+        }
         // Resolves after the next successful refresh attempt.
         return next;
       }
+    }
+  }
+
+  void close() {
+    synchronized (connectionInfoGuard) {
+      if (closed) {
+        return;
+      }
+
+      // Cancel any in-progress requests
+      if (!this.current.isDone()) {
+        this.current.cancel(true);
+      }
+      if (!this.next.isDone()) {
+        this.next.cancel(true);
+      }
+
+      this.current = Futures.immediateFailedFuture(new RuntimeException("Connection is closed."));
+
+      this.closed = true;
     }
   }
 

@@ -52,19 +52,17 @@ public class ITDefaultConnectionInfoRepositoryTest {
       generator = KeyPairGenerator.getInstance("RSA");
     } catch (NoSuchAlgorithmException err) {
       throw new RuntimeException(
-          "Unable to initialize Cloud SQL socket factory because no RSA implementation is "
+          "Unable to initialize AlloyDB socket factory because no RSA implementation is "
               + "available.");
     }
     generator.initialize(2048);
 
     keyPair = generator.generateKeyPair();
     executor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor());
-    ConnectionConfig config =
-        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceUri)).build();
+    ConnectorConfig config = new ConnectorConfig.Builder().build();
     FixedCredentialsProvider credentialsProvider = CredentialsProviderFactory.create(config);
     alloyDBAdminClient =
-        AlloyDBAdminClientFactory.create(
-            credentialsProvider, config.getConnectorConfig().getAdminServiceEndpoint());
+        AlloyDBAdminClientFactory.create(credentialsProvider, config.getAdminServiceEndpoint());
 
     defaultConnectionInfoRepository =
         new DefaultConnectionInfoRepository(executor, alloyDBAdminClient);

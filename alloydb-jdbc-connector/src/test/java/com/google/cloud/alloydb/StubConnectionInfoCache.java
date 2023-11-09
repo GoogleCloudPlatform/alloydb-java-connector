@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class StubConnectionInfoCache implements ConnectionInfoCache {
 
   private final AtomicBoolean forceRefreshWasCalled = new AtomicBoolean(false);
+  private final AtomicBoolean closeWasCalled = new AtomicBoolean(false);
   private ConnectionInfo connectionInfo;
 
   @Override
@@ -32,8 +33,17 @@ public class StubConnectionInfoCache implements ConnectionInfoCache {
     forceRefreshWasCalled.set(true);
   }
 
+  @Override
+  public void close() {
+    closeWasCalled.set(true);
+  }
+
   public boolean hasForceRefreshed() {
     return forceRefreshWasCalled.get();
+  }
+
+  public boolean hasClosed() {
+    return closeWasCalled.get();
   }
 
   public void setConnectionInfo(ConnectionInfo connectionInfo) {

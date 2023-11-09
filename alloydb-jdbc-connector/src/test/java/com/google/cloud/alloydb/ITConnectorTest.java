@@ -49,12 +49,10 @@ public class ITConnectorTest {
     executor = newTestExecutor();
     instanceName = System.getenv("ALLOYDB_INSTANCE_NAME");
     // Create the client once and close it later.
-    ConnectionConfig config =
-        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
+    ConnectorConfig config = new ConnectorConfig.Builder().build();
     FixedCredentialsProvider credentialsProvider = CredentialsProviderFactory.create(config);
     alloydbAdminClient =
-        AlloyDBAdminClientFactory.create(
-            credentialsProvider, config.getConnectorConfig().getAdminServiceEndpoint());
+        AlloyDBAdminClientFactory.create(credentialsProvider, config.getAdminServiceEndpoint());
   }
 
   @After
@@ -75,18 +73,21 @@ public class ITConnectorTest {
   @Test
   public void testConnect_createsSocketConnection() throws IOException {
     SSLSocket socket = null;
+    ConnectionConfig config =
+        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
     try {
       ConnectionInfoRepository connectionInfoRepository =
           new DefaultConnectionInfoRepository(executor, alloydbAdminClient);
       Connector connector =
           new Connector(
+              config.getConnectorConfig(),
               executor,
               connectionInfoRepository,
               RsaKeyPairGenerator.generateKeyPair(),
               new DefaultConnectionInfoCacheFactory(),
               new ConcurrentHashMap<>());
 
-      socket = (SSLSocket) connector.connect(InstanceName.parse(instanceName));
+      socket = (SSLSocket) connector.connect(config);
 
       assertThat(socket.getKeepAlive()).isTrue();
       assertThat(socket.getTcpNoDelay()).isTrue();
@@ -116,16 +117,19 @@ public class ITConnectorTest {
     StubConnectionInfoCacheFactory connectionInfoCacheFactory =
         new StubConnectionInfoCacheFactory(stubConnectionInfoCache);
     SSLSocket socket = null;
+    ConnectionConfig config =
+        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
 
     try {
       Connector connector =
           new Connector(
+              config.getConnectorConfig(),
               executor,
               new DefaultConnectionInfoRepository(executor, alloydbAdminClient),
               clientConnectorKeyPair,
               connectionInfoCacheFactory,
               new ConcurrentHashMap<>());
-      socket = (SSLSocket) connector.connect(InstanceName.parse(instanceName));
+      socket = (SSLSocket) connector.connect(config);
     } catch (ConnectException ignore) {
       // The socket connect will fail because it's trying to connect to localhost with TLS certs.
       // So ignore the exception here.
@@ -139,6 +143,7 @@ public class ITConnectorTest {
     }
 
     assertThat(stubConnectionInfoCache.hasForceRefreshed()).isTrue();
+    assertThat(stubConnectionInfoCache.hasClosed()).isFalse();
   }
 
   @Test
@@ -150,9 +155,13 @@ public class ITConnectorTest {
         new DefaultConnectionInfoCacheFactory();
     ListeningScheduledExecutorService exec =
         MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor());
+    ConnectorConfig config = new ConnectorConfig.Builder().build();
+    ConnectorConfig newConfig =
+        new ConnectorConfig.Builder().withAdminServiceEndpoint("endpoint:3443").build();
 
     Connector a =
         new Connector(
+            config,
             executor,
             connectionInfoRepo,
             clientConnectorKeyPair,
@@ -162,6 +171,17 @@ public class ITConnectorTest {
     assertThat(a)
         .isNotEqualTo(
             new Connector(
+                newConfig, // Different
+                executor,
+                connectionInfoRepo,
+                clientConnectorKeyPair,
+                connectionInfoCacheFactory,
+                new ConcurrentHashMap<>()));
+
+    assertThat(a)
+        .isNotEqualTo(
+            new Connector(
+                config,
                 exec, // Different
                 connectionInfoRepo,
                 clientConnectorKeyPair,
@@ -171,6 +191,7 @@ public class ITConnectorTest {
     assertThat(a)
         .isNotEqualTo(
             new Connector(
+                config,
                 executor,
                 new DefaultConnectionInfoRepository(executor, alloydbAdminClient), // Different
                 clientConnectorKeyPair,
@@ -180,6 +201,7 @@ public class ITConnectorTest {
     assertThat(a)
         .isNotEqualTo(
             new Connector(
+                config,
                 executor,
                 connectionInfoRepo,
                 RsaKeyPairGenerator.generateKeyPair(), // Different
@@ -189,10 +211,11 @@ public class ITConnectorTest {
     assertThat(a)
         .isNotEqualTo(
             new Connector(
+                config,
                 executor,
                 connectionInfoRepo,
                 clientConnectorKeyPair,
-                new DefaultConnectionInfoCacheFactory(),
+                new DefaultConnectionInfoCacheFactory(), // Different
                 new ConcurrentHashMap<>()));
   }
 
@@ -203,10 +226,12 @@ public class ITConnectorTest {
     KeyPair clientConnectorKeyPair = RsaKeyPairGenerator.generateKeyPair();
     DefaultConnectionInfoCacheFactory connectionInfoCacheFactory =
         new DefaultConnectionInfoCacheFactory();
-    ConcurrentHashMap<InstanceName, ConnectionInfoCache> instances = new ConcurrentHashMap<>();
+    ConcurrentHashMap<ConnectionConfig, ConnectionInfoCache> instances = new ConcurrentHashMap<>();
+    ConnectorConfig config = new ConnectorConfig.Builder().build();
 
     Connector a =
         new Connector(
+            config,
             executor,
             connectionInfoRepo,
             clientConnectorKeyPair,
@@ -216,6 +241,7 @@ public class ITConnectorTest {
     assertThat(a.hashCode())
         .isEqualTo(
             Objects.hashCode(
+                config,
                 executor,
                 connectionInfoRepo,
                 clientConnectorKeyPair,

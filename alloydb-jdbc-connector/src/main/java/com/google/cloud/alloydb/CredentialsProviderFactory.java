@@ -26,7 +26,7 @@ class CredentialsProviderFactory {
   private static final String CLOUD_PLATFORM = "https://www.googleapis.com/auth/cloud-platform";
   private static final String ALLOYDB_LOGIN = "https://www.googleapis.com/auth/alloydb.login";
 
-  static FixedCredentialsProvider create(ConnectionConfig config) {
+  static FixedCredentialsProvider create(ConnectorConfig config) {
     GoogleCredentials credentials;
     try {
       credentials = GoogleCredentials.getApplicationDefault();
@@ -34,13 +34,12 @@ class CredentialsProviderFactory {
       throw new RuntimeException("failed to retrieve OAuth2 access token", e);
     }
 
-    if (config.getConnectorConfig().getTargetPrincipal() != null
-        && !config.getConnectorConfig().getTargetPrincipal().isEmpty()) {
+    if (config.getTargetPrincipal() != null && !config.getTargetPrincipal().isEmpty()) {
       credentials =
           ImpersonatedCredentials.newBuilder()
               .setSourceCredentials(credentials)
-              .setTargetPrincipal(config.getConnectorConfig().getTargetPrincipal())
-              .setDelegates(config.getConnectorConfig().getDelegates())
+              .setTargetPrincipal(config.getTargetPrincipal())
+              .setDelegates(config.getDelegates())
               .setScopes(Arrays.asList(ALLOYDB_LOGIN, CLOUD_PLATFORM))
               .build();
     }
