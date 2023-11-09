@@ -18,6 +18,7 @@ package com.google.cloud.alloydb;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.base.Objects;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
@@ -113,5 +114,21 @@ public class ConnectorConfigTest {
 
     assertThat(k1).isEqualTo(k2);
     assertThat(k1.hashCode()).isEqualTo(k2.hashCode());
+  }
+
+  @Test
+  public void testHashCode() {
+    final String wantTargetPrincipal = "test@example.com";
+    final List<String> wantDelegates = Arrays.asList("test1@example.com", "test2@example.com");
+    final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";
+    ConnectorConfig cc =
+        new ConnectorConfig.Builder()
+            .withTargetPrincipal(wantTargetPrincipal)
+            .withDelegates(wantDelegates)
+            .withAdminServiceEndpoint(wantAdminServiceEndpoint)
+            .build();
+
+    assertThat(cc.hashCode())
+        .isEqualTo(Objects.hashCode(wantTargetPrincipal, wantDelegates, wantAdminServiceEndpoint));
   }
 }
