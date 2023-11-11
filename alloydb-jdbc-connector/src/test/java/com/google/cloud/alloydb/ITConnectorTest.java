@@ -17,8 +17,6 @@ package com.google.cloud.alloydb;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.cloud.alloydb.v1.AlloyDBAdminClient;
 import com.google.cloud.alloydb.v1.InstanceName;
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
@@ -41,8 +39,10 @@ import org.junit.Test;
 public class ITConnectorTest {
 
   private String instanceName;
-  private AlloyDBAdminClient alloydbAdminClient;
   private ListeningScheduledExecutorService executor;
+  private ConnectionInfoRepositoryFactory connectionInfoRepositoryFactory;
+  private ConnectionInfoRepository connectionInfoRepo;
+  private CredentialFactoryProvider credentialFactoryProvider;
 
   @Before
   public void setUp() throws IOException {
@@ -50,14 +50,15 @@ public class ITConnectorTest {
     instanceName = System.getenv("ALLOYDB_INSTANCE_NAME");
     // Create the client once and close it later.
     ConnectorConfig config = new ConnectorConfig.Builder().build();
-    FixedCredentialsProvider credentialsProvider = CredentialsProviderFactory.create(config);
-    alloydbAdminClient =
-        AlloyDBAdminClientFactory.create(credentialsProvider, config.getAdminServiceEndpoint());
+    credentialFactoryProvider = new CredentialFactoryProvider();
+    CredentialFactory instanceCredentialFactory =
+        credentialFactoryProvider.getInstanceCredentialFactory(config);
+    connectionInfoRepositoryFactory = new DefaultConnectionInfoRepositoryFactory(executor);
+    connectionInfoRepo = connectionInfoRepositoryFactory.create(instanceCredentialFactory, config);
   }
 
   @After
   public void tearDown() {
-    alloydbAdminClient.close();
     executor.shutdown();
   }
 
@@ -76,13 +77,11 @@ public class ITConnectorTest {
     ConnectionConfig config =
         new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
     try {
-      ConnectionInfoRepository connectionInfoRepository =
-          new DefaultConnectionInfoRepository(executor, alloydbAdminClient);
       Connector connector =
           new Connector(
               config.getConnectorConfig(),
               executor,
-              connectionInfoRepository,
+              connectionInfoRepo,
               RsaKeyPairGenerator.generateKeyPair(),
               new DefaultConnectionInfoCacheFactory(),
               new ConcurrentHashMap<>());
@@ -125,7 +124,7 @@ public class ITConnectorTest {
           new Connector(
               config.getConnectorConfig(),
               executor,
-              new DefaultConnectionInfoRepository(executor, alloydbAdminClient),
+              connectionInfoRepo,
               clientConnectorKeyPair,
               connectionInfoCacheFactory,
               new ConcurrentHashMap<>());
@@ -148,8 +147,6 @@ public class ITConnectorTest {
 
   @Test
   public void testEquals() {
-    DefaultConnectionInfoRepository connectionInfoRepo =
-        new DefaultConnectionInfoRepository(executor, alloydbAdminClient);
     KeyPair clientConnectorKeyPair = RsaKeyPairGenerator.generateKeyPair();
     DefaultConnectionInfoCacheFactory connectionInfoCacheFactory =
         new DefaultConnectionInfoCacheFactory();
@@ -158,6 +155,10 @@ public class ITConnectorTest {
     ConnectorConfig config = new ConnectorConfig.Builder().build();
     ConnectorConfig newConfig =
         new ConnectorConfig.Builder().withAdminServiceEndpoint("endpoint:3443").build();
+    CredentialFactory instanceCredentialFactory =
+        credentialFactoryProvider.getInstanceCredentialFactory(newConfig);
+    ConnectionInfoRepository newConnectionInfoRepo =
+        connectionInfoRepositoryFactory.create(instanceCredentialFactory, config);
 
     Connector a =
         new Connector(
@@ -193,7 +194,7 @@ public class ITConnectorTest {
             new Connector(
                 config,
                 executor,
-                new DefaultConnectionInfoRepository(executor, alloydbAdminClient), // Different
+                newConnectionInfoRepo, // Different
                 clientConnectorKeyPair,
                 connectionInfoCacheFactory,
                 new ConcurrentHashMap<>()));
@@ -221,8 +222,6 @@ public class ITConnectorTest {
 
   @Test
   public void testHashCode() {
-    DefaultConnectionInfoRepository connectionInfoRepo =
-        new DefaultConnectionInfoRepository(executor, alloydbAdminClient);
     KeyPair clientConnectorKeyPair = RsaKeyPairGenerator.generateKeyPair();
     DefaultConnectionInfoCacheFactory connectionInfoCacheFactory =
         new DefaultConnectionInfoCacheFactory();

@@ -37,6 +37,7 @@ public class ConnectionConfigTest {
     final List<String> wantDelegates = Arrays.asList("test1@example.com", "test2@example.com");
     final String delegates = wantDelegates.stream().collect(Collectors.joining(","));
     final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";
+    final String wantPath = "my-path";
 
     Properties props = new Properties();
     props.setProperty(ConnectionConfig.ALLOYDB_INSTANCE_NAME, INSTANCE_NAME);
@@ -44,6 +45,7 @@ public class ConnectionConfigTest {
     props.setProperty(ConnectionConfig.ALLOYDB_TARGET_PRINCIPAL, wantTargetPrincipal);
     props.setProperty(ConnectionConfig.ALLOYDB_DELEGATES, delegates);
     props.setProperty(ConnectionConfig.ALLOYDB_ADMIN_SERVICE_ENDPOINT, wantAdminServiceEndpoint);
+    props.setProperty(ConnectionConfig.ALLOYDB_GOOGLE_CREDENTIALS_PATH, wantPath);
 
     ConnectionConfig config = ConnectionConfig.fromConnectionProperties(props);
 
@@ -53,6 +55,7 @@ public class ConnectionConfigTest {
     assertThat(config.getConnectorConfig().getDelegates()).isEqualTo(wantDelegates);
     assertThat(config.getConnectorConfig().getAdminServiceEndpoint())
         .isEqualTo(wantAdminServiceEndpoint);
+    assertThat(config.getConnectorConfig().getGoogleCredentialsPath()).isEqualTo(wantPath);
   }
 
   @Test
@@ -62,12 +65,14 @@ public class ConnectionConfigTest {
     final String wantTargetPrincipal = "test@example.com";
     final List<String> wantDelegates = Arrays.asList("test1@example.com", "test2@example.com");
     final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";
+    final String wantPath = "my-path";
 
     ConnectorConfig connectorConfig =
         new ConnectorConfig.Builder()
             .withTargetPrincipal(wantTargetPrincipal)
             .withDelegates(wantDelegates)
             .withAdminServiceEndpoint(wantAdminServiceEndpoint)
+            .withGoogleCredentialsPath(wantPath)
             .build();
 
     ConnectionConfig config =
@@ -84,6 +89,7 @@ public class ConnectionConfigTest {
     assertThat(config.getConnectorConfig().getDelegates()).isEqualTo(wantDelegates);
     assertThat(config.getConnectorConfig().getAdminServiceEndpoint())
         .isEqualTo(wantAdminServiceEndpoint);
+    assertThat(config.getConnectorConfig().getGoogleCredentialsPath()).isEqualTo(wantPath);
   }
 
   @Test

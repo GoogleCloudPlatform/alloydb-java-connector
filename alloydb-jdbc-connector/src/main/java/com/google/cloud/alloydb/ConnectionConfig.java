@@ -29,6 +29,7 @@ class ConnectionConfig {
   public static final String ALLOYDB_DELEGATES = "alloydbDelegates";
   public static final String ALLOYDB_NAMED_CONNECTOR = "alloydbNamedConnector";
   public static final String ALLOYDB_ADMIN_SERVICE_ENDPOINT = "alloydbAdminServiceEndpoint";
+  public static final String ALLOYDB_GOOGLE_CREDENTIALS_PATH = "alloydbGoogleCredentialsPath";
   private final InstanceName instanceName;
   private final String namedConnector;
   private final ConnectorConfig connectorConfig;
@@ -48,6 +49,8 @@ class ConnectionConfig {
     } else {
       delegates = Collections.emptyList();
     }
+    final String googleCredentialsPath =
+        props.getProperty(ConnectionConfig.ALLOYDB_GOOGLE_CREDENTIALS_PATH);
 
     return new ConnectionConfig(
         instanceName,
@@ -56,6 +59,7 @@ class ConnectionConfig {
             .withTargetPrincipal(targetPrincipal)
             .withDelegates(delegates)
             .withAdminServiceEndpoint(adminServiceEndpoint)
+            .withGoogleCredentialsPath(googleCredentialsPath)
             .build());
   }
 

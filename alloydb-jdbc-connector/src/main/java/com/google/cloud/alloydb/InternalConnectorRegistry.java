@@ -15,8 +15,6 @@
  */
 package com.google.cloud.alloydb;
 
-import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.cloud.alloydb.v1.AlloyDBAdminClient;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -38,6 +36,9 @@ enum InternalConnectorRegistry implements Closeable {
   private final ListeningScheduledExecutorService executor;
 
   @SuppressWarnings("ImmutableEnumChecker")
+  private final CredentialFactoryProvider credentialFactoryProvider;
+
+  @SuppressWarnings("ImmutableEnumChecker")
   private ConcurrentHashMap<ConnectorConfig, Connector> unnamedConnectors;
 
   @SuppressWarnings("ImmutableEnumChecker")
@@ -51,6 +52,7 @@ enum InternalConnectorRegistry implements Closeable {
     this.executor = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(8));
     this.unnamedConnectors = new ConcurrentHashMap<>();
     this.namedConnectors = new ConcurrentHashMap<>();
+    this.credentialFactoryProvider = new CredentialFactoryProvider();
   }
 
   /**
@@ -112,21 +114,20 @@ enum InternalConnectorRegistry implements Closeable {
   }
 
   private Connector createConnector(ConnectorConfig config) {
-    try {
-      FixedCredentialsProvider credentialsProvider = CredentialsProviderFactory.create(config);
-      AlloyDBAdminClient alloyDBAdminClient =
-          AlloyDBAdminClientFactory.create(credentialsProvider, config.getAdminServiceEndpoint());
+    CredentialFactory instanceCredentialFactory =
+        credentialFactoryProvider.getInstanceCredentialFactory(config);
+    DefaultConnectionInfoRepositoryFactory connectionInfoRepositoryFactory =
+        new DefaultConnectionInfoRepositoryFactory(executor);
+    DefaultConnectionInfoRepository connectionInfoRepository =
+        connectionInfoRepositoryFactory.create(instanceCredentialFactory, config);
 
-      return new Connector(
-          config,
-          executor,
-          new DefaultConnectionInfoRepository(executor, alloyDBAdminClient),
-          RsaKeyPairGenerator.generateKeyPair(),
-          new DefaultConnectionInfoCacheFactory(),
-          new ConcurrentHashMap<>());
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return new Connector(
+        config,
+        executor,
+        connectionInfoRepository,
+        RsaKeyPairGenerator.generateKeyPair(),
+        new DefaultConnectionInfoCacheFactory(),
+        new ConcurrentHashMap<>());
   }
 
   private Connector getNamedConnector(String name) {

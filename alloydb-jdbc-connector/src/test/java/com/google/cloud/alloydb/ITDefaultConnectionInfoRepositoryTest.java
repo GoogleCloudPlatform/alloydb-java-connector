@@ -19,8 +19,6 @@ package com.google.cloud.alloydb;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
-import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.cloud.alloydb.v1.AlloyDBAdminClient;
 import com.google.cloud.alloydb.v1.InstanceName;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
@@ -39,7 +37,6 @@ public class ITDefaultConnectionInfoRepositoryTest {
 
   private DefaultConnectionInfoRepository defaultConnectionInfoRepository;
   private KeyPair keyPair;
-  private AlloyDBAdminClient alloyDBAdminClient;
   private String instanceUri;
   private ListeningScheduledExecutorService executor;
 
@@ -60,17 +57,17 @@ public class ITDefaultConnectionInfoRepositoryTest {
     keyPair = generator.generateKeyPair();
     executor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor());
     ConnectorConfig config = new ConnectorConfig.Builder().build();
-    FixedCredentialsProvider credentialsProvider = CredentialsProviderFactory.create(config);
-    alloyDBAdminClient =
-        AlloyDBAdminClientFactory.create(credentialsProvider, config.getAdminServiceEndpoint());
-
+    CredentialFactoryProvider credentialFactoryProvider = new CredentialFactoryProvider();
+    CredentialFactory instanceCredentialFactory =
+        credentialFactoryProvider.getInstanceCredentialFactory(config);
+    ConnectionInfoRepositoryFactory connectionInfoRepositoryFactory =
+        new DefaultConnectionInfoRepositoryFactory(executor);
     defaultConnectionInfoRepository =
-        new DefaultConnectionInfoRepository(executor, alloyDBAdminClient);
+        connectionInfoRepositoryFactory.create(instanceCredentialFactory, config);
   }
 
   @After
   public void tearDown() {
-    alloyDBAdminClient.close();
     executor.shutdown();
   }
 
