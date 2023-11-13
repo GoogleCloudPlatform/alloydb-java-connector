@@ -16,7 +16,8 @@
   "dependencyDashboard": true,
   "dependencyDashboardLabels": ["type: process"],
   "ignoreDeps": [
-    "org.graalvm.sdk:graal-sdk"
+    "org.graalvm.sdk:graal-sdk",
+    "ch.qos.logback:logback-classic"
   ],
   "packageRules": [
     {
