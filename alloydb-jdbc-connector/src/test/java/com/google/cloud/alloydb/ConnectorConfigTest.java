@@ -17,10 +17,13 @@
 package com.google.cloud.alloydb;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Objects;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 import org.junit.Test;
 
 public class ConnectorConfigTest {
@@ -117,18 +120,92 @@ public class ConnectorConfigTest {
   }
 
   @Test
+  public void testBuild_withGoogleCredentialsPath() {
+    final String wantGoogleCredentialsPath = "/path/to/credentials";
+    ConnectorConfig cc =
+        new ConnectorConfig.Builder().withGoogleCredentialsPath(wantGoogleCredentialsPath).build();
+    assertThat(cc.getGoogleCredentialsPath()).isEqualTo(wantGoogleCredentialsPath);
+  }
+
+  @Test
+  public void testBuild_withGoogleCredentials() {
+    final GoogleCredentials wantGoogleCredentials = GoogleCredentials.create(null);
+    ConnectorConfig cc =
+        new ConnectorConfig.Builder().withGoogleCredentials(wantGoogleCredentials).build();
+    assertThat(cc.getGoogleCredentials()).isSameInstanceAs(wantGoogleCredentials);
+  }
+
+  @Test
+  public void testBuild_withGoogleCredentialsSupplier() {
+    final Supplier<GoogleCredentials> wantGoogleCredentialSupplier =
+        () -> GoogleCredentials.create(null);
+    ConnectorConfig cc =
+        new ConnectorConfig.Builder()
+            .withGoogleCredentialsSupplier(wantGoogleCredentialSupplier)
+            .build();
+    assertThat(cc.getGoogleCredentialsSupplier()).isSameInstanceAs(wantGoogleCredentialSupplier);
+  }
+
+  @Test
+  public void testBuild_failsWhenManyGoogleCredentialFieldsSet() {
+    final Supplier<GoogleCredentials> wantGoogleCredentialSupplier =
+        () -> GoogleCredentials.create(null);
+    final GoogleCredentials wantGoogleCredentials = GoogleCredentials.create(null);
+    final String wantGoogleCredentialsPath = "/path/to/credentials";
+
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            new ConnectorConfig.Builder()
+                .withGoogleCredentials(wantGoogleCredentials)
+                .withGoogleCredentialsSupplier(wantGoogleCredentialSupplier)
+                .build());
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            new ConnectorConfig.Builder()
+                .withGoogleCredentialsPath(wantGoogleCredentialsPath)
+                .withGoogleCredentialsSupplier(wantGoogleCredentialSupplier)
+                .build());
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            new ConnectorConfig.Builder()
+                .withGoogleCredentialsPath(wantGoogleCredentialsPath)
+                .withGoogleCredentials(wantGoogleCredentials)
+                .build());
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            new ConnectorConfig.Builder()
+                .withGoogleCredentialsPath(wantGoogleCredentialsPath)
+                .withGoogleCredentials(wantGoogleCredentials)
+                .withGoogleCredentialsSupplier(wantGoogleCredentialSupplier)
+                .build());
+  }
+
+  @Test
   public void testHashCode() {
     final String wantTargetPrincipal = "test@example.com";
     final List<String> wantDelegates = Arrays.asList("test1@example.com", "test2@example.com");
     final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";
+    final String wantGoogleCredentialsPath = "/path/to/credentials";
     ConnectorConfig cc =
         new ConnectorConfig.Builder()
             .withTargetPrincipal(wantTargetPrincipal)
             .withDelegates(wantDelegates)
             .withAdminServiceEndpoint(wantAdminServiceEndpoint)
+            .withGoogleCredentialsPath(wantGoogleCredentialsPath)
             .build();
 
     assertThat(cc.hashCode())
-        .isEqualTo(Objects.hashCode(wantTargetPrincipal, wantDelegates, wantAdminServiceEndpoint));
+        .isEqualTo(
+            Objects.hashCode(
+                wantTargetPrincipal,
+                wantDelegates,
+                wantAdminServiceEndpoint,
+                null, // googleCredentialsSupplier
+                null, // googleCredentials
+                wantGoogleCredentialsPath));
   }
 }
