@@ -200,9 +200,13 @@ For more information, see the [underlying client library documentation][client-d
 
 [client-docs]: https://cloud.google.com/java/docs/reference/google-cloud-alloydb/latest/com.google.cloud.alloydb.v1beta#alloydbadminclient_1
 
-### Example
+#### Example
 
 ```java
 config.addDataSourceProperty("alloydbAdminServiceEndpoint",
     "NEW_API_SERVICE_ENDPOINT");
 ```
+
+## Configuration Reference
+
+- See [Configuration Reference](configuration.md)
