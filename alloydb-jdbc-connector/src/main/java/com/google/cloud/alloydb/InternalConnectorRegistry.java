@@ -95,16 +95,21 @@ enum InternalConnectorRegistry implements Closeable {
   }
 
   /** Shutdown all connectors and remove the singleton instance. */
-  public void shutdown() {
+  private void shutdown() {
     this.unnamedConnectors.forEach((key, c) -> c.close());
     this.unnamedConnectors.clear();
     this.namedConnectors.forEach((key, c) -> c.close());
     this.namedConnectors.clear();
-    this.executor.shutdown();
   }
 
   @Override
   public void close() {
+    shutdown();
+    this.executor.shutdown();
+  }
+
+  /** Calls shutdown on the singleton. */
+  public void resetInstance() {
     shutdown();
   }
 
