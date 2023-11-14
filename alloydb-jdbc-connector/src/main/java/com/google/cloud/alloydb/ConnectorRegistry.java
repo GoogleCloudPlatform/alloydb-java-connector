@@ -37,4 +37,12 @@ public final class ConnectorRegistry {
   public static void close(String name) {
     InternalConnectorRegistry.INSTANCE.close(name);
   }
+
+  /**
+   * Resets the entire AlloyDB JDBC Connector. This will stop all background threads. The next
+   * attempt to open a connection or register a configuration will start a new ConnectorRegistry.
+   */
+  public static void reset() {
+    InternalConnectorRegistry.INSTANCE.resetInstance();
+  }
 }
