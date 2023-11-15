@@ -111,6 +111,12 @@
       <artifactId>google-auth-library-oauth2-http</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>com.google.auth</groupId>
+      <artifactId>google-auth-library-credentials</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- Logging -->
     <dependency> 
       <groupId>org.slf4j</groupId>
