@@ -39,7 +39,7 @@
   <url>https://github.com/GoogleCloudPlatform/alloydb-java-connector</url>
 
   <properties>
-    <bouncycastle.version>1.76</bouncycastle.version>
+    <bouncycastle.version>1.77</bouncycastle.version>
     <postgresql.version>42.6.0</postgresql.version>
   </properties>
 
