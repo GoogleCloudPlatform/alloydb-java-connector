@@ -58,6 +58,8 @@ jobs:
         workload_identity_provider: ${{ secrets.PROVIDER_NAME }}
         service_account: ${{ secrets.SERVICE_ACCOUNT }}
         access_token_lifetime: 600s
+    - name: Java Version
+      run: java -version
     - name: Run tests
       run: .kokoro/build.sh
       env:
@@ -98,6 +100,8 @@ jobs:
         workload_identity_provider: ${{ secrets.PROVIDER_NAME }}
         service_account: ${{ secrets.SERVICE_ACCOUNT }}
         access_token_lifetime: 600s
+    - name: Java Version
+      run: java -version
     - name: Run tests
       run: .kokoro/build.bat
       env:
@@ -125,6 +129,8 @@ jobs:
       with:
         distribution: zulu
         java-version: ${{matrix.java}}
+    - name: Java Version
+      run: java -version
     - name: Build dependencies
       run: .kokoro/dependencies.sh
 
@@ -141,6 +147,8 @@ jobs:
       with:
         distribution: zulu
         java-version: 11
+    - name: Java Version
+      run: java -version
     - name: Run lint
       run: .kokoro/build.sh
       env:
@@ -159,6 +167,8 @@ jobs:
       with:
         distribution: zulu
         java-version: 8
+    - name: Java Version
+      run: java -version
     - name: Run CLIRR
       run: .kokoro/build.sh
       env:
