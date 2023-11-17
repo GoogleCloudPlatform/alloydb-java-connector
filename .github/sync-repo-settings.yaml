@@ -43,8 +43,9 @@ branchProtectionRules:
   requiredStatusCheckContexts:
   - "dependencies (11)"
   - "lint"
-  - "units (8)"
-  - "units (11)"
+  - "unit-tests (linux) (8)"
+  - "unit-tests (linux) (11)"
+  - "unit-tests (linux) (17)"
   - "units + e2e"
   - "cla/google"
   # Wait until we make the repo public before bringing this back

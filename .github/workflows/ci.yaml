@@ -29,6 +29,7 @@ permissions: read-all
 
 jobs:
   units:
+    name: unit-tests (linux)
     # run job on proper workflow event triggers (skip job for pull_request event from forks and only run pull_request_target for "tests: run" label)
     if: "${{ (github.event.action != 'labeled' && github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) || github.event.label.name == 'tests: run' }}"
     runs-on: ubuntu-latest
@@ -41,11 +42,13 @@ jobs:
       matrix:
         java: [8, 11, 17]
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - name: Checkout code
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
-    - uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
+    - name: Set up JDK
+      uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
       with:
         distribution: zulu
         java-version: ${{matrix.java}}
@@ -55,8 +58,10 @@ jobs:
         workload_identity_provider: ${{ secrets.PROVIDER_NAME }}
         service_account: ${{ secrets.SERVICE_ACCOUNT }}
         access_token_lifetime: 600s
-    - run: java -version
-    - run: .kokoro/build.sh
+    - name: Java Version
+      run: java -version
+    - name: Run tests
+      run: .kokoro/build.sh
       env:
         JOB_TYPE: test
     - name: FlakyBot
@@ -68,6 +73,7 @@ jobs:
         ./flakybot --repo ${{github.repository}} --commit_hash ${{github.sha}} --build_url https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
 
   windows:
+    name: unit-tests (windows)
     # run job on proper workflow event triggers (skip job for pull_request event from forks and only run pull_request_target for "tests: run" label)
     if: "${{ (github.event.action != 'labeled' && github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) || github.event.label.name == 'tests: run' }}"
     runs-on: windows-latest
@@ -78,11 +84,13 @@ jobs:
     steps:
     - name: Support longpaths
       run: git config --system core.longpaths true
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - name: Checkout code
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
-    - uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
+    - name: Set up JDK
+      uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
       with:
         distribution: zulu
         java-version: 8
@@ -92,8 +100,10 @@ jobs:
         workload_identity_provider: ${{ secrets.PROVIDER_NAME }}
         service_account: ${{ secrets.SERVICE_ACCOUNT }}
         access_token_lifetime: 600s
-    - run: java -version
-    - run: .kokoro/build.bat
+    - name: Java Version
+      run: java -version
+    - name: Run tests
+      run: .kokoro/build.bat
       env:
         JOB_TYPE: test
     - name: FlakyBot
@@ -109,46 +119,58 @@ jobs:
       matrix:
         java: [8, 11, 17]
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - name: Checkout code
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
-    - uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
+    - name: Set up JDK
+      uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
       with:
         distribution: zulu
         java-version: ${{matrix.java}}
-    - run: java -version
-    - run: .kokoro/dependencies.sh
+    - name: Java Version
+      run: java -version
+    - name: Build dependencies
+      run: .kokoro/dependencies.sh
 
   lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - name: Checkout code
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
-    - uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
+    - name: Set up JDK
+      uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
       with:
         distribution: zulu
         java-version: 11
-    - run: java -version
-    - run: .kokoro/build.sh
+    - name: Java Version
+      run: java -version
+    - name: Run lint
+      run: .kokoro/build.sh
       env:
         JOB_TYPE: lint
 
   clirr:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - name: Checkout code
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
-    - uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
+    - name: Set up JDK
+      uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
       with:
         distribution: zulu
         java-version: 8
-    - run: java -version
-    - run: .kokoro/build.sh
+    - name: Java Version
+      run: java -version
+    - name: Run CLIRR
+      run: .kokoro/build.sh
       env:
         JOB_TYPE: clirr
 
