@@ -57,6 +57,8 @@
           <ignoredDependencies>
             <!-- The postgres driver must be provided by client application and is otherwise unused here. -->
             <ignoredDependency>org.postgresql:postgresql:*</ignoredDependency>
+            <!-- A transitive dependency use only in test directly, but can't be marked as test scope. -->
+            <ignoredDependency>com.google.auth:google-auth-library-credentials:*</ignoredDependency>
           </ignoredDependencies>
           <usedDependencies>
             <!-- This dependency is not used at compile-time. -->
