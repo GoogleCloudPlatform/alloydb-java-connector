@@ -40,7 +40,7 @@
 
   <properties>
     <bouncycastle.version>1.77</bouncycastle.version>
-    <postgresql.version>42.6.0</postgresql.version>
+    <postgresql.version>42.7.0</postgresql.version>
   </properties>
 
   <build>
