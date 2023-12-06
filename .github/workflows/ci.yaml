@@ -191,7 +191,7 @@ jobs:
         repository: ${{ github.event.pull_request.head.repo.full_name }}
 
     - name: Setup Maven Action
-      uses: s4u/setup-maven-action@57ca7f1a813fd21035f9399bc015664601217110
+      uses: s4u/setup-maven-action@fa2c7e4517ed008b1f73e7e0195a9eecf5582cd4
       with:
         java-version: 17
 
@@ -253,7 +253,7 @@ jobs:
     steps:
       - name: Remove PR label
         if: "${{ github.event.action == 'labeled' && github.event.label.name == 'tests: run' }}"
-        uses: actions/github-script@e69ef5462fd455e02edcaf4dd7708eda96b9eda0 # v7.0.0
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -281,7 +281,7 @@ jobs:
           java-version: 8
 
       - name: Setup Maven Action
-        uses: s4u/setup-maven-action@57ca7f1a813fd21035f9399bc015664601217110
+        uses: s4u/setup-maven-action@fa2c7e4517ed008b1f73e7e0195a9eecf5582cd4
         with:
           java-version: 8
 
