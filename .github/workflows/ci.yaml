@@ -30,13 +30,7 @@ permissions: read-all
 jobs:
   units:
     name: unit-tests (linux)
-    # run job on proper workflow event triggers (skip job for pull_request event from forks and only run pull_request_target for "tests: run" label)
-    if: "${{ (github.event.action != 'labeled' && github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) || github.event.label.name == 'tests: run' }}"
     runs-on: ubuntu-latest
-    permissions:
-      contents: "read"
-      id-token: "write"
-      issues: write
     strategy:
       fail-fast: false
       matrix:
@@ -52,12 +46,6 @@ jobs:
       with:
         distribution: zulu
         java-version: ${{matrix.java}}
-    - name: Authenticate to Google Cloud
-      uses: google-github-actions/auth@67e9c72af6e0492df856527b474995862b7b6591 # v2.0.0
-      with:
-        workload_identity_provider: ${{ secrets.PROVIDER_NAME }}
-        service_account: ${{ secrets.SERVICE_ACCOUNT }}
-        access_token_lifetime: 600s
     - name: Java Version
       run: java -version
     - name: Run tests
@@ -74,13 +62,7 @@ jobs:
 
   windows:
     name: unit-tests (windows)
-    # run job on proper workflow event triggers (skip job for pull_request event from forks and only run pull_request_target for "tests: run" label)
-    if: "${{ (github.event.action != 'labeled' && github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) || github.event.label.name == 'tests: run' }}"
     runs-on: windows-latest
-    permissions:
-      contents: "read"
-      id-token: "write"
-      issues: write
     steps:
     - name: Support longpaths
       run: git config --system core.longpaths true
@@ -94,12 +76,6 @@ jobs:
       with:
         distribution: zulu
         java-version: 8
-    - name: Authenticate to Google Cloud
-      uses: google-github-actions/auth@67e9c72af6e0492df856527b474995862b7b6591 # v2.0.0
-      with:
-        workload_identity_provider: ${{ secrets.PROVIDER_NAME }}
-        service_account: ${{ secrets.SERVICE_ACCOUNT }}
-        access_token_lifetime: 600s
     - name: Java Version
       run: java -version
     - name: Run tests
