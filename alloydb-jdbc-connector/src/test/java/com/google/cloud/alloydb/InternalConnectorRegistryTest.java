@@ -24,12 +24,19 @@ import com.google.cloud.alloydb.v1.InstanceName;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Properties;
+import org.junit.Before;
 import org.junit.Test;
 
 public class InternalConnectorRegistryTest {
 
   private static final String INSTANCE_NAME =
       "projects/<PROJECT>/locations/<REGION>/clusters/<CLUSTER>/instances/<INSTANCE>";
+
+  @Before
+  public void setUp() {
+    InternalConnectorRegistry.INSTANCE.setCredentialFactoryProvider(
+        new CredentialFactoryProvider(new StubCredentialFactory()));
+  }
 
   @Test
   public void create_failOnInvalidInstanceName() throws IOException {

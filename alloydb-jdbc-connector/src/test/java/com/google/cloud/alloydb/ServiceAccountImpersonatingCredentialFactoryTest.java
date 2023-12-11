@@ -29,7 +29,7 @@ public class ServiceAccountImpersonatingCredentialFactoryTest {
 
   @Test
   public void testImpersonatedCredentialsWithMultipleAccounts() {
-    DefaultCredentialFactory factory = new DefaultCredentialFactory();
+    StubCredentialFactory factory = new StubCredentialFactory();
     Credentials credentials = factory.getCredentials();
 
     CredentialFactory impersonatedFactory =
@@ -51,7 +51,7 @@ public class ServiceAccountImpersonatingCredentialFactoryTest {
 
   @Test
   public void testImpersonatedCredentialsWithOneAccount() {
-    DefaultCredentialFactory factory = new DefaultCredentialFactory();
+    StubCredentialFactory factory = new StubCredentialFactory();
     Credentials credentials = factory.getCredentials();
 
     CredentialFactory impersonatedFactory =
@@ -70,7 +70,7 @@ public class ServiceAccountImpersonatingCredentialFactoryTest {
 
   @Test
   public void testEmptyDelegatesThrowsIllegalArgumentException() {
-    DefaultCredentialFactory factory = new DefaultCredentialFactory();
+    StubCredentialFactory factory = new StubCredentialFactory();
     assertThrows(
         IllegalArgumentException.class,
         () -> {

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.alloydb;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -36,7 +37,7 @@ enum InternalConnectorRegistry implements Closeable {
   private final ListeningScheduledExecutorService executor;
 
   @SuppressWarnings("ImmutableEnumChecker")
-  private final CredentialFactoryProvider credentialFactoryProvider;
+  private CredentialFactoryProvider credentialFactoryProvider;
 
   @SuppressWarnings("ImmutableEnumChecker")
   private ConcurrentHashMap<ConnectorConfig, Connector> unnamedConnectors;
@@ -53,6 +54,12 @@ enum InternalConnectorRegistry implements Closeable {
     this.unnamedConnectors = new ConcurrentHashMap<>();
     this.namedConnectors = new ConcurrentHashMap<>();
     this.credentialFactoryProvider = new CredentialFactoryProvider();
+  }
+
+  /** Test use only: Set a new CredentialFactoryProvider */
+  @VisibleForTesting
+  void setCredentialFactoryProvider(CredentialFactoryProvider credentialFactoryProvider) {
+    this.credentialFactoryProvider = credentialFactoryProvider;
   }
 
   /**
