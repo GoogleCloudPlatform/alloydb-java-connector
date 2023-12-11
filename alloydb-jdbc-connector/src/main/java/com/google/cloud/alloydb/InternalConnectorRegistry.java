@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.Socket;
@@ -45,6 +46,13 @@ enum InternalConnectorRegistry implements Closeable {
   @SuppressWarnings("ImmutableEnumChecker")
   private ConcurrentHashMap<String, Connector> namedConnectors;
 
+  @SuppressWarnings("ImmutableEnumChecker")
+  private final Object shutdownGuard = new Object();
+
+  @SuppressWarnings("ImmutableEnumChecker")
+  @GuardedBy("shutdownGuard")
+  private boolean shutdown = false;
+
   InternalConnectorRegistry() {
     // During refresh, each instance consumes 2 threads from the thread pool. By using 8 threads,
     // there should be enough free threads so that there will not be a deadlock. Most users
@@ -70,6 +78,12 @@ enum InternalConnectorRegistry implements Closeable {
    * @throws IOException if error occurs during socket creation.
    */
   public Socket connect(ConnectionConfig config) throws IOException {
+    synchronized (shutdownGuard) {
+      if (shutdown) {
+        throw new IllegalStateException("ConnectorRegistry was shut down.");
+      }
+    }
+
     if (config.getNamedConnector() != null) {
       Connector connector = getNamedConnector(config.getNamedConnector());
       return connector.connect(config.withConnectorConfig(connector.getConfig()));
@@ -86,6 +100,12 @@ enum InternalConnectorRegistry implements Closeable {
 
   /** Register the configuration for a named connector. */
   public void register(String name, ConnectorConfig config) {
+    synchronized (shutdownGuard) {
+      if (shutdown) {
+        throw new IllegalStateException("ConnectorRegistry was shut down.");
+      }
+    }
+
     if (this.namedConnectors.containsKey(name)) {
       throw new IllegalArgumentException("Named connection " + name + " exists.");
     }
@@ -94,6 +114,12 @@ enum InternalConnectorRegistry implements Closeable {
 
   /** Close a named connector, stopping the refresh process and removing it from the registry. */
   public void close(String name) {
+    synchronized (shutdownGuard) {
+      if (shutdown) {
+        throw new IllegalStateException("ConnectorRegistry was shut down.");
+      }
+    }
+
     Connector connector = namedConnectors.remove(name);
     if (connector == null) {
       throw new IllegalArgumentException("Named connection " + name + " does not exist.");
@@ -101,8 +127,8 @@ enum InternalConnectorRegistry implements Closeable {
     connector.close();
   }
 
-  /** Shutdown all connectors and remove the singleton instance. */
-  private void shutdown() {
+  /** Shutdown all connectors. */
+  private void shutdownConnectors() {
     this.unnamedConnectors.forEach((key, c) -> c.close());
     this.unnamedConnectors.clear();
     this.namedConnectors.forEach((key, c) -> c.close());
@@ -111,13 +137,21 @@ enum InternalConnectorRegistry implements Closeable {
 
   @Override
   public void close() {
-    shutdown();
-    this.executor.shutdown();
+    shutdownInstance();
   }
 
   /** Calls shutdown on the singleton. */
   public void resetInstance() {
-    shutdown();
+    shutdownConnectors();
+  }
+
+  /** Calls shutdown on the singleton. */
+  public void shutdownInstance() {
+    synchronized (shutdownGuard) {
+      shutdown = true;
+      shutdownConnectors();
+      this.executor.shutdown();
+    }
   }
 
   private Connector getConnector(ConnectionConfig config) {

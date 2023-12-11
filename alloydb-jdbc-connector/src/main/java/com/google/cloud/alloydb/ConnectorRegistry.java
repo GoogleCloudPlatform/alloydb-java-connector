@@ -45,4 +45,12 @@ public final class ConnectorRegistry {
   public static void reset() {
     InternalConnectorRegistry.INSTANCE.resetInstance();
   }
+
+  /**
+   * Shutdown the entire AlloyDB JDBC Connector. This will stop all background threads. All future
+   * attempts to connect to the database will fail.
+   */
+  public static void shutdown() {
+    InternalConnectorRegistry.INSTANCE.shutdownInstance();
+  }
 }
