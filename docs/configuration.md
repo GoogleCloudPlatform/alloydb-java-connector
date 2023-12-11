@@ -182,9 +182,21 @@ ConnectorRegistry.reset();
 ```
 
 After calling `ConnectorRegistry.reset()`, the next attempt to connect to a
-database using a SocketFactory or R2DBC ConnectionFactory, or
-to `ConnectorRegistry.register()` will start a new connector registry, restart
-the background threads, and create a new connector.
+database, or to `ConnectorRegistry.register()` will start a new connector
+registry, restart the background threads, and create a new connector.
+
+### Shutdown The Connector Registry
+
+The application may shut down the ConnectorRegistry. This closes all existing
+named and unnamed connectors, and stops internal background threads.
+
+```java
+ConnectorRegistry.shutdown();
+```
+
+After calling `ConnectorRegistry.shutdown()`, subsequent attempts to connect to
+a database, or to `ConnectorRegistry.register()` will fail, 
+throwing `IllegalStateException`.
 
 ## Configuring Google Credentials
 
