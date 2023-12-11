@@ -31,6 +31,10 @@ jobs:
   units:
     name: unit-tests (linux)
     runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+      id-token: "write"
+      issues: write
     strategy:
       fail-fast: false
       matrix:
@@ -46,6 +50,14 @@ jobs:
       with:
         distribution: zulu
         java-version: ${{matrix.java}}
+    - name: Authenticate to Google Cloud
+      # only needed for Flakybot on periodic (schedule) and continuous (push) events
+      if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+      uses: google-github-actions/auth@67e9c72af6e0492df856527b474995862b7b6591 # v2.0.0
+      with:
+        workload_identity_provider: ${{ secrets.PROVIDER_NAME }}
+        service_account: ${{ secrets.SERVICE_ACCOUNT }}
+        access_token_lifetime: 600s
     - name: Java Version
       run: java -version
     - name: Run tests
@@ -63,6 +75,10 @@ jobs:
   windows:
     name: unit-tests (windows)
     runs-on: windows-latest
+    permissions:
+      contents: "read"
+      id-token: "write"
+      issues: write
     steps:
     - name: Support longpaths
       run: git config --system core.longpaths true
@@ -76,6 +92,14 @@ jobs:
       with:
         distribution: zulu
         java-version: 8
+    - name: Authenticate to Google Cloud
+      # only needed for Flakybot on periodic (schedule) and continuous (push) events
+      if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+      uses: google-github-actions/auth@67e9c72af6e0492df856527b474995862b7b6591 # v2.0.0
+      with:
+        workload_identity_provider: ${{ secrets.PROVIDER_NAME }}
+        service_account: ${{ secrets.SERVICE_ACCOUNT }}
+        access_token_lifetime: 600s
     - name: Java Version
       run: java -version
     - name: Run tests
