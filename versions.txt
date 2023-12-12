@@ -1,4 +1,4 @@
 # Format:
 # module:released-version:current-version
 
-alloydb-jdbc-connector:0.3.0:0.3.0
+alloydb-jdbc-connector:0.3.0:0.3.1-SNAPSHOT
