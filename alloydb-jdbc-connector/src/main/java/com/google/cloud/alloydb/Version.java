@@ -17,6 +17,6 @@ package com.google.cloud.alloydb;
 
 class Version {
   // {x-version-update-start:alloydb-jdbc-connector:current}
-  static final String VERSION = "0.3.0";
+  static final String VERSION = "0.3.1-SNAPSHOT";
   // {x-version-update-end}
 }
