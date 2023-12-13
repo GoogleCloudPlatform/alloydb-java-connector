@@ -15,6 +15,7 @@
   "semanticCommits": "enabled",
   "dependencyDashboard": true,
   "dependencyDashboardLabels": ["type: process"],
+  "ignorePaths": [".kokoro/requirements.txt"],
   "ignoreDeps": [
     "org.graalvm.sdk:graal-sdk",
     "ch.qos.logback:logback-classic"
@@ -83,11 +84,6 @@
         "^com.google.cloud:google-cloud-alloydb-bom"
       ],
       "groupName": "alloydb BOM & shared dependencies"
-    },
-    {
-      "matchDatasources": ["pypi"],
-      "groupName": "python dependencies for kokoro",
-      "commitMessagePrefix": "chore(deps):"
     },
     {
       "matchManagers": ["github-actions"],
