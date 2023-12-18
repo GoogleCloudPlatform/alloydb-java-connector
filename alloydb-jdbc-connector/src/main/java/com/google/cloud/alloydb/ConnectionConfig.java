@@ -30,9 +30,12 @@ class ConnectionConfig {
   public static final String ALLOYDB_NAMED_CONNECTOR = "alloydbNamedConnector";
   public static final String ALLOYDB_ADMIN_SERVICE_ENDPOINT = "alloydbAdminServiceEndpoint";
   public static final String ALLOYDB_GOOGLE_CREDENTIALS_PATH = "alloydbGoogleCredentialsPath";
+  public static final String ENABLE_IAM_AUTH_PROPERTY = "enableIamAuth";
+  public static final AuthType DEFAULT_AUTH_TYPE = AuthType.PASSWORD;
   private final InstanceName instanceName;
   private final String namedConnector;
   private final ConnectorConfig connectorConfig;
+  private final AuthType authType;
 
   /** Create a new ConnectionConfig from the well known JDBC Connection properties. */
   static ConnectionConfig fromConnectionProperties(Properties props) {
@@ -51,10 +54,15 @@ class ConnectionConfig {
     }
     final String googleCredentialsPath =
         props.getProperty(ConnectionConfig.ALLOYDB_GOOGLE_CREDENTIALS_PATH);
+    final AuthType authType =
+        Boolean.parseBoolean(props.getProperty(ConnectionConfig.ENABLE_IAM_AUTH_PROPERTY))
+            ? AuthType.IAM
+            : AuthType.PASSWORD;
 
     return new ConnectionConfig(
         instanceName,
         namedConnector,
+        authType,
         new ConnectorConfig.Builder()
             .withTargetPrincipal(targetPrincipal)
             .withDelegates(delegates)
@@ -83,15 +91,19 @@ class ConnectionConfig {
   }
 
   private ConnectionConfig(
-      InstanceName instanceName, String namedConnector, ConnectorConfig connectorConfig) {
+      InstanceName instanceName,
+      String namedConnector,
+      AuthType authType,
+      ConnectorConfig connectorConfig) {
     this.instanceName = instanceName;
     this.namedConnector = namedConnector;
     this.connectorConfig = connectorConfig;
+    this.authType = authType;
   }
 
   /** Creates a new instance of the ConnectionConfig with an updated connectorConfig. */
   ConnectionConfig withConnectorConfig(ConnectorConfig config) {
-    return new ConnectionConfig(instanceName, namedConnector, config);
+    return new ConnectionConfig(instanceName, namedConnector, authType, config);
   }
 
   InstanceName getInstanceName() {
@@ -106,11 +118,16 @@ class ConnectionConfig {
     return connectorConfig;
   }
 
+  AuthType getAuthType() {
+    return authType;
+  }
+
   /** The builder for the ConnectionConfig. */
   static class Builder {
     private InstanceName instanceName;
     private String namedConnector;
     private ConnectorConfig connectorConfig = new ConnectorConfig.Builder().build();
+    private AuthType authType = DEFAULT_AUTH_TYPE;
 
     Builder withInstanceName(InstanceName instanceName) {
       this.instanceName = instanceName;
@@ -127,8 +144,13 @@ class ConnectionConfig {
       return this;
     }
 
+    public Builder withAuthType(AuthType authType) {
+      this.authType = authType;
+      return this;
+    }
+
     ConnectionConfig build() {
-      return new ConnectionConfig(instanceName, namedConnector, connectorConfig);
+      return new ConnectionConfig(instanceName, namedConnector, authType, connectorConfig);
     }
   }
 }

@@ -38,6 +38,7 @@ public class ConnectionConfigTest {
     final String delegates = wantDelegates.stream().collect(Collectors.joining(","));
     final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";
     final String wantPath = "my-path";
+    final String iamAuthN = "true";
 
     Properties props = new Properties();
     props.setProperty(ConnectionConfig.ALLOYDB_INSTANCE_NAME, INSTANCE_NAME);
@@ -46,6 +47,7 @@ public class ConnectionConfigTest {
     props.setProperty(ConnectionConfig.ALLOYDB_DELEGATES, delegates);
     props.setProperty(ConnectionConfig.ALLOYDB_ADMIN_SERVICE_ENDPOINT, wantAdminServiceEndpoint);
     props.setProperty(ConnectionConfig.ALLOYDB_GOOGLE_CREDENTIALS_PATH, wantPath);
+    props.setProperty(ConnectionConfig.ENABLE_IAM_AUTH_PROPERTY, iamAuthN);
 
     ConnectionConfig config = ConnectionConfig.fromConnectionProperties(props);
 
@@ -56,6 +58,7 @@ public class ConnectionConfigTest {
     assertThat(config.getConnectorConfig().getAdminServiceEndpoint())
         .isEqualTo(wantAdminServiceEndpoint);
     assertThat(config.getConnectorConfig().getGoogleCredentialsPath()).isEqualTo(wantPath);
+    assertThat(config.getAuthType()).isEqualTo(AuthType.IAM);
   }
 
   @Test
@@ -66,6 +69,7 @@ public class ConnectionConfigTest {
     final List<String> wantDelegates = Arrays.asList("test1@example.com", "test2@example.com");
     final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";
     final String wantPath = "my-path";
+    final AuthType wantAuthType = AuthType.PASSWORD;
 
     ConnectorConfig connectorConfig =
         new ConnectorConfig.Builder()
@@ -80,6 +84,7 @@ public class ConnectionConfigTest {
             .withInstanceName(wantInstance)
             .withNamedConnector(wantNamedConnector)
             .withConnectorConfig(connectorConfig)
+            .withAuthType(wantAuthType)
             .build();
 
     assertThat(config.getInstanceName()).isEqualTo(wantInstance);
@@ -90,6 +95,7 @@ public class ConnectionConfigTest {
     assertThat(config.getConnectorConfig().getAdminServiceEndpoint())
         .isEqualTo(wantAdminServiceEndpoint);
     assertThat(config.getConnectorConfig().getGoogleCredentialsPath()).isEqualTo(wantPath);
+    assertThat(config.getAuthType()).isEqualTo(wantAuthType);
   }
 
   @Test
