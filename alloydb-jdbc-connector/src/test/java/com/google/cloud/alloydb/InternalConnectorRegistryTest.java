@@ -133,6 +133,7 @@ public class InternalConnectorRegistryTest {
     // Attempt and fail to connect using the cloudSqlNamedConnection connection property
     Properties connProps = new Properties();
     connProps.setProperty(ConnectionConfig.ALLOYDB_NAMED_CONNECTOR, namedConnector);
+    connProps.setProperty(ConnectionConfig.ALLOYDB_INSTANCE_NAME, INSTANCE_NAME);
     ConnectionConfig nameOnlyConfig = ConnectionConfig.fromConnectionProperties(connProps);
 
     // Assert that no connection is possible because the connector is closed.
@@ -151,6 +152,7 @@ public class InternalConnectorRegistryTest {
     String namedConnector = "first-connection";
     Properties connProps = new Properties();
     connProps.setProperty(ConnectionConfig.ALLOYDB_NAMED_CONNECTOR, namedConnector);
+    connProps.setProperty(ConnectionConfig.ALLOYDB_INSTANCE_NAME, INSTANCE_NAME);
     ConnectionConfig nameOnlyConfig = ConnectionConfig.fromConnectionProperties(connProps);
     IllegalArgumentException ex =
         assertThrows(

@@ -17,6 +17,7 @@
 package com.google.cloud.alloydb;
 
 import com.google.cloud.alloydb.v1.InstanceName;
+import com.google.common.base.Preconditions;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +40,7 @@ class ConnectionConfig {
 
   /** Create a new ConnectionConfig from the well known JDBC Connection properties. */
   static ConnectionConfig fromConnectionProperties(Properties props) {
+    validateProperties(props);
     final String instanceNameStr = props.getProperty(ALLOYDB_INSTANCE_NAME, "");
     final InstanceName instanceName = InstanceName.parse(instanceNameStr);
     final String namedConnector = props.getProperty(ConnectionConfig.ALLOYDB_NAMED_CONNECTOR);
@@ -88,6 +90,15 @@ class ConnectionConfig {
   @Override
   public int hashCode() {
     return Objects.hash(instanceName, namedConnector, connectorConfig);
+  }
+
+  private static void validateProperties(Properties props) {
+    final String instanceNameStr = props.getProperty(ALLOYDB_INSTANCE_NAME, "");
+    Preconditions.checkArgument(
+        InstanceName.isParsableFrom(instanceNameStr) == true,
+        String.format(
+            "'%s' must have format: projects/<PROJECT>/locations/<REGION>/clusters/<CLUSTER>/instances/<INSTANCE>",
+            ALLOYDB_INSTANCE_NAME));
   }
 
   private ConnectionConfig(

@@ -16,6 +16,7 @@
 package com.google.cloud.alloydb;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.fail;
 
 import com.google.cloud.alloydb.v1.InstanceName;
 import com.google.common.base.Objects;
@@ -223,5 +224,35 @@ public class ConnectionConfigTest {
             .build();
 
     assertThat(config.hashCode()).isEqualTo(Objects.hashCode(wantInstance, wantNamedConnector, cc));
+  }
+
+  @Test
+  public void testInstanceName_withDomainScopedProject() {
+    String projectName = "google.com:project";
+    String instanceName =
+        String.format(
+            "projects/%s/locations/<REGION>/clusters/<CLUSTER>/instances/<INSTANCE>", projectName);
+    Properties props = new Properties();
+    props.setProperty(ConnectionConfig.ALLOYDB_INSTANCE_NAME, instanceName);
+
+    ConnectionConfig config = ConnectionConfig.fromConnectionProperties(props);
+
+    assertThat(config.getInstanceName().getProject()).isEqualTo(projectName);
+  }
+
+  @Test
+  public void testInstanceName_withInvalidProject() {
+    String instanceName = "projects///locations/<REGION>/clusters/<CLUSTER>/instances/<INSTANCE>";
+    Properties props = new Properties();
+    props.setProperty(ConnectionConfig.ALLOYDB_INSTANCE_NAME, instanceName);
+
+    try {
+      ConnectionConfig.fromConnectionProperties(props);
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertThat(e)
+          .hasMessageThat()
+          .contains(String.format("'%s' must have format", ConnectionConfig.ALLOYDB_INSTANCE_NAME));
+    }
   }
 }
