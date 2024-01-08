@@ -102,6 +102,7 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Close
             .setParent(getParent(instanceName))
             .setCertDuration(Duration.newBuilder().setSeconds(3600 /* 1 hour */))
             .setPublicKey(generatePublicKeyCert(keyPair))
+            .setUseMetadataExchange(true)
             .build();
 
     return alloyDBAdminClient.generateClientCertificate(request);

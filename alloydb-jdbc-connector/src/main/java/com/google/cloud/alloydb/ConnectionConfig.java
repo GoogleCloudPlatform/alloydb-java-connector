@@ -31,7 +31,7 @@ class ConnectionConfig {
   public static final String ALLOYDB_NAMED_CONNECTOR = "alloydbNamedConnector";
   public static final String ALLOYDB_ADMIN_SERVICE_ENDPOINT = "alloydbAdminServiceEndpoint";
   public static final String ALLOYDB_GOOGLE_CREDENTIALS_PATH = "alloydbGoogleCredentialsPath";
-  public static final String ENABLE_IAM_AUTH_PROPERTY = "enableIamAuth";
+  public static final String ENABLE_IAM_AUTH_PROPERTY = "alloydbEnableIAMAuth";
   public static final AuthType DEFAULT_AUTH_TYPE = AuthType.PASSWORD;
   private final InstanceName instanceName;
   private final String namedConnector;

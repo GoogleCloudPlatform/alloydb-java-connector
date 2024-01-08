@@ -166,6 +166,8 @@ enum InternalConnectorRegistry implements Closeable {
         new DefaultConnectionInfoRepositoryFactory(executor);
     DefaultConnectionInfoRepository connectionInfoRepository =
         connectionInfoRepositoryFactory.create(instanceCredentialFactory, config);
+    AccessTokenSupplier accessTokenSupplier =
+        new DefaultAccessTokenSupplier(instanceCredentialFactory);
 
     return new Connector(
         config,
@@ -173,7 +175,8 @@ enum InternalConnectorRegistry implements Closeable {
         connectionInfoRepository,
         RsaKeyPairGenerator.generateKeyPair(),
         new DefaultConnectionInfoCacheFactory(),
-        new ConcurrentHashMap<>());
+        new ConcurrentHashMap<>(),
+        accessTokenSupplier);
   }
 
   private Connector getNamedConnector(String name) {
