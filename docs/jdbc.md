@@ -108,6 +108,59 @@ performance from a connection pool.
 [e2e]: https://github.com/GoogleCloudPlatform/alloydb-java-connector/blob/main/alloydb-jdbc-connector/src/test/java/com/google/cloud/alloydb/ITSocketFactoryTest.java
 [pool-sizing]: https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing
 
+### Automatic IAM Database Authentication
+
+The Java Connector supports [IAM database authentication][iam-authn].
+
+Make sure to
+[configure your AlloyDB Instance to allow IAM authentication][configure-iam-authn]
+and [add an IAM database user][add-iam-user]. Now, you can connect using
+user or service account credentials instead of a password.
+When setting up the connection, set the `alloydbEnableIAMAuth` connection property
+to `true` and the `user` field should be formatted as follows:
+
+- For an IAM user account, use the full user's email address,
+e.g., `db-user@example.com`.
+- For a service account, strip off the `.gserviceaccount.com` suffix, e.g.,
+`my-sa@my-project.iam.gserviceaccount.com` should be `my-sa@my-project.iam`.
+
+#### Example
+
+```java
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
+public class ExampleApplication {
+
+  private HikariDataSource dataSource;
+
+  HikariDataSource getDataSource() {
+    HikariConfig config = new HikariConfig();
+
+    // There is no need to set a host on the JDBC URL
+    // since the Connector will resolve the correct IP address.
+    config.setJdbcUrl("jdbc:postgresql:///postgres");
+    config.setUsername(System.getenv("ALLOYDB_IAM_USER"));
+
+    // Tell the driver to use the AlloyDB Java Connector's SocketFactory
+    // when connecting to an instance
+    config.addDataSourceProperty("socketFactory",
+        "com.google.cloud.alloydb.SocketFactory");
+    // Tell the Java Connector which instance to connect to.
+    config.addDataSourceProperty("alloydbInstanceName",
+        System.getenv("ALLOYDB_INSTANCE_NAME"));
+    config.addDataSourceProperty("alloydbEnableIAMAuth", "true");
+
+    this.dataSource = new HikariDataSource(config);
+  }
+  // Use DataSource as usual ...
+}
+```
+
+[iam-authn]: https://cloud.google.com/alloydb/docs/manage-iam-authn
+[configure-iam-authn]: https://cloud.google.com/alloydb/docs/manage-iam-authn#enable
+[add-iam-user]: https://cloud.google.com/alloydb/docs/manage-iam-authn#create-user
+
 ### Service Account Impersonation
 
 The Java Connector supports service account impersonation with the

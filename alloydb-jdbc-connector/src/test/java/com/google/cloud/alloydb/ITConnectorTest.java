@@ -43,6 +43,7 @@ public class ITConnectorTest {
   private ConnectionInfoRepositoryFactory connectionInfoRepositoryFactory;
   private ConnectionInfoRepository connectionInfoRepo;
   private CredentialFactoryProvider credentialFactoryProvider;
+  private AccessTokenSupplier accessTokenSupplier;
 
   @Before
   public void setUp() throws IOException {
@@ -55,6 +56,7 @@ public class ITConnectorTest {
         credentialFactoryProvider.getInstanceCredentialFactory(config);
     connectionInfoRepositoryFactory = new DefaultConnectionInfoRepositoryFactory(executor);
     connectionInfoRepo = connectionInfoRepositoryFactory.create(instanceCredentialFactory, config);
+    accessTokenSupplier = new DefaultAccessTokenSupplier(instanceCredentialFactory);
   }
 
   @After
@@ -84,7 +86,8 @@ public class ITConnectorTest {
               connectionInfoRepo,
               RsaKeyPairGenerator.generateKeyPair(),
               new DefaultConnectionInfoCacheFactory(),
-              new ConcurrentHashMap<>());
+              new ConcurrentHashMap<>(),
+              accessTokenSupplier);
 
       socket = (SSLSocket) connector.connect(config);
 
@@ -127,7 +130,8 @@ public class ITConnectorTest {
               connectionInfoRepo,
               clientConnectorKeyPair,
               connectionInfoCacheFactory,
-              new ConcurrentHashMap<>());
+              new ConcurrentHashMap<>(),
+              accessTokenSupplier);
       socket = (SSLSocket) connector.connect(config);
     } catch (ConnectException ignore) {
       // The socket connect will fail because it's trying to connect to localhost with TLS certs.
@@ -167,7 +171,8 @@ public class ITConnectorTest {
             connectionInfoRepo,
             clientConnectorKeyPair,
             connectionInfoCacheFactory,
-            new ConcurrentHashMap<>());
+            new ConcurrentHashMap<>(),
+            accessTokenSupplier);
 
     assertThat(a)
         .isNotEqualTo(
@@ -177,7 +182,8 @@ public class ITConnectorTest {
                 connectionInfoRepo,
                 clientConnectorKeyPair,
                 connectionInfoCacheFactory,
-                new ConcurrentHashMap<>()));
+                new ConcurrentHashMap<>(),
+                accessTokenSupplier));
 
     assertThat(a)
         .isNotEqualTo(
@@ -187,7 +193,8 @@ public class ITConnectorTest {
                 connectionInfoRepo,
                 clientConnectorKeyPair,
                 connectionInfoCacheFactory,
-                new ConcurrentHashMap<>()));
+                new ConcurrentHashMap<>(),
+                accessTokenSupplier));
 
     assertThat(a)
         .isNotEqualTo(
@@ -197,7 +204,8 @@ public class ITConnectorTest {
                 newConnectionInfoRepo, // Different
                 clientConnectorKeyPair,
                 connectionInfoCacheFactory,
-                new ConcurrentHashMap<>()));
+                new ConcurrentHashMap<>(),
+                accessTokenSupplier));
 
     assertThat(a)
         .isNotEqualTo(
@@ -207,7 +215,8 @@ public class ITConnectorTest {
                 connectionInfoRepo,
                 RsaKeyPairGenerator.generateKeyPair(), // Different
                 connectionInfoCacheFactory,
-                new ConcurrentHashMap<>()));
+                new ConcurrentHashMap<>(),
+                accessTokenSupplier));
 
     assertThat(a)
         .isNotEqualTo(
@@ -217,7 +226,19 @@ public class ITConnectorTest {
                 connectionInfoRepo,
                 clientConnectorKeyPair,
                 new DefaultConnectionInfoCacheFactory(), // Different
-                new ConcurrentHashMap<>()));
+                new ConcurrentHashMap<>(),
+                accessTokenSupplier));
+
+    assertThat(a)
+        .isNotEqualTo(
+            new Connector(
+                config,
+                executor,
+                connectionInfoRepo,
+                clientConnectorKeyPair,
+                connectionInfoCacheFactory,
+                new ConcurrentHashMap<>(),
+                null)); // Different
   }
 
   @Test
@@ -235,7 +256,8 @@ public class ITConnectorTest {
             connectionInfoRepo,
             clientConnectorKeyPair,
             connectionInfoCacheFactory,
-            instances);
+            instances,
+            accessTokenSupplier);
 
     assertThat(a.hashCode())
         .isEqualTo(
@@ -245,6 +267,7 @@ public class ITConnectorTest {
                 connectionInfoRepo,
                 clientConnectorKeyPair,
                 connectionInfoCacheFactory,
-                instances));
+                instances,
+                accessTokenSupplier));
   }
 }
