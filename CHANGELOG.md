@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.4.0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v0.3.0...v0.4.0) (2024-01-17)
+
+
+### Features
+
+* add support for Auto IAM AuthN ([#363](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/363)) ([b409e32](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/b409e323338cab116a1b6e37d03b3949615b1624))
+
+
+### Dependencies
+
+* Update com.google.errorprone dependencies to v2.24.0 ([#358](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/358)) ([9e000a4](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/9e000a48fc390ecd96e446f44de7e80eb55a43fe))
+* Update com.google.errorprone dependencies to v2.24.1 ([#362](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/362)) ([3553267](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/3553267ab3b43744a48357fc82ee371a4cfc1743))
+* Update dependency com.google.cloud:google-cloud-alloydb-bom to v0.21.0 ([#345](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/345)) ([b19071f](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/b19071f4e29bfee0ebb264a75bd7431dda611fde))
+* Update dependency com.google.cloud:google-cloud-alloydb-bom to v0.22.0 ([#370](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/370)) ([e191d66](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/e191d66a31f25b3fd0777d5fea7b72291ebf4f7f))
+* Update dependency com.google.cloud:google-cloud-alloydb-connectors-bom to v0.11.0 ([#371](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/371)) ([fed20a3](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/fed20a3ba4fe09fad321ba4949b82dd81484c482))
+* Update dependency org.apache.maven.plugins:maven-compiler-plugin to v3.12.0 ([#355](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/355)) ([4cb279c](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/4cb279c6807d57acbc40c5a8006e21b240fc7864))
+* Update dependency org.apache.maven.plugins:maven-compiler-plugin to v3.12.1 ([#360](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/360)) ([1285924](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/12859243fdde1e7eda8b5b4af13294e5806706ca))
+* Update dependency org.slf4j:slf4j-api to v2.0.10 ([#361](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/361)) ([681507a](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/681507a70e570e7f2f22ce48e92af2d11bbfb501))
+* Update dependency org.slf4j:slf4j-api to v2.0.11 ([#367](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/367)) ([1f00ad6](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/1f00ad67a5feabbb6da96c6461cc9062e55fc9c5))
+
 ## [0.3.0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v0.2.0...v0.3.0) (2023-12-11)
 
 
