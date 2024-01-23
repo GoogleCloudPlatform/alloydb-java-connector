@@ -470,6 +470,46 @@ public class RefresherTest {
     assertThat(r.getNext().isCancelled()).isTrue();
   }
 
+  @Test
+  public void testRefreshesTokenIfExpired() throws Exception {
+    ExampleData initialData = new ExampleData(Instant.now().minus(2, ChronoUnit.SECONDS));
+    ExampleData data = new ExampleData(Instant.now().plus(1, ChronoUnit.HOURS));
+
+    AtomicInteger refreshCount = new AtomicInteger();
+    final PauseCondition refresh1 = new PauseCondition();
+
+    Refresher r =
+        new Refresher(
+            "RefresherTest.testRefreshesTokenIfExpired",
+            executorService,
+            new RefreshCalculator(),
+            () -> {
+              int c = refreshCount.get();
+              ExampleData refreshResult = data;
+              switch (c) {
+                case 0:
+                  // refresh 0 should return initialData immediately
+                  refreshResult = initialData;
+                  break;
+              }
+              // refresh 2 and on should return data immediately
+              refreshCount.incrementAndGet();
+              return Futures.immediateFuture(refreshResult);
+            },
+            rateLimiter,
+            false);
+
+    // Get the first data that is about to expire
+    refresh1.waitForCondition(() -> r.getConnectionInfo(TEST_TIMEOUT_MS) == initialData, 1000L);
+    assertThat(refreshCount.get()).isEqualTo(1);
+
+    r.refreshIfExpired();
+
+    // getConnectionInfo again, and assert the refresh operation completed.
+    refresh1.waitForCondition(() -> r.getConnectionInfo(TEST_TIMEOUT_MS) == data, 1000L);
+    assertThat(refreshCount.get()).isEqualTo(2);
+  }
+
   private static class ExampleData extends ConnectionInfo {
 
     private final Instant expiration;

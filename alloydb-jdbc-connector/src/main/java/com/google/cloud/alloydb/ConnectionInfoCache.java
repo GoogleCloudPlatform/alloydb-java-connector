@@ -26,4 +26,6 @@ interface ConnectionInfoCache {
   void forceRefresh();
 
   void close();
+
+  void refreshIfExpired();
 }

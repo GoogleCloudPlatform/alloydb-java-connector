@@ -64,4 +64,10 @@ class DefaultConnectionInfoCache implements ConnectionInfoCache {
   public void close() {
     refresher.close();
   }
+
+  /** Refresh the certificate if expired */
+  @Override
+  public void refreshIfExpired() {
+    this.refresher.refreshIfExpired();
+  }
 }

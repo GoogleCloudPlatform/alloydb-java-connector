@@ -146,6 +146,7 @@ public class ITConnectorTest {
     }
 
     assertThat(stubConnectionInfoCache.hasForceRefreshed()).isTrue();
+    assertThat(stubConnectionInfoCache.hasRefreshedIfExpired()).isTrue();
     assertThat(stubConnectionInfoCache.hasClosed()).isFalse();
   }
 

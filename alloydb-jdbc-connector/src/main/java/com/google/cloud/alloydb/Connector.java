@@ -79,7 +79,17 @@ class Connector {
   }
 
   ConnectionInfoCache getConnection(ConnectionConfig config) {
-    return instances.computeIfAbsent(config, k -> createConnectionInfo(config));
+    ConnectionInfoCache instance =
+        instances.computeIfAbsent(config, k -> createConnectionInfo(config));
+
+    // If the client certificate has expired (as when the computer goes to
+    // sleep, and the refresh cycle cannot run), force a refresh immediately.
+    // The TLS handshake will not fail on an expired client certificate. It's
+    // not until the first read where the client cert error will be surfaced.
+    // So check that the certificate is valid before proceeding.
+    instance.refreshIfExpired();
+
+    return instance;
   }
 
   private ConnectionInfoCache createConnectionInfo(ConnectionConfig config) {
