@@ -21,6 +21,7 @@ public class StubConnectionInfoCache implements ConnectionInfoCache {
 
   private final AtomicBoolean forceRefreshWasCalled = new AtomicBoolean(false);
   private final AtomicBoolean closeWasCalled = new AtomicBoolean(false);
+  private final AtomicBoolean refreshIfExpiredWasCalled = new AtomicBoolean(false);
   private ConnectionInfo connectionInfo;
 
   @Override
@@ -38,12 +39,21 @@ public class StubConnectionInfoCache implements ConnectionInfoCache {
     closeWasCalled.set(true);
   }
 
+  @Override
+  public void refreshIfExpired() {
+    refreshIfExpiredWasCalled.set(true);
+  }
+
   public boolean hasForceRefreshed() {
     return forceRefreshWasCalled.get();
   }
 
   public boolean hasClosed() {
     return closeWasCalled.get();
+  }
+
+  public boolean hasRefreshedIfExpired() {
+    return refreshIfExpiredWasCalled.get();
   }
 
   public void setConnectionInfo(ConnectionInfo connectionInfo) {
