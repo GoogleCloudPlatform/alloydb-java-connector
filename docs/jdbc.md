@@ -231,7 +231,9 @@ In this example, the IAM principal impersonates SERVICE_ACCOUNT_1 which
 impersonates SERVICE_ACCOUNT_2 which then impersonates the
 TARGET_SERVICE_ACCOUNT.
 
-### Admin API Service Endpoint
+### Admin API
+
+#### Service Endpoint
 
 The Java Connector supports setting the Admin API Service Endpoint with the
 `alloydbAdminServiceEndpoint` JDBC connection property. This feature is
@@ -253,11 +255,27 @@ For more information, see the [underlying client library documentation][client-d
 
 [client-docs]: https://cloud.google.com/java/docs/reference/google-cloud-alloydb/latest/com.google.cloud.alloydb.v1beta#alloydbadminclient_1
 
-#### Example
+##### Example
 
 ```java
 config.addDataSourceProperty("alloydbAdminServiceEndpoint",
     "NEW_API_SERVICE_ENDPOINT");
+```
+
+#### Quota project
+
+The Java Connector supports setting the project ID for quota and billing
+with the `alloydbQuotaProject` property. If not specified, defaults to the
+project sourced from environment.
+
+For more information, see the [documentation][quota-project-doc].
+
+[quota-project-doc]: https://cloud.google.com/docs/quota/set-quota-project
+
+##### Example
+
+```java
+config.addDataSourceProperty("alloydbQuotaProject", "PROJECT_NAME");
 ```
 
 ## Configuration Reference

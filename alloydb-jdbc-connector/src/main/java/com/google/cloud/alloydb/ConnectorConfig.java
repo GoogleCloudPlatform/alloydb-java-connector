@@ -34,6 +34,7 @@ public class ConnectorConfig {
   private final Supplier<GoogleCredentials> googleCredentialsSupplier;
   private final GoogleCredentials googleCredentials;
   private final String googleCredentialsPath;
+  private final String quotaProject;
 
   private ConnectorConfig(
       String targetPrincipal,
@@ -41,13 +42,15 @@ public class ConnectorConfig {
       String adminServiceEndpoint,
       Supplier<GoogleCredentials> googleCredentialsSupplier,
       GoogleCredentials googleCredentials,
-      String googleCredentialsPath) {
+      String googleCredentialsPath,
+      String quotaProject) {
     this.targetPrincipal = targetPrincipal;
     this.delegates = delegates;
     this.adminServiceEndpoint = adminServiceEndpoint;
     this.googleCredentialsSupplier = googleCredentialsSupplier;
     this.googleCredentials = googleCredentials;
     this.googleCredentialsPath = googleCredentialsPath;
+    this.quotaProject = quotaProject;
   }
 
   @Override
@@ -64,7 +67,8 @@ public class ConnectorConfig {
         && Objects.equal(adminServiceEndpoint, that.adminServiceEndpoint)
         && Objects.equal(googleCredentialsSupplier, that.googleCredentialsSupplier)
         && Objects.equal(googleCredentials, that.googleCredentials)
-        && Objects.equal(googleCredentialsPath, that.googleCredentialsPath);
+        && Objects.equal(googleCredentialsPath, that.googleCredentialsPath)
+        && Objects.equal(quotaProject, that.quotaProject);
   }
 
   @Override
@@ -75,7 +79,8 @@ public class ConnectorConfig {
         adminServiceEndpoint,
         googleCredentialsSupplier,
         googleCredentials,
-        googleCredentialsPath);
+        googleCredentialsPath,
+        quotaProject);
   }
 
   public String getTargetPrincipal() {
@@ -102,6 +107,9 @@ public class ConnectorConfig {
     return googleCredentialsPath;
   }
 
+  public String getQuotaProject() {
+    return quotaProject;
+  }
   /** The builder for the ConnectionConfig. */
   public static class Builder {
 
@@ -111,6 +119,7 @@ public class ConnectorConfig {
     private Supplier<GoogleCredentials> googleCredentialsSupplier;
     private GoogleCredentials googleCredentials;
     private String googleCredentialsPath;
+    private String quotaProject;
 
     public Builder withTargetPrincipal(String targetPrincipal) {
       this.targetPrincipal = targetPrincipal;
@@ -143,6 +152,11 @@ public class ConnectorConfig {
       return this;
     }
 
+    public Builder withQuotaProject(String quotaProject) {
+      this.quotaProject = quotaProject;
+      return this;
+    }
+
     /** Builds a new instance of {@code ConnectionConfig}. */
     public ConnectorConfig build() {
       // validate only one GoogleCredentials configuration field set
@@ -168,7 +182,8 @@ public class ConnectorConfig {
           adminServiceEndpoint,
           googleCredentialsSupplier,
           googleCredentials,
-          googleCredentialsPath);
+          googleCredentialsPath,
+          quotaProject);
     }
   }
 }
