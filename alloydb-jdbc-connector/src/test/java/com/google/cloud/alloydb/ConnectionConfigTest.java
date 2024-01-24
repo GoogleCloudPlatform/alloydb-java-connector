@@ -40,6 +40,7 @@ public class ConnectionConfigTest {
     final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";
     final String wantPath = "my-path";
     final String iamAuthN = "true";
+    final String wantQuotaProject = "myNewProject";
 
     Properties props = new Properties();
     props.setProperty(ConnectionConfig.ALLOYDB_INSTANCE_NAME, INSTANCE_NAME);
@@ -49,6 +50,7 @@ public class ConnectionConfigTest {
     props.setProperty(ConnectionConfig.ALLOYDB_ADMIN_SERVICE_ENDPOINT, wantAdminServiceEndpoint);
     props.setProperty(ConnectionConfig.ALLOYDB_GOOGLE_CREDENTIALS_PATH, wantPath);
     props.setProperty(ConnectionConfig.ENABLE_IAM_AUTH_PROPERTY, iamAuthN);
+    props.setProperty(ConnectionConfig.ALLOYDB_QUOTA_PROJECT, wantQuotaProject);
 
     ConnectionConfig config = ConnectionConfig.fromConnectionProperties(props);
 
@@ -59,6 +61,7 @@ public class ConnectionConfigTest {
     assertThat(config.getConnectorConfig().getAdminServiceEndpoint())
         .isEqualTo(wantAdminServiceEndpoint);
     assertThat(config.getConnectorConfig().getGoogleCredentialsPath()).isEqualTo(wantPath);
+    assertThat(config.getConnectorConfig().getQuotaProject()).isEqualTo(wantQuotaProject);
     assertThat(config.getAuthType()).isEqualTo(AuthType.IAM);
   }
 
@@ -71,6 +74,7 @@ public class ConnectionConfigTest {
     final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";
     final String wantPath = "my-path";
     final AuthType wantAuthType = AuthType.PASSWORD;
+    final String wantQuotaProject = "myNewProject";
 
     ConnectorConfig connectorConfig =
         new ConnectorConfig.Builder()
@@ -78,6 +82,7 @@ public class ConnectionConfigTest {
             .withDelegates(wantDelegates)
             .withAdminServiceEndpoint(wantAdminServiceEndpoint)
             .withGoogleCredentialsPath(wantPath)
+            .withQuotaProject(wantQuotaProject)
             .build();
 
     ConnectionConfig config =
@@ -96,6 +101,7 @@ public class ConnectionConfigTest {
     assertThat(config.getConnectorConfig().getAdminServiceEndpoint())
         .isEqualTo(wantAdminServiceEndpoint);
     assertThat(config.getConnectorConfig().getGoogleCredentialsPath()).isEqualTo(wantPath);
+    assertThat(config.getConnectorConfig().getQuotaProject()).isEqualTo(wantQuotaProject);
     assertThat(config.getAuthType()).isEqualTo(wantAuthType);
   }
 
@@ -208,12 +214,14 @@ public class ConnectionConfigTest {
     final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";
     final InstanceName wantInstance = InstanceName.parse(INSTANCE_NAME);
     final String wantNamedConnector = "my-connection";
+    final String wantQuotaProject = "myNewProject";
 
     ConnectorConfig cc =
         new ConnectorConfig.Builder()
             .withTargetPrincipal(wantTargetPrincipal)
             .withDelegates(wantDelegates)
             .withAdminServiceEndpoint(wantAdminServiceEndpoint)
+            .withQuotaProject(wantQuotaProject)
             .build();
 
     ConnectionConfig config =

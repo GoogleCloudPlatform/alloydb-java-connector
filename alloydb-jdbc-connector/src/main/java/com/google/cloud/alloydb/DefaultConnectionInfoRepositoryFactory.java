@@ -34,9 +34,7 @@ class DefaultConnectionInfoRepositoryFactory implements ConnectionInfoRepository
 
     AlloyDBAdminClient alloyDBAdminClient;
     try {
-      alloyDBAdminClient =
-          AlloyDBAdminClientFactory.create(
-              credentialFactory.create(), config.getAdminServiceEndpoint());
+      alloyDBAdminClient = AlloyDBAdminClientFactory.create(credentialFactory.create(), config);
       return new DefaultConnectionInfoRepository(executor, alloyDBAdminClient);
     } catch (IOException e) {
       throw new RuntimeException(e);

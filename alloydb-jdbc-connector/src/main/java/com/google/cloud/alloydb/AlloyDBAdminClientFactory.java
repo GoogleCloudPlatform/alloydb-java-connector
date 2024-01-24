@@ -31,10 +31,11 @@ class AlloyDBAdminClientFactory {
 
   private static final String DEFAULT_ENDPOINT = "alloydb.googleapis.com:443";
 
-  static AlloyDBAdminClient create(FixedCredentialsProvider credentialsProvider, String endpoint)
-      throws IOException {
+  static AlloyDBAdminClient create(
+      FixedCredentialsProvider credentialsProvider, ConnectorConfig config) throws IOException {
     AlloyDBAdminSettings.Builder settingsBuilder = AlloyDBAdminSettings.newBuilder();
 
+    String endpoint = config.getAdminServiceEndpoint();
     if (endpoint == null || endpoint.isEmpty()) {
       endpoint = DEFAULT_ENDPOINT;
     }
@@ -44,13 +45,14 @@ class AlloyDBAdminClientFactory {
             .put("user-agent", "alloydb-java-connector/" + Version.VERSION)
             .build();
 
-    AlloyDBAdminSettings alloyDBAdminSettings =
-        settingsBuilder
-            .setEndpoint(endpoint)
-            .setHeaderProvider(FixedHeaderProvider.create(headers))
-            .setCredentialsProvider(credentialsProvider)
-            .build();
+    settingsBuilder
+        .setEndpoint(endpoint)
+        .setHeaderProvider(FixedHeaderProvider.create(headers))
+        .setCredentialsProvider(credentialsProvider);
 
-    return AlloyDBAdminClient.create(alloyDBAdminSettings);
+    if (config.getQuotaProject() != null) {
+      settingsBuilder.setQuotaProjectId(config.getQuotaProject());
+    }
+    return AlloyDBAdminClient.create(settingsBuilder.build());
   }
 }
