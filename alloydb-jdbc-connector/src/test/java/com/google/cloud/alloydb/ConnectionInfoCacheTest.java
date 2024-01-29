@@ -20,7 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode;
-import com.google.cloud.alloydb.v1.InstanceName;
+import com.google.cloud.alloydb.v1alpha.InstanceName;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
@@ -40,6 +40,7 @@ import org.junit.Test;
 public class ConnectionInfoCacheTest {
 
   private static final String TEST_INSTANCE_IP = "10.0.0.1";
+  private static final String TEST_INSTANCE_PUBLIC_IP = "34.0.0.1";
   private static final String TEST_INSTANCE_ID = "some-instance-id";
   private static final Instant ONE_HOUR_FROM_NOW = Instant.now().plus(1, ChronoUnit.HOURS);
   private InstanceName instanceName;
@@ -73,6 +74,7 @@ public class ConnectionInfoCacheTest {
         () ->
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
+                TEST_INSTANCE_PUBLIC_IP,
                 TEST_INSTANCE_ID,
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
                 Arrays.asList(
@@ -90,6 +92,7 @@ public class ConnectionInfoCacheTest {
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
 
     assertThat(connectionInfo.getIpAddress()).isEqualTo(TEST_INSTANCE_IP);
+    assertThat(connectionInfo.getPublicIpAddress()).isEqualTo(TEST_INSTANCE_PUBLIC_IP);
     assertThat(connectionInfo.getInstanceUid()).isEqualTo(TEST_INSTANCE_ID);
     assertThat(
             connectionInfo
@@ -130,6 +133,7 @@ public class ConnectionInfoCacheTest {
         () ->
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
+                TEST_INSTANCE_PUBLIC_IP,
                 TEST_INSTANCE_ID,
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
                 certificateChain,
@@ -173,6 +177,7 @@ public class ConnectionInfoCacheTest {
         () ->
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
+                TEST_INSTANCE_PUBLIC_IP,
                 TEST_INSTANCE_ID,
                 testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
                 certificateChain,

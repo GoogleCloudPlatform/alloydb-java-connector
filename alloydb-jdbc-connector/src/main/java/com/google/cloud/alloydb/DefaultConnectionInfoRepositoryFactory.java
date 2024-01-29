@@ -16,7 +16,7 @@
 
 package com.google.cloud.alloydb;
 
-import com.google.cloud.alloydb.v1.AlloyDBAdminClient;
+import com.google.cloud.alloydb.v1alpha.AlloyDBAdminClient;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import java.io.IOException;
 

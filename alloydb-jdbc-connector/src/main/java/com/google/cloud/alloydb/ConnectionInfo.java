@@ -24,6 +24,7 @@ import java.util.List;
 class ConnectionInfo {
 
   private final String ipAddress;
+  private final String publicIpAddress;
   private final String instanceUid;
   private final X509Certificate clientCertificate;
   private final List<X509Certificate> certificateChain;
@@ -31,11 +32,13 @@ class ConnectionInfo {
 
   ConnectionInfo(
       String ipAddress,
+      String publicIpAddress,
       String instanceUid,
       X509Certificate clientCertificate,
       List<X509Certificate> certificateChain,
       X509Certificate caCertificate) {
     this.ipAddress = ipAddress;
+    this.publicIpAddress = publicIpAddress;
     this.instanceUid = instanceUid;
     this.clientCertificate = clientCertificate;
     this.certificateChain = certificateChain;
@@ -44,6 +47,10 @@ class ConnectionInfo {
 
   String getIpAddress() {
     return ipAddress;
+  }
+
+  String getPublicIpAddress() {
+    return publicIpAddress;
   }
 
   String getInstanceUid() {
@@ -81,6 +88,7 @@ class ConnectionInfo {
 
     ConnectionInfo that = (ConnectionInfo) o;
     return Objects.equal(ipAddress, that.ipAddress)
+        && Objects.equal(publicIpAddress, that.publicIpAddress)
         && Objects.equal(instanceUid, that.instanceUid)
         && Objects.equal(clientCertificate, that.clientCertificate)
         && Objects.equal(certificateChain, that.certificateChain)
@@ -90,7 +98,12 @@ class ConnectionInfo {
   @Override
   public int hashCode() {
     return Objects.hashCode(
-        ipAddress, instanceUid, clientCertificate, certificateChain, caCertificate);
+        ipAddress,
+        publicIpAddress,
+        instanceUid,
+        clientCertificate,
+        certificateChain,
+        caCertificate);
   }
 
   @Override
@@ -98,6 +111,9 @@ class ConnectionInfo {
     return "ConnectionInfo{"
         + "ipAddress='"
         + ipAddress
+        + '\''
+        + ",publicIpAddress='"
+        + publicIpAddress
         + '\''
         + ", instanceUid='"
         + instanceUid

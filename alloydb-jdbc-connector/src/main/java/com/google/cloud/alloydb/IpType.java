@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,7 @@
  */
 package com.google.cloud.alloydb;
 
-import com.google.cloud.alloydb.v1alpha.InstanceName;
-import com.google.common.util.concurrent.ListeningScheduledExecutorService;
-import java.security.KeyPair;
-
-interface ConnectionInfoCacheFactory {
-
-  ConnectionInfoCache create(
-      ListeningScheduledExecutorService executor,
-      ConnectionInfoRepository connectionInfoRepo,
-      InstanceName instanceName,
-      KeyPair clientConnectorKeyPair,
-      long minRefreshDelayMs);
+public enum IpType {
+  PUBLIC,
+  PRIVATE;
 }
