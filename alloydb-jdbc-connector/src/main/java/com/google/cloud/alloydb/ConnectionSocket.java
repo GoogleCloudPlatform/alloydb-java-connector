@@ -86,14 +86,22 @@ class ConnectionSocket {
             connectionInfo.getCertificateChain(),
             this.clientConnectorKeyPair.getPrivate());
 
+    String ipAddress = connectionInfo.getIpAddress();
+    if (connectionConfig.getIpType().equals(IpType.PUBLIC)) {
+      ipAddress = connectionInfo.getPublicIpAddress();
+    }
+
+    if (ipAddress == null || ipAddress.isEmpty()) {
+      throw new RuntimeException("No IP address for the instance");
+    }
+
     // Use the instance's IP address as a HostName.
     SSLParameters sslParameters = socket.getSSLParameters();
-    sslParameters.setServerNames(
-        Collections.singletonList(new SNIHostName(connectionInfo.getIpAddress())));
+    sslParameters.setServerNames(Collections.singletonList(new SNIHostName(ipAddress)));
 
     socket.setKeepAlive(true);
     socket.setTcpNoDelay(true);
-    socket.connect(new InetSocketAddress(connectionInfo.getIpAddress(), SERVER_SIDE_PROXY_PORT));
+    socket.connect(new InetSocketAddress(ipAddress, SERVER_SIDE_PROXY_PORT));
     socket.startHandshake();
 
     // The metadata exchange must occur after the TLS connection is established

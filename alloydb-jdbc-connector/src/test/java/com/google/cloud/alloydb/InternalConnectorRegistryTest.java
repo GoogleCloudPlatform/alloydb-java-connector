@@ -20,7 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
-import com.google.cloud.alloydb.v1.InstanceName;
+import com.google.cloud.alloydb.v1alpha.InstanceName;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Properties;

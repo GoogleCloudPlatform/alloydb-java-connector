@@ -18,7 +18,7 @@ package com.google.cloud.alloydb;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
-import com.google.cloud.alloydb.v1.InstanceName;
+import com.google.cloud.alloydb.v1alpha.InstanceName;
 import com.google.common.base.Objects;
 import java.util.Arrays;
 import java.util.List;
@@ -41,6 +41,7 @@ public class ConnectionConfigTest {
     final String wantPath = "my-path";
     final String iamAuthN = "true";
     final String wantQuotaProject = "myNewProject";
+    final String ipType = "PUBLIC";
 
     Properties props = new Properties();
     props.setProperty(ConnectionConfig.ALLOYDB_INSTANCE_NAME, INSTANCE_NAME);
@@ -51,6 +52,7 @@ public class ConnectionConfigTest {
     props.setProperty(ConnectionConfig.ALLOYDB_GOOGLE_CREDENTIALS_PATH, wantPath);
     props.setProperty(ConnectionConfig.ENABLE_IAM_AUTH_PROPERTY, iamAuthN);
     props.setProperty(ConnectionConfig.ALLOYDB_QUOTA_PROJECT, wantQuotaProject);
+    props.setProperty(ConnectionConfig.ALLOYDB_IP_TYPE, ipType);
 
     ConnectionConfig config = ConnectionConfig.fromConnectionProperties(props);
 
@@ -63,6 +65,7 @@ public class ConnectionConfigTest {
     assertThat(config.getConnectorConfig().getGoogleCredentialsPath()).isEqualTo(wantPath);
     assertThat(config.getConnectorConfig().getQuotaProject()).isEqualTo(wantQuotaProject);
     assertThat(config.getAuthType()).isEqualTo(AuthType.IAM);
+    assertThat(config.getIpType()).isEqualTo(IpType.PUBLIC);
   }
 
   @Test
@@ -75,6 +78,7 @@ public class ConnectionConfigTest {
     final String wantPath = "my-path";
     final AuthType wantAuthType = AuthType.PASSWORD;
     final String wantQuotaProject = "myNewProject";
+    final IpType ipType = IpType.PRIVATE;
 
     ConnectorConfig connectorConfig =
         new ConnectorConfig.Builder()
@@ -91,6 +95,7 @@ public class ConnectionConfigTest {
             .withNamedConnector(wantNamedConnector)
             .withConnectorConfig(connectorConfig)
             .withAuthType(wantAuthType)
+            .withIpType(ipType)
             .build();
 
     assertThat(config.getInstanceName()).isEqualTo(wantInstance);
@@ -103,6 +108,7 @@ public class ConnectionConfigTest {
     assertThat(config.getConnectorConfig().getGoogleCredentialsPath()).isEqualTo(wantPath);
     assertThat(config.getConnectorConfig().getQuotaProject()).isEqualTo(wantQuotaProject);
     assertThat(config.getAuthType()).isEqualTo(wantAuthType);
+    assertThat(config.getIpType()).isEqualTo(IpType.PRIVATE);
   }
 
   @Test
@@ -215,6 +221,7 @@ public class ConnectionConfigTest {
     final InstanceName wantInstance = InstanceName.parse(INSTANCE_NAME);
     final String wantNamedConnector = "my-connection";
     final String wantQuotaProject = "myNewProject";
+    final IpType ipType = IpType.PUBLIC;
 
     ConnectorConfig cc =
         new ConnectorConfig.Builder()
@@ -229,9 +236,11 @@ public class ConnectionConfigTest {
             .withInstanceName(wantInstance)
             .withNamedConnector(wantNamedConnector)
             .withConnectorConfig(cc)
+            .withIpType(ipType)
             .build();
 
-    assertThat(config.hashCode()).isEqualTo(Objects.hashCode(wantInstance, wantNamedConnector, cc));
+    assertThat(config.hashCode())
+        .isEqualTo(Objects.hashCode(wantInstance, wantNamedConnector, ipType, cc));
   }
 
   @Test

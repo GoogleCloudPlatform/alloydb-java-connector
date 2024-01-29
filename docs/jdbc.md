@@ -278,6 +278,18 @@ For more information, see the [documentation][quota-project-doc].
 config.addDataSourceProperty("alloydbQuotaProject", "PROJECT_NAME");
 ```
 
+### Specifying IP Type
+
+The `alloydbIpType` argument is used to specify the type of IP to be used. 
+Options are: `PRIVATE` (default) and `PUBLIC`. For example, `alloydbIpType=PUBLIC` will 
+use the instance's Public IP.
+
+#### Example
+
+```java
+config.addDataSourceProperty("alloydbIpType", "PUBLIC");
+```
+
 ## Configuration Reference
 
 - See [Configuration Reference](configuration.md)

@@ -19,7 +19,7 @@ package com.google.cloud.alloydb;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
-import com.google.cloud.alloydb.v1.InstanceName;
+import com.google.cloud.alloydb.v1alpha.InstanceName;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -82,6 +82,7 @@ public class ITDefaultConnectionInfoRepositoryTest {
 
     assertThat(connectionInfo.getInstanceUid()).isNotEmpty();
     assertThat(connectionInfo.getIpAddress()).isNotEmpty();
+    assertThat(connectionInfo.getPublicIpAddress()).isNotEmpty();
     assertThat(connectionInfo.getClientCertificate()).isNotNull();
     assertThat(connectionInfo.getCertificateChain()).hasSize(3);
   }

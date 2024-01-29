@@ -17,7 +17,7 @@ package com.google.cloud.alloydb;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.cloud.alloydb.v1.InstanceName;
+import com.google.cloud.alloydb.v1alpha.InstanceName;
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -108,6 +108,7 @@ public class ITConnectorTest {
     StubConnectionInfoCache stubConnectionInfoCache = new StubConnectionInfoCache();
     stubConnectionInfoCache.setConnectionInfo(
         new ConnectionInfo(
+            "127.0.0.1", // localhost doesn't do TLS
             "127.0.0.1", // localhost doesn't do TLS
             "some-instance",
             testCertificates.getEphemeralCertificate(

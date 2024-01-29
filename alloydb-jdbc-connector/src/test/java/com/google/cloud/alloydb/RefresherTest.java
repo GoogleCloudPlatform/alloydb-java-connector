@@ -515,7 +515,7 @@ public class RefresherTest {
     private final Instant expiration;
 
     ExampleData(Instant expiration) {
-      super("10.1.1.1", "instance", null, null, null);
+      super("10.1.1.1", "34.1.1.1", "instance", null, null, null);
       this.expiration = expiration;
     }
 

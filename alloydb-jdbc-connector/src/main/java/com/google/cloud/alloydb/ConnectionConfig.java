@@ -16,11 +16,12 @@
 
 package com.google.cloud.alloydb;
 
-import com.google.cloud.alloydb.v1.InstanceName;
+import com.google.cloud.alloydb.v1alpha.InstanceName;
 import com.google.common.base.Preconditions;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -33,11 +34,14 @@ class ConnectionConfig {
   public static final String ALLOYDB_GOOGLE_CREDENTIALS_PATH = "alloydbGoogleCredentialsPath";
   public static final String ALLOYDB_QUOTA_PROJECT = "alloydbQuotaProject";
   public static final String ENABLE_IAM_AUTH_PROPERTY = "alloydbEnableIAMAuth";
+  public static final String ALLOYDB_IP_TYPE = "alloydbIpType";
   public static final AuthType DEFAULT_AUTH_TYPE = AuthType.PASSWORD;
+  public static final IpType DEFAULT_IP_TYPE = IpType.PRIVATE;
   private final InstanceName instanceName;
   private final String namedConnector;
   private final ConnectorConfig connectorConfig;
   private final AuthType authType;
+  private final IpType ipType;
 
   /** Create a new ConnectionConfig from the well known JDBC Connection properties. */
   static ConnectionConfig fromConnectionProperties(Properties props) {
@@ -62,11 +66,18 @@ class ConnectionConfig {
             ? AuthType.IAM
             : AuthType.PASSWORD;
     final String quotaProject = props.getProperty(ConnectionConfig.ALLOYDB_QUOTA_PROJECT);
+    IpType ipType = IpType.PRIVATE;
+    if (props.getProperty(ConnectionConfig.ALLOYDB_IP_TYPE) != null) {
+      ipType =
+          IpType.valueOf(
+              props.getProperty(ConnectionConfig.ALLOYDB_IP_TYPE).toUpperCase(Locale.getDefault()));
+    }
 
     return new ConnectionConfig(
         instanceName,
         namedConnector,
         authType,
+        ipType,
         new ConnectorConfig.Builder()
             .withTargetPrincipal(targetPrincipal)
             .withDelegates(delegates)
@@ -87,12 +98,13 @@ class ConnectionConfig {
     ConnectionConfig config = (ConnectionConfig) o;
     return Objects.equals(instanceName, config.instanceName)
         && Objects.equals(namedConnector, config.namedConnector)
+        && Objects.equals(ipType, config.ipType)
         && Objects.equals(connectorConfig, config.connectorConfig);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(instanceName, namedConnector, connectorConfig);
+    return Objects.hash(instanceName, namedConnector, ipType, connectorConfig);
   }
 
   private static void validateProperties(Properties props) {
@@ -108,16 +120,18 @@ class ConnectionConfig {
       InstanceName instanceName,
       String namedConnector,
       AuthType authType,
+      IpType ipType,
       ConnectorConfig connectorConfig) {
     this.instanceName = instanceName;
     this.namedConnector = namedConnector;
     this.connectorConfig = connectorConfig;
     this.authType = authType;
+    this.ipType = ipType;
   }
 
   /** Creates a new instance of the ConnectionConfig with an updated connectorConfig. */
   ConnectionConfig withConnectorConfig(ConnectorConfig config) {
-    return new ConnectionConfig(instanceName, namedConnector, authType, config);
+    return new ConnectionConfig(instanceName, namedConnector, authType, ipType, config);
   }
 
   InstanceName getInstanceName() {
@@ -136,12 +150,17 @@ class ConnectionConfig {
     return authType;
   }
 
+  IpType getIpType() {
+    return ipType;
+  }
+
   /** The builder for the ConnectionConfig. */
   static class Builder {
     private InstanceName instanceName;
     private String namedConnector;
     private ConnectorConfig connectorConfig = new ConnectorConfig.Builder().build();
     private AuthType authType = DEFAULT_AUTH_TYPE;
+    private IpType ipType = DEFAULT_IP_TYPE;
 
     Builder withInstanceName(InstanceName instanceName) {
       this.instanceName = instanceName;
@@ -163,8 +182,13 @@ class ConnectionConfig {
       return this;
     }
 
+    public Builder withIpType(IpType ipType) {
+      this.ipType = ipType;
+      return this;
+    }
+
     ConnectionConfig build() {
-      return new ConnectionConfig(instanceName, namedConnector, authType, connectorConfig);
+      return new ConnectionConfig(instanceName, namedConnector, authType, ipType, connectorConfig);
     }
   }
 }

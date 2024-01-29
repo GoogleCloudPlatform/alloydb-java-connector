@@ -16,11 +16,11 @@
 
 package com.google.cloud.alloydb;
 
-import com.google.cloud.alloydb.v1.AlloyDBAdminClient;
-import com.google.cloud.alloydb.v1.ClusterName;
-import com.google.cloud.alloydb.v1.GenerateClientCertificateRequest;
-import com.google.cloud.alloydb.v1.GenerateClientCertificateResponse;
-import com.google.cloud.alloydb.v1.InstanceName;
+import com.google.cloud.alloydb.v1alpha.AlloyDBAdminClient;
+import com.google.cloud.alloydb.v1alpha.ClusterName;
+import com.google.cloud.alloydb.v1alpha.GenerateClientCertificateRequest;
+import com.google.cloud.alloydb.v1alpha.GenerateClientCertificateResponse;
+import com.google.cloud.alloydb.v1alpha.InstanceName;
 import com.google.common.io.BaseEncoding;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -54,7 +54,7 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Close
   @Override
   public ListenableFuture<ConnectionInfo> getConnectionInfo(
       InstanceName instanceName, KeyPair keyPair) {
-    ListenableFuture<com.google.cloud.alloydb.v1.ConnectionInfo> infoFuture =
+    ListenableFuture<com.google.cloud.alloydb.v1alpha.ConnectionInfo> infoFuture =
         executor.submit(() -> getConnectionInfo(instanceName));
     ListenableFuture<GenerateClientCertificateResponse> clientCertificateResponseFuture =
         executor.submit(() -> getGenerateClientCertificateResponse(instanceName, keyPair));
@@ -62,7 +62,7 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Close
     return Futures.whenAllComplete(infoFuture, clientCertificateResponseFuture)
         .call(
             () -> {
-              com.google.cloud.alloydb.v1.ConnectionInfo info = Futures.getDone(infoFuture);
+              com.google.cloud.alloydb.v1alpha.ConnectionInfo info = Futures.getDone(infoFuture);
               GenerateClientCertificateResponse certificateResponse =
                   Futures.getDone(clientCertificateResponseFuture);
 
@@ -78,6 +78,7 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Close
 
               return new ConnectionInfo(
                   info.getIpAddress(),
+                  info.getPublicIpAddress(),
                   info.getInstanceUid(),
                   clientCertificate,
                   certificateChain,
@@ -91,7 +92,8 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Close
     this.alloyDBAdminClient.close();
   }
 
-  private com.google.cloud.alloydb.v1.ConnectionInfo getConnectionInfo(InstanceName instanceName) {
+  private com.google.cloud.alloydb.v1alpha.ConnectionInfo getConnectionInfo(
+      InstanceName instanceName) {
     return alloyDBAdminClient.getConnectionInfo(instanceName);
   }
 
