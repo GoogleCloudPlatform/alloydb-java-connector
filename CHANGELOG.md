@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.5.0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v0.4.0...v0.5.0) (2024-01-29)
+
+
+### Features
+
+* add option to specify quota project ([#393](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/393)) ([3e72435](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/3e72435068d8fab9e871dbd499e3ecb80fd1ca8b))
+* add support for public IP ([#373](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/373)) ([016065b](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/016065b8f9885398dda2674b68591c8a67e5d808))
+
+
+### Bug Fixes
+
+* ensure cert refresh recovers from sleep ([#387](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/387)) ([06ff42c](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/06ff42c7d3da088d9f7d178a0fcca361358ba6e0))
+
+
+### Dependencies
+
+* Update dependency com.google.cloud:google-cloud-alloydb-bom to v0.23.0 ([#391](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/391)) ([7097d9d](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/7097d9d81084440df6dee576081b5754e2ed5479))
+* Update dependency com.google.cloud:google-cloud-alloydb-connectors-bom to v0.12.0 ([#392](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/392)) ([81369c5](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/81369c5b4fc7065e109874f91646b2926214567e))
+* Update dependency com.google.cloud:google-cloud-shared-dependencies to v3.22.0 ([#383](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/383)) ([a68623d](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/a68623df59b32db80bfc1e037131f20250ae7936))
+* Update dependency com.google.cloud:google-cloud-shared-dependencies to v3.23.0 ([#394](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/394)) ([6969ec3](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/6969ec321206be9855adc926d9f35e44c5dbca66))
+
 ## [0.4.0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v0.3.0...v0.4.0) (2024-01-17)
 
 
