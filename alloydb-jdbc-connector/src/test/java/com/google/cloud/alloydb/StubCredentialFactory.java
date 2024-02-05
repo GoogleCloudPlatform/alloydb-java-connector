@@ -16,11 +16,13 @@
 
 package com.google.cloud.alloydb;
 
+import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 
 public class StubCredentialFactory implements CredentialFactory {
   @Override
   public GoogleCredentials getCredentials() {
-    return GoogleCredentials.create(null);
+    AccessToken accessToken = AccessToken.newBuilder().setTokenValue("valid").build();
+    return GoogleCredentials.create(accessToken);
   }
 }
