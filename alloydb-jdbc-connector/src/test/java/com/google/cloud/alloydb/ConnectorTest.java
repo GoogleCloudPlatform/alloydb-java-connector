@@ -52,7 +52,7 @@ public class ConnectorTest {
   private static final String SERVER_MESSAGE = "HELLO";
   private static final String ERROR_MESSAGE_NOT_FOUND = "Resource 'instance' was not found";
   private static final String ERROR_MESSAGE_PERMISSION_DENIED =
-      "Location X is not found or access is unauthorized.";
+      "Location not found or access is unauthorized.";
   private static final String ERROR_MESSAGE_INTERNAL = "Internal Error";
 
   ListeningScheduledExecutorService defaultExecutor;

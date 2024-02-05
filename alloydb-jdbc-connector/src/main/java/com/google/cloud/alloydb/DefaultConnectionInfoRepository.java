@@ -27,8 +27,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
+import io.grpc.Status;
 import io.grpc.Status.Code;
-import io.grpc.StatusRuntimeException;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.security.KeyPair;
@@ -124,13 +124,12 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Close
   }
 
   private RuntimeException handleException(Exception e) {
-    StatusRuntimeException statusEx = (StatusRuntimeException) e.getCause();
+    Status status = Status.fromThrowable(e);
     String message =
         String.format(
-            "AlloyDB Admin API failed to return the connection info. Reason: %s",
-            statusEx.getMessage());
+            "AlloyDB Admin API failed to return the connection info. Reason: %s", e.getMessage());
 
-    if (TERMINAL_STATUS_CODES.contains(statusEx.getStatus().getCode())) {
+    if (TERMINAL_STATUS_CODES.contains(status.getCode())) {
       return new TerminalException(message, e);
     }
 
