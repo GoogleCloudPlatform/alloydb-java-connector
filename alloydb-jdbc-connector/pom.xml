@@ -41,7 +41,7 @@
   <properties>
     <bouncycastle.version>1.77</bouncycastle.version>
     <postgresql.version>42.7.1</postgresql.version>
-    <grpc.version>1.61.0</grpc.version>
+    <grpc.version>1.61.1</grpc.version>
   </properties>
 
   <build>
