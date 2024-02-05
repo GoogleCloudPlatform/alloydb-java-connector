@@ -35,7 +35,7 @@ import org.junit.Test;
 
 public class ITDefaultConnectionInfoRepositoryTest {
 
-  private DefaultConnectionInfoRepository defaultConnectionInfoRepository;
+  private ConnectionInfoRepository defaultConnectionInfoRepository;
   private KeyPair keyPair;
   private String instanceUri;
   private ListeningScheduledExecutorService executor;

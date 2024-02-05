@@ -18,7 +18,6 @@ package com.google.cloud.alloydb;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
 
 import com.google.cloud.alloydb.v1alpha.InstanceName;
 import java.io.IOException;
@@ -40,33 +39,36 @@ public class InternalConnectorRegistryTest {
 
   @Test
   public void create_failOnInvalidInstanceName() throws IOException {
-    try {
-      InternalConnectorRegistry.INSTANCE.connect(
-          new ConnectionConfig.Builder().withInstanceName(InstanceName.parse("myProject")).build());
-      fail();
-    } catch (IllegalArgumentException e) {
-      assertThat(e)
-          .hasMessageThat()
-          .contains("InstanceName.parse: formattedString not in valid format");
-    }
+    IllegalArgumentException ex =
+        assertThrows(
+            IllegalArgumentException.class,
+            () ->
+                InternalConnectorRegistry.INSTANCE.connect(
+                    new ConnectionConfig.Builder()
+                        .withInstanceName(InstanceName.parse("myProject"))
+                        .build()));
+    assertThat(ex)
+        .hasMessageThat()
+        .contains("InstanceName.parse: formattedString not in valid format");
   }
 
   @Test
   public void create_failOnEmptyTargetPrincipal() throws IOException, InterruptedException {
-    try {
-      InternalConnectorRegistry.INSTANCE.connect(
-          new ConnectionConfig.Builder()
-              .withInstanceName(InstanceName.parse(INSTANCE_NAME))
-              .withConnectorConfig(
-                  new ConnectorConfig.Builder()
-                      .withDelegates(
-                          Collections.singletonList("delegate-service-principal@example.com"))
-                      .build())
-              .build());
-      fail("IllegalArgumentException expected.");
-    } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage()).contains(ConnectionConfig.ALLOYDB_TARGET_PRINCIPAL);
-    }
+    IllegalArgumentException ex =
+        assertThrows(
+            IllegalArgumentException.class,
+            () ->
+                InternalConnectorRegistry.INSTANCE.connect(
+                    new ConnectionConfig.Builder()
+                        .withInstanceName(InstanceName.parse(INSTANCE_NAME))
+                        .withConnectorConfig(
+                            new ConnectorConfig.Builder()
+                                .withDelegates(
+                                    Collections.singletonList(
+                                        "delegate-service-principal@example.com"))
+                                .build())
+                        .build()));
+    assertThat(ex.getMessage()).contains(ConnectionConfig.ALLOYDB_TARGET_PRINCIPAL);
   }
 
   @Test
