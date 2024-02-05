@@ -51,6 +51,9 @@ public class ConnectorTest {
   private static final String PRIVATE_IP = "127.0.0.2";
   private static final String SERVER_MESSAGE = "HELLO";
   private static final String ERROR_MESSAGE_NOT_FOUND = "Resource 'instance' was not found";
+  private static final String ERROR_MESSAGE_PERMISSION_DENIED =
+      "Location X is not found or access is unauthorized.";
+  private static final String ERROR_MESSAGE_INTERNAL = "Internal Error";
 
   ListeningScheduledExecutorService defaultExecutor;
 
@@ -82,7 +85,7 @@ public class ConnectorTest {
   }
 
   @Test
-  public void create_throwsException_notFound()
+  public void create_throwsTerminalException_notFound()
       throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
     MockAlloyDBAdminGrpc mock =
         new MockAlloyDBAdminGrpc(Code.NOT_FOUND.getNumber(), ERROR_MESSAGE_NOT_FOUND);
@@ -91,9 +94,37 @@ public class ConnectorTest {
         new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(INSTANCE_NAME)).build();
     Connector connector = newConnector(config.getConnectorConfig(), mock);
 
-    RuntimeException ex = assertThrows(RuntimeException.class, () -> connector.connect(config));
-
+    TerminalException ex = assertThrows(TerminalException.class, () -> connector.connect(config));
     assertThat(ex).hasMessageThat().contains(ERROR_MESSAGE_NOT_FOUND);
+  }
+
+  @Test
+  public void create_throwsTerminalException_notAuthorized()
+      throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+    MockAlloyDBAdminGrpc mock =
+        new MockAlloyDBAdminGrpc(
+            Code.PERMISSION_DENIED.getNumber(), ERROR_MESSAGE_PERMISSION_DENIED);
+
+    ConnectionConfig config =
+        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(INSTANCE_NAME)).build();
+    Connector connector = newConnector(config.getConnectorConfig(), mock);
+
+    TerminalException ex = assertThrows(TerminalException.class, () -> connector.connect(config));
+    assertThat(ex).hasMessageThat().contains(ERROR_MESSAGE_PERMISSION_DENIED);
+  }
+
+  @Test
+  public void create_throwsNonTerminalException_internalError()
+      throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+    MockAlloyDBAdminGrpc mock =
+        new MockAlloyDBAdminGrpc(Code.INTERNAL.getNumber(), ERROR_MESSAGE_INTERNAL);
+
+    ConnectionConfig config =
+        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(INSTANCE_NAME)).build();
+    Connector connector = newConnector(config.getConnectorConfig(), mock);
+
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> connector.connect(config));
+    assertThat(ex).hasMessageThat().contains(ERROR_MESSAGE_INTERNAL);
   }
 
   private Connector newConnector(ConnectorConfig config, MockAlloyDBAdminGrpc mock)

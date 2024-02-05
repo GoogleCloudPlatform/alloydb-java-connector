@@ -27,6 +27,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
+import io.grpc.Status.Code;
+import io.grpc.StatusRuntimeException;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.security.KeyPair;
@@ -34,6 +36,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Closeable {
@@ -42,6 +45,8 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Close
   private static final String OPENSSL_PUBLIC_KEY_END = "-----END RSA PUBLIC KEY-----";
   private static final String X_509 = "X.509";
   private static final int PEM_LINE_LENGTH = 64;
+  private static final List<Code> TERMINAL_STATUS_CODES =
+      Arrays.asList(Code.NOT_FOUND, Code.PERMISSION_DENIED, Code.INVALID_ARGUMENT);
   private final ListeningScheduledExecutorService executor;
   private final AlloyDBAdminClient alloyDBAdminClient;
 
@@ -94,7 +99,11 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Close
 
   private com.google.cloud.alloydb.v1alpha.ConnectionInfo getConnectionInfo(
       InstanceName instanceName) {
-    return alloyDBAdminClient.getConnectionInfo(instanceName);
+    try {
+      return alloyDBAdminClient.getConnectionInfo(instanceName);
+    } catch (Exception e) {
+      throw handleException(e);
+    }
   }
 
   private GenerateClientCertificateResponse getGenerateClientCertificateResponse(
@@ -107,7 +116,25 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Close
             .setUseMetadataExchange(true)
             .build();
 
-    return alloyDBAdminClient.generateClientCertificate(request);
+    try {
+      return alloyDBAdminClient.generateClientCertificate(request);
+    } catch (Exception e) {
+      throw handleException(e);
+    }
+  }
+
+  private RuntimeException handleException(Exception e) {
+    StatusRuntimeException statusEx = (StatusRuntimeException) e.getCause();
+    String message =
+        String.format(
+            "AlloyDB Admin API failed to return the connection info. Reason: %s",
+            statusEx.getMessage());
+
+    if (TERMINAL_STATUS_CODES.contains(statusEx.getStatus().getCode())) {
+      return new TerminalException(message, e);
+    }
+
+    return new RuntimeException(message, e);
   }
 
   private String getParent(InstanceName instanceName) {

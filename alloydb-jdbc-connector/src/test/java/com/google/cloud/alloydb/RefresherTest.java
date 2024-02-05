@@ -58,7 +58,10 @@ public class RefresherTest {
     ExampleData data = new ExampleData(Instant.now().plus(1, ChronoUnit.HOURS));
     Refresher r =
         new Refresher(
-            "testcase", executorService, () -> Futures.immediateFuture(data), rateLimiter);
+            "RefresherTest.testDataRetrievedSuccessfully",
+            executorService,
+            () -> Futures.immediateFuture(data),
+            rateLimiter);
     ConnectionInfo gotInfo = r.getConnectionInfo(TEST_TIMEOUT_MS);
     assertThat(gotInfo).isSameInstanceAs(data);
   }
@@ -82,7 +85,11 @@ public class RefresherTest {
     ExampleData data = new ExampleData(Instant.now().plus(1, ChronoUnit.HOURS));
     SpyRateLimiter rl = new SpyRateLimiter(10);
     Refresher r =
-        new Refresher("testcase", executorService, () -> Futures.immediateFuture(data), rl);
+        new Refresher(
+            "RefresherTest.testRateLimiterInUse",
+            executorService,
+            () -> Futures.immediateFuture(data),
+            rl);
     ConnectionInfo gotInfo = r.getConnectionInfo(TEST_TIMEOUT_MS);
     assertThat(gotInfo).isSameInstanceAs(data);
     assertThat(rl.counter).isNotEqualTo(0);
@@ -92,7 +99,7 @@ public class RefresherTest {
   public void testInstanceFailsOnConnectionError() {
     Refresher r =
         new Refresher(
-            "testcase",
+            "RefresherTest.testInstanceFailsOnConnectionError",
             executorService,
             () -> Futures.immediateFailedFuture(new RuntimeException("always fails")),
             rateLimiter);
@@ -107,7 +114,7 @@ public class RefresherTest {
     ExampleData data = new ExampleData(Instant.now().plus(1, ChronoUnit.HOURS));
     Refresher r =
         new Refresher(
-            "testcase",
+            "RefresherTest.testInstanceFailsOnTooLongToRetrieve",
             executorService,
             () -> {
               cond.pause();
@@ -126,7 +133,7 @@ public class RefresherTest {
     final PauseCondition cond = new PauseCondition();
     Refresher r =
         new Refresher(
-            "testcase",
+            "RefresherTest.testForcesRefresh",
             executorService,
             () -> {
               int c = refreshCount.get();
@@ -168,7 +175,7 @@ public class RefresherTest {
 
     Refresher r =
         new Refresher(
-            "testcase",
+            "RefresherTest.testRetriesOnInitialFailures",
             executorService,
             () -> {
               int c = refreshCount.get();
@@ -199,7 +206,7 @@ public class RefresherTest {
 
     Refresher r =
         new Refresher(
-            "testcase",
+            "RefresherTest.testRefreshesExpiredData",
             executorService,
             () -> {
               int c = refreshCount.get();
@@ -253,7 +260,7 @@ public class RefresherTest {
 
     Refresher r =
         new Refresher(
-            "testcase",
+            "RefresherTest.testThatForceRefreshBalksWhenAScheduledRefreshIsInProgress",
             executorService,
             () -> {
               int c = refreshCount.get();
@@ -310,7 +317,7 @@ public class RefresherTest {
 
     Refresher r =
         new Refresher(
-            "testcase",
+            "RefresherTest.testThatForceRefreshBalksWhenAForceRefreshIsInProgress",
             executorService,
             () -> {
               int c = refreshCount.get();
@@ -363,7 +370,7 @@ public class RefresherTest {
 
     Refresher r =
         new Refresher(
-            "testcase",
+            "RefresherTest.testRefreshRetriesOnAfterFailedAttempts",
             executorService,
             () -> {
               int c = refreshCount.get();
@@ -424,7 +431,10 @@ public class RefresherTest {
     ExampleData data = new ExampleData(Instant.now().plus(1, ChronoUnit.HOURS));
     Refresher r =
         new Refresher(
-            "testcase", executorService, () -> Futures.immediateFuture(data), rateLimiter);
+            "RefresherTest.testClosedInstanceDataThrowsException",
+            executorService,
+            () -> Futures.immediateFuture(data),
+            rateLimiter);
     r.close();
 
     assertThrows(IllegalStateException.class, () -> r.getConnectionInfo(TEST_TIMEOUT_MS));
@@ -440,7 +450,7 @@ public class RefresherTest {
 
     Refresher r =
         new Refresher(
-            "testcase",
+            "RefresherTest.testClosedInstanceDataStopsRefreshTasks",
             executorService,
             () -> {
               int c = refreshCount.get();
@@ -504,6 +514,66 @@ public class RefresherTest {
     assertThat(refreshCount.get()).isEqualTo(1);
 
     r.refreshIfExpired();
+
+    // getConnectionInfo again, and assert the refresh operation completed.
+    refresh1.waitForCondition(() -> r.getConnectionInfo(TEST_TIMEOUT_MS) == data, 1000L);
+    assertThat(refreshCount.get()).isEqualTo(2);
+  }
+
+  @Test
+  public void testGetConnectionInfo_throwsTerminalException_refreshOperationNotScheduled() {
+    ExampleData data = new ExampleData(Instant.now().plus(1, ChronoUnit.HOURS));
+    AtomicInteger refreshCount = new AtomicInteger();
+
+    Refresher r =
+        new Refresher(
+            "RefresherTest.testGetConnectionInfo_throwsTerminalException_refreshOperationNotScheduled",
+            executorService,
+            () -> {
+              int c = refreshCount.get();
+              ExampleData refreshResult = data;
+              switch (c) {
+                case 0:
+                  // refresh 0 should throw an exception
+                  refreshCount.incrementAndGet();
+                  throw new TerminalException("Not authorized");
+              }
+              // refresh 2 and on should return data immediately
+              refreshCount.incrementAndGet();
+              return Futures.immediateFuture(refreshResult);
+            },
+            rateLimiter);
+
+    // Raising TerminalException stops the refresher's executor from running the next task.
+    assertThrows(TerminalException.class, () -> r.getConnectionInfo(TEST_TIMEOUT_MS));
+    assertThat(refreshCount.get()).isEqualTo(1);
+  }
+
+  @Test
+  public void testGetConnectionInfo_throwsRuntimeException_refreshOperationScheduled()
+      throws Exception {
+    ExampleData data = new ExampleData(Instant.now().plus(1, ChronoUnit.HOURS));
+    AtomicInteger refreshCount = new AtomicInteger();
+    final PauseCondition refresh1 = new PauseCondition();
+
+    Refresher r =
+        new Refresher(
+            "RefresherTest.testGetConnectionInfo_throwsRuntimeException_refreshOperationScheduled",
+            executorService,
+            () -> {
+              int c = refreshCount.get();
+              ExampleData refreshResult = data;
+              switch (c) {
+                case 0:
+                  // refresh 0 should throw an exception
+                  refreshCount.incrementAndGet();
+                  throw new RuntimeException("Bad Gateway");
+              }
+              // refresh 2 and on should return data immediately
+              refreshCount.incrementAndGet();
+              return Futures.immediateFuture(refreshResult);
+            },
+            rateLimiter);
 
     // getConnectionInfo again, and assert the refresh operation completed.
     refresh1.waitForCondition(() -> r.getConnectionInfo(TEST_TIMEOUT_MS) == data, 1000L);
