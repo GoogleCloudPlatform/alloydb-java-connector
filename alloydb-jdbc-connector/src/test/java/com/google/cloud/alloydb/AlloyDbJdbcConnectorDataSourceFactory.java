@@ -21,6 +21,7 @@ import com.zaxxer.hikari.HikariDataSource;
 
 public class AlloyDbJdbcConnectorDataSourceFactory {
 
+  public static final String ALLOYDB_DB = System.getenv("ALLOYDB_DB");
   public static final String ALLOYDB_USER = System.getenv("ALLOYDB_USER");
   public static final String ALLOYDB_PASS = System.getenv("ALLOYDB_PASS");
   public static final String ALLOYDB_INSTANCE_NAME = System.getenv("ALLOYDB_INSTANCE_NAME");
@@ -28,7 +29,7 @@ public class AlloyDbJdbcConnectorDataSourceFactory {
   static HikariDataSource createDataSource() {
     HikariConfig config = new HikariConfig();
 
-    config.setJdbcUrl("jdbc:postgresql:///postgres");
+    config.setJdbcUrl(String.format("jdbc:postgresql:///%s", ALLOYDB_DB));
     config.setUsername(ALLOYDB_USER); // e.g., "postgres"
     config.setPassword(ALLOYDB_PASS); // e.g., "secret-password"
     config.addDataSourceProperty("socketFactory", "com.google.cloud.alloydb.SocketFactory");

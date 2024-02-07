@@ -21,13 +21,14 @@ import com.zaxxer.hikari.HikariDataSource;
 
 public class AlloyDbJdbcDirectPathDataSourceFactory {
 
+  public static final String ALLOYDB_DB = System.getenv("ALLOYDB_DB");
   public static final String ALLOYDB_USER = System.getenv("ALLOYDB_IAM_USER");
   public static final String ALLOYDB_INSTANCE_IP = System.getenv("ALLOYDB_INSTANCE_IP");
 
   static HikariDataSource createDataSource() {
     HikariConfig config = new HikariConfig();
 
-    config.setJdbcUrl(String.format("jdbc:postgresql://%s/postgres", ALLOYDB_INSTANCE_IP));
+    config.setJdbcUrl(String.format("jdbc:postgresql://%s/%s", ALLOYDB_INSTANCE_IP, ALLOYDB_DB));
     config.setUsername(ALLOYDB_USER); // e.g., "postgres"
     // No need to set password, as that's dynamically configured in the
     // AlloyDBDirectPathDataSource with a refreshed OAuth2 token.

@@ -80,7 +80,7 @@ public class ExampleApplication {
 
     // There is no need to set a host on the JDBC URL
     // since the Connector will resolve the correct IP address.
-    config.setJdbcUrl("jdbc:postgresql:///postgres");
+    config.setJdbcUrl(String.format("jdbc:postgresql:///%s", System.getenv("ALLOYDB_DB")));
     config.setUsername(System.getenv("ALLOYDB_USER"));
     config.setPassword(System.getenv("ALLOYDB_PASS"));
 
@@ -139,7 +139,7 @@ public class ExampleApplication {
 
     // There is no need to set a host on the JDBC URL
     // since the Connector will resolve the correct IP address.
-    config.setJdbcUrl("jdbc:postgresql:///postgres");
+    config.setJdbcUrl(String.format("jdbc:postgresql:///%s", System.getenv("ALLOYDB_DB")));
     config.setUsername(System.getenv("ALLOYDB_IAM_USER"));
 
     // Tell the driver to use the AlloyDB Java Connector's SocketFactory
@@ -185,7 +185,7 @@ public class ExampleApplication {
 
     // There is no need to set a host on the JDBC URL
     // since the Connector will resolve the correct IP address.
-    config.setJdbcUrl("jdbc:postgresql:///postgres");
+    config.setJdbcUrl(String.format("jdbc:postgresql:///%s", System.getenv("ALLOYDB_DB")));
     config.setUsername(System.getenv("ALLOYDB_USER"));
     config.setPassword(System.getenv("ALLOYDB_PASS"));
 
