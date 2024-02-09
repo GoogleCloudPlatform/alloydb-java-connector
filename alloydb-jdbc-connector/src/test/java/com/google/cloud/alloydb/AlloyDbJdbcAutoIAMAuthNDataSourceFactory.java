@@ -21,13 +21,14 @@ import com.zaxxer.hikari.HikariDataSource;
 
 public class AlloyDbJdbcAutoIAMAuthNDataSourceFactory {
 
+  public static final String ALLOYDB_DB = System.getenv("ALLOYDB_DB");
   public static final String ALLOYDB_USER = System.getenv("ALLOYDB_IAM_USER");
   public static final String ALLOYDB_INSTANCE_NAME = System.getenv("ALLOYDB_INSTANCE_NAME");
 
   static HikariDataSource createDataSource() {
     HikariConfig config = new HikariConfig();
 
-    config.setJdbcUrl("jdbc:postgresql:///postgres");
+    config.setJdbcUrl(String.format("jdbc:postgresql:///%s", ALLOYDB_DB));
     config.setUsername(ALLOYDB_USER);
     config.addDataSourceProperty("socketFactory", "com.google.cloud.alloydb.SocketFactory");
     // e.g., "projects/my-project/locations/us-central1/clusters/my-cluster/instances/my-instance"
