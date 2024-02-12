@@ -191,7 +191,7 @@ jobs:
         repository: ${{ github.event.pull_request.head.repo.full_name }}
 
     - name: Setup Maven Action
-      uses: s4u/setup-maven-action@9337884575c7c64d6ed20d9ab3ee943658d49336
+      uses: s4u/setup-maven-action@6d44c18d67d9e1549907b8815efa5e4dada1801b
       with:
         java-version: 17
 
@@ -281,7 +281,7 @@ jobs:
           java-version: 8
 
       - name: Setup Maven Action
-        uses: s4u/setup-maven-action@9337884575c7c64d6ed20d9ab3ee943658d49336
+        uses: s4u/setup-maven-action@6d44c18d67d9e1549907b8815efa5e4dada1801b
         with:
           java-version: 8
 
