@@ -19,7 +19,7 @@ Include the following in the project's `pom.xml`:
 <dependency>
   <groupId>com.google.cloud</groupId>
   <artifactId>alloydb-jdbc-connector</artifactId>
-  <version>0.5.0</version>
+  <version>0.6.0</version>
 </dependency>
 ```
 <!-- {x-version-update-end} -->
@@ -40,7 +40,7 @@ Include the following the project's `gradle.build`
 <!-- {x-version-update-start:alloydb-jdbc-connector:released} -->
 ```gradle
 // Add connector with the latest version
-implementation group: 'com.google.cloud.alloydb', name: 'alloydb-jdbc-connector', version: '0.5.0'
+implementation group: 'com.google.cloud.alloydb', name: 'alloydb-jdbc-connector', version: '0.6.0'
 ```
 <!-- {x-version-update-end} -->
 
