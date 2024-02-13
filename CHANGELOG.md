@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.6.0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v0.5.0...v0.6.0) (2024-02-13)
+
+
+### Features
+
+* Background refresh stops on unrecoverable Admin API response ([#403](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/403)) ([107f80c](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/107f80c1cfde826fe1db8be1a0630c1f533aa055))
+
+
+### Dependencies
+
+* Update dependency com.google.cloud:google-cloud-alloydb-bom to v0.24.0 ([#416](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/416)) ([54edc02](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/54edc02fe005f5b3d205b23e57f18bdad552ff88))
+* Update dependency com.google.cloud:google-cloud-alloydb-connectors-bom to v0.13.0 ([#417](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/417)) ([0768215](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/07682153bc89b3f29aa56bd856fdb3ac84298143))
+* Update dependency com.google.cloud:google-cloud-shared-dependencies to v3.24.0 ([#398](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/398)) ([69fd2a2](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/69fd2a2ce84a081a2122a8882aeb554b2a4ba997))
+* Update dependency org.slf4j:slf4j-api to v2.0.12 ([#412](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/412)) ([011db8f](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/011db8fd9f37f97dfc267f89c38fbc3974dcdc92))
+* Update native-image.version to v0.10.0 ([#400](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/400)) ([09236d7](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/09236d7c70dbe0f0bd087174d765e999857573c8))
+
 ## [0.5.0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v0.4.0...v0.5.0) (2024-01-29)
 
 
