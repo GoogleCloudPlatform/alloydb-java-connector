@@ -241,7 +241,7 @@ used by applications that need to connect to a Google Cloud API other
 than the GCP public API.
 
 The `alloydbAdminServiceEndpoint` property specifies a network address that
-the AlloyDB Admin API service uses to service the actual API requests,
+the AlloyDB API service uses to service the actual API requests,
 for example `"googleapis.example.com:443"`.
 
 If this option is not set, the connector will use the default service address
