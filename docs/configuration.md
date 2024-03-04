@@ -30,11 +30,11 @@ JDBC connection.
 
 An application may need to use named connectors if:
 
-- It needs to connect to the AlloyDB Admin API using credentials 
+- It needs to connect to the AlloyDB API using credentials 
   other than the Application Default Credentials.
 - It needs to connect to multiple AlloyDB instances using different
   credentials.
-- It uses a non-standard AlloyDB Admin API service URL.
+- It uses a non-standard AlloyDB API service URL.
 - It needs to precisely control when connectors start and stop. 
 - It needs to reset the entire connector configuration without restarting 
   the application.
@@ -201,7 +201,7 @@ throwing `IllegalStateException`.
 ## Configuring Google Credentials
 
 By default, connectors will use the Google Application Default credentials to
-connect to Google AlloyDB Admin API. The application can set specific
+connect to Google AlloyDB API. The application can set specific
 Google Credentials in the connector configuration.
 
 ### Unnamed Connectors 
@@ -250,13 +250,13 @@ registered with `ConnectorRegistry.register()`.
 ### Connector Configuration Properties
 
 These properties configure the connector which loads AlloyDB instance 
-configuration using the AlloyDB Admin API. 
+configuration using the AlloyDB API. 
 
 | JDBC Connection Property | Description | Example |
 |---------------|---------------------|-----------------|
 | alloydbTargetPrincipal   | The service account to impersonate when connecting to the database and database admin API. | `db-user@my-project.iam.gserviceaccount.com` |
 | alloydbDelegates  | A comma-separated list of service accounts delegates. See [Delegated Service Account Impersonation](jdbc.md#delegated-service-account-impersonation) | `application@my-project.iam.gserviceaccount.com,services@my-project.iam.gserviceaccount.com` |
-| alloydbAdminServiceEndpoint  | An alternate AlloyDB admin API endpoint. | `alloydb.googleapis.com:443` |
+| alloydbAdminServiceEndpoint  | An alternate AlloyDB API endpoint. | `alloydb.googleapis.com:443` |
 | alloydbGoogleCredentialsPath | A file path to a JSON file containing a GoogleCredentials oauth token.| `/home/alice/secrets/my-credentials.json` |
 
 ### Connection Configuration Properties
