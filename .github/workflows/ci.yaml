@@ -64,6 +64,8 @@ jobs:
       run: .kokoro/build.sh
       env:
         JOB_TYPE: test
+    - name: Check Coverage
+      run: .kokoro/check_coverage.sh
     - name: FlakyBot
       # only run flakybot on periodic (schedule) and continuous (push) events
       if: ${{ (github.event_name == 'schedule' || github.event_name == 'push') && runner.os == 'Linux' && always() }}
@@ -106,6 +108,8 @@ jobs:
       run: .kokoro/build.bat
       env:
         JOB_TYPE: test
+    - name: Check Coverage
+      run: .kokoro/check_coverage.sh
     - name: FlakyBot
       # only run flakybot on periodic (schedule) and continuous (push) events
       if: ${{ (github.event_name == 'schedule' || github.event_name == 'push') && runner.os == 'Windows' && always() }}
@@ -316,10 +320,6 @@ jobs:
           JOB_TYPE: integration
         run: .kokoro/build.sh
         shell: bash
-
-      - name: Check Coverage
-        run: .kokoro/check_coverage.sh
-
 
       - name: FlakyBot
         # only run flakybot on periodic (schedule) and continuous (push) events

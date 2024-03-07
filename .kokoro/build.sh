@@ -42,7 +42,7 @@ set +e
 
 case ${JOB_TYPE} in
 test)
-    mvn test -B -ntp -Dclirr.skip=true -Denforcer.skip=true
+    mvn test -B -ntp -Pcoverage -Dclirr.skip=true -Denforcer.skip=true
     RETURN_CODE=$?
     ;;
 lint)
@@ -56,7 +56,6 @@ javadoc)
 integration)
     mvn -B ${INTEGRATION_TEST_ARGS} \
       -ntp \
-      -Pcoverage \
       -Penable-integration-tests \
       -DtrimStackTrace=false \
       -Dclirr.skip=true \
