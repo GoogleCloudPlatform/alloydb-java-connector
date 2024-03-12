@@ -28,7 +28,7 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>alloydb-jdbc-connector</artifactId>
-      <version>0.6.1-SNAPSHOT</version>
+      <version>1.0.0</version>
     </dependency>
     <!-- {x-version-update-end} -->
 

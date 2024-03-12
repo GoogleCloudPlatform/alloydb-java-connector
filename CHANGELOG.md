@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.0.0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v0.6.0...v1.0.0) (2024-03-12)
+
+
+### Dependencies
+
+* Update com.google.errorprone dependencies to v2.26.0 ([#463](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/463)) ([b34030f](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/b34030fabb63e5dbdb61482087fc4b565c5a3b99))
+* Update dependency com.google.api:gax-grpc to v2.45.0 ([#452](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/452)) ([087e688](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/087e68802ad4c68aedf06bce851d7700b6716746))
+* Update dependency com.google.api.grpc:proto-google-common-protos to v2.36.0 ([#453](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/453)) ([3076195](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/3076195879e146e4ddc4668961cce7f684c9f8ee))
+* Update dependency com.google.cloud:google-cloud-alloydb-bom to v0.26.0 ([#457](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/457)) ([cb7f886](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/cb7f8869c8379ec1fb51149e7abf1f6564dcacca))
+* Update dependency com.google.cloud:google-cloud-alloydb-connectors-bom to v0.15.0 ([#458](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/458)) ([8793a09](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/8793a09d8ed70445e8abd503ed3e2de496691ab0))
+* Update dependency com.google.cloud:google-cloud-shared-config to v1.7.4 ([#449](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/449)) ([d758798](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/d758798e5954328e5de33fbc87716c7f026052a5))
+* Update dependency com.google.cloud:google-cloud-shared-dependencies to v3.27.0 ([#454](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/454)) ([6fad6d8](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/6fad6d86303e3e833b39135ad851dca3a5b8c7fb))
+* Update dependency com.google.truth:truth to v1.4.2 ([#451](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/451)) ([0594e4e](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/0594e4e4a246e2b824a7df3be9ee5a1061ed228b))
+* Update dependency io.grpc:grpc-bom to v1.62.2 ([#444](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/444)) ([9204c88](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/9204c8888589459d0d99ce17a485ec99c6f50985))
+* Update dependency org.jmock:jmock to v2.13.0 ([#461](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/461)) ([45c462a](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/45c462adb11a4eafa4bf5a555da465cc5a31b548))
+* Update native-image.version to v0.10.1 ([#433](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/433)) ([3774a1f](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/3774a1f5ebbd6362297aeb044328657cf7b1d0a5))
+
+
+### Documentation
+
+* Use AlloyDB API for consistency with the official documentation. ([#456](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/456)) ([c0401ba](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/c0401ba01c87ec1a1cc435403d1e9e0c58a62f29))
+
+
+### Miscellaneous Chores
+
+* release 1.0.0 ([#464](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/464)) ([3e39704](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/3e39704c4c5436cb9b1937bfe99c2a457feaf09f))
+
 ## [0.6.0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v0.5.0...v0.6.0) (2024-02-13)
 
 
