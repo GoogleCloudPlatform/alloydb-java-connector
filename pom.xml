@@ -69,7 +69,7 @@
       <dependency>
         <groupId>com.google.cloud</groupId>
         <artifactId>google-cloud-shared-dependencies</artifactId>
-        <version>3.27.0</version>
+        <version>3.28.1</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -153,6 +153,11 @@
         <groupId>org.graalvm.sdk</groupId>
         <artifactId>graal-sdk</artifactId>
         <version>22.0.0</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>failureaccess</artifactId>
+        <version>1.0.2</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
