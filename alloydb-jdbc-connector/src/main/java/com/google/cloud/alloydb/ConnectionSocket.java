@@ -86,9 +86,18 @@ class ConnectionSocket {
             connectionInfo.getCertificateChain(),
             this.clientConnectorKeyPair.getPrivate());
 
-    String ipAddress = connectionInfo.getIpAddress();
-    if (connectionConfig.getIpType().equals(IpType.PUBLIC)) {
-      ipAddress = connectionInfo.getPublicIpAddress();
+    String ipAddress;
+    switch (connectionConfig.getIpType()) {
+      case PUBLIC:
+        ipAddress = connectionInfo.getPublicIpAddress();
+        break;
+      case PSC:
+        // DNS names always end with a period (.), so remove it.
+        ipAddress = connectionInfo.getPscDnsName().replaceFirst("\\.$", "");
+        break;
+      default:
+        ipAddress = connectionInfo.getIpAddress();
+        break;
     }
 
     if (ipAddress == null || ipAddress.isEmpty()) {
