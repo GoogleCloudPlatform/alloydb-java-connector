@@ -26,6 +26,7 @@ class ConnectionInfo {
   private final String ipAddress;
   private final String publicIpAddress;
   private final String instanceUid;
+  private final String pscDnsName;
   private final X509Certificate clientCertificate;
   private final List<X509Certificate> certificateChain;
   private final X509Certificate caCertificate;
@@ -33,12 +34,14 @@ class ConnectionInfo {
   ConnectionInfo(
       String ipAddress,
       String publicIpAddress,
+      String pscDnsName,
       String instanceUid,
       X509Certificate clientCertificate,
       List<X509Certificate> certificateChain,
       X509Certificate caCertificate) {
     this.ipAddress = ipAddress;
     this.publicIpAddress = publicIpAddress;
+    this.pscDnsName = pscDnsName;
     this.instanceUid = instanceUid;
     this.clientCertificate = clientCertificate;
     this.certificateChain = certificateChain;
@@ -51,6 +54,10 @@ class ConnectionInfo {
 
   String getPublicIpAddress() {
     return publicIpAddress;
+  }
+
+  String getPscDnsName() {
+    return pscDnsName;
   }
 
   String getInstanceUid() {
@@ -89,6 +96,7 @@ class ConnectionInfo {
     ConnectionInfo that = (ConnectionInfo) o;
     return Objects.equal(ipAddress, that.ipAddress)
         && Objects.equal(publicIpAddress, that.publicIpAddress)
+        && Objects.equal(pscDnsName, that.pscDnsName)
         && Objects.equal(instanceUid, that.instanceUid)
         && Objects.equal(clientCertificate, that.clientCertificate)
         && Objects.equal(certificateChain, that.certificateChain)
@@ -100,6 +108,7 @@ class ConnectionInfo {
     return Objects.hashCode(
         ipAddress,
         publicIpAddress,
+        pscDnsName,
         instanceUid,
         clientCertificate,
         certificateChain,
@@ -114,6 +123,9 @@ class ConnectionInfo {
         + '\''
         + ",publicIpAddress='"
         + publicIpAddress
+        + '\''
+        + ",pscDnsName='"
+        + pscDnsName
         + '\''
         + ", instanceUid='"
         + instanceUid

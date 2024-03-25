@@ -36,6 +36,7 @@ public class ConnectionInfoTest {
 
   private static final String IP_ADDRESS = "10.0.0.1";
   private static final String PUBLIC_IP_ADDRESS = "34.0.0.1";
+  private static final String DNS_NAME = "abcde.12345.us-central1.alloydb.goog";
   private static final String INSTANCE_UID = "some-id";
   private KeyPair testKeyPair;
   private TestCertificates testCertificates;
@@ -54,6 +55,7 @@ public class ConnectionInfoTest {
         new ConnectionInfo(
             IP_ADDRESS,
             PUBLIC_IP_ADDRESS,
+            DNS_NAME,
             INSTANCE_UID,
             testCertificates.getEphemeralCertificate(testKeyPair.getPublic(), expected),
             Arrays.asList(
@@ -74,6 +76,7 @@ public class ConnectionInfoTest {
         new ConnectionInfo(
             IP_ADDRESS,
             PUBLIC_IP_ADDRESS,
+            DNS_NAME,
             INSTANCE_UID,
             ephemeralCertificate,
             Arrays.asList(
@@ -89,6 +92,7 @@ public class ConnectionInfoTest {
             new ConnectionInfo(
                 "different IP",
                 PUBLIC_IP_ADDRESS,
+                DNS_NAME,
                 INSTANCE_UID,
                 ephemeralCertificate,
                 Arrays.asList(
@@ -100,6 +104,7 @@ public class ConnectionInfoTest {
             new ConnectionInfo(
                 IP_ADDRESS,
                 "different Public IP",
+                DNS_NAME,
                 INSTANCE_UID,
                 ephemeralCertificate,
                 Arrays.asList(
@@ -111,6 +116,19 @@ public class ConnectionInfoTest {
             new ConnectionInfo(
                 IP_ADDRESS,
                 PUBLIC_IP_ADDRESS,
+                "different DNS name",
+                INSTANCE_UID,
+                ephemeralCertificate,
+                Arrays.asList(
+                    testCertificates.getIntermediateCertificate(),
+                    testCertificates.getRootCertificate()),
+                testCertificates.getRootCertificate()));
+    assertThat(c1)
+        .isNotEqualTo(
+            new ConnectionInfo(
+                IP_ADDRESS,
+                PUBLIC_IP_ADDRESS,
+                DNS_NAME,
                 "different instance Uid",
                 ephemeralCertificate,
                 Arrays.asList(
@@ -122,6 +140,7 @@ public class ConnectionInfoTest {
             new ConnectionInfo(
                 IP_ADDRESS,
                 PUBLIC_IP_ADDRESS,
+                DNS_NAME,
                 INSTANCE_UID,
                 testCertificates.getEphemeralCertificate(
                     testKeyPair.getPublic(), Instant.now().plus(1, ChronoUnit.DAYS)),
@@ -134,6 +153,7 @@ public class ConnectionInfoTest {
             new ConnectionInfo(
                 IP_ADDRESS,
                 PUBLIC_IP_ADDRESS,
+                DNS_NAME,
                 INSTANCE_UID,
                 testCertificates.getEphemeralCertificate(
                     testKeyPair.getPublic(), Instant.now().plus(1, ChronoUnit.DAYS)),
@@ -144,6 +164,7 @@ public class ConnectionInfoTest {
         new ConnectionInfo(
             IP_ADDRESS,
             PUBLIC_IP_ADDRESS,
+            DNS_NAME,
             "some-id",
             ephemeralCertificate,
             Arrays.asList(
@@ -160,6 +181,7 @@ public class ConnectionInfoTest {
         new ConnectionInfo(
             IP_ADDRESS,
             PUBLIC_IP_ADDRESS,
+            DNS_NAME,
             "some-id",
             testCertificates.getEphemeralCertificate(testKeyPair.getPublic(), Instant.now()),
             Arrays.asList(
@@ -174,6 +196,7 @@ public class ConnectionInfoTest {
     return Objects.hashCode(
         connectionInfo.getIpAddress(),
         connectionInfo.getPublicIpAddress(),
+        connectionInfo.getPscDnsName(),
         connectionInfo.getInstanceUid(),
         connectionInfo.getClientCertificate(),
         connectionInfo.getCertificateChain(),

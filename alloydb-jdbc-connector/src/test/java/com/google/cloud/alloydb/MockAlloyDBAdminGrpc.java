@@ -30,9 +30,11 @@ class MockAlloyDBAdminGrpc extends AlloyDBAdminGrpc.AlloyDBAdminImplBase {
   private int errorCode;
   private String errorMessage;
   private String ipAddress;
+  private IpType ipType;
 
-  MockAlloyDBAdminGrpc(String ipAddress) {
+  MockAlloyDBAdminGrpc(String ipAddress, IpType ipType) {
     this.ipAddress = ipAddress;
+    this.ipType = ipType;
   }
 
   MockAlloyDBAdminGrpc(int errorCode, String errorMessage) {
@@ -72,7 +74,21 @@ class MockAlloyDBAdminGrpc extends AlloyDBAdminGrpc.AlloyDBAdminImplBase {
       Status status = Status.newBuilder().setCode(errorCode).setMessage(errorMessage).build();
       responseObserver.onError(StatusProto.toStatusRuntimeException(status));
     } else {
-      responseObserver.onNext(ConnectionInfo.newBuilder().setIpAddress(ipAddress).build());
+      ConnectionInfo.Builder builder = ConnectionInfo.newBuilder();
+
+      switch (ipType) {
+        case PUBLIC:
+          builder = builder.setPublicIpAddress(ipAddress);
+          break;
+        case PSC:
+          builder = builder.setPscDnsName(ipAddress);
+          break;
+        default:
+          builder = builder.setIpAddress(ipAddress);
+          break;
+      }
+
+      responseObserver.onNext(builder.build());
       responseObserver.onCompleted();
     }
   }

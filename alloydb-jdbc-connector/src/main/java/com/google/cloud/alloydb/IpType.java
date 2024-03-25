@@ -17,5 +17,6 @@ package com.google.cloud.alloydb;
 
 public enum IpType {
   PUBLIC,
-  PRIVATE;
+  PRIVATE,
+  PSC;
 }
