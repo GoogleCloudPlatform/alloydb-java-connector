@@ -52,8 +52,10 @@ class MockAlloyDBAdminGrpc extends AlloyDBAdminGrpc.AlloyDBAdminImplBase {
       try {
         GenerateClientCertificateResponse response =
             GenerateClientCertificateResponse.newBuilder()
-                .setCaCert(TestKeys.SIGNING_CA_CERT)
-                .addPemCertificateChain(TestKeys.CLIENT_CERT)
+                .setCaCert(TestCertificates.INSTANCE.getRootCertificateStr())
+                .addPemCertificateChain(TestCertificates.INSTANCE.getClientCertificateStr())
+                .addPemCertificateChain(TestCertificates.INSTANCE.getIntermediateCertificateStr())
+                .addPemCertificateChain(TestCertificates.INSTANCE.getRootCertificateStr())
                 .build();
 
         responseObserver.onNext(response);

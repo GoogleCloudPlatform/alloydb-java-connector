@@ -28,16 +28,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
-import java.security.KeyFactory;
-import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
-import java.util.Base64.Decoder;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import org.junit.After;
@@ -140,24 +132,11 @@ public class ConnectorTest {
     AccessTokenSupplier accessTokenSupplier =
         new DefaultAccessTokenSupplier(instanceCredentialFactory);
 
-    Decoder decoder = Base64.getDecoder();
-    // Decode client private test key
-    KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-    PKCS8EncodedKeySpec privateKeySpec =
-        new PKCS8EncodedKeySpec(decoder.decode(TestKeys.CLIENT_PRIVATE_KEY.replaceAll("\\s", "")));
-    PrivateKey privateKey = keyFactory.generatePrivate(privateKeySpec);
-
-    // Decode client public test key
-    X509EncodedKeySpec publicKeySpec =
-        new X509EncodedKeySpec(decoder.decode(TestKeys.CLIENT_PUBLIC_KEY.replaceAll("\\s", "")));
-    PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
-    KeyPair clientKeyPair = new KeyPair(publicKey, privateKey);
-
     return new Connector(
         config,
         defaultExecutor,
         connectionInfoRepository,
-        clientKeyPair,
+        TestCertificates.INSTANCE.getClientKey(),
         new DefaultConnectionInfoCacheFactory(),
         new ConcurrentHashMap<>(),
         accessTokenSupplier);
