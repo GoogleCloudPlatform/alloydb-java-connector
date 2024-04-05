@@ -22,12 +22,10 @@ import com.google.cloud.alloydb.connectors.v1.MetadataExchangeResponse;
 import com.google.cloud.alloydb.connectors.v1.MetadataExchangeResponse.ResponseCode;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.KeyStore.PasswordProtection;
 import java.security.KeyStore.PrivateKeyEntry;
@@ -38,10 +36,7 @@ import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Base64;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.KeyManager;
@@ -74,25 +69,13 @@ class FakeSslServer {
         new Thread(
             () -> {
               try {
-                CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-
-                PKCS8EncodedKeySpec keySpec =
-                    new PKCS8EncodedKeySpec(
-                        decodeBase64StripWhitespace(TestKeys.SERVER_CERT_PRIVATE_KEY));
-                PrivateKey privateKey = KeyFactory.getInstance("RSA").generatePrivate(keySpec);
-
                 final X509Certificate signingCaCert =
-                    (X509Certificate)
-                        certFactory.generateCertificate(
-                            new ByteArrayInputStream(TestKeys.SIGNING_CA_CERT.getBytes(UTF_8)));
+                    TestCertificates.INSTANCE.getRootCertificate();
 
                 KeyManager[] keyManagers =
                     initializeKeyManager(
-                        new Certificate[] {
-                          certFactory.generateCertificate(
-                              new ByteArrayInputStream(TestKeys.SERVER_CERT.getBytes(UTF_8)))
-                        },
-                        privateKey);
+                        new Certificate[] {TestCertificates.INSTANCE.getServerCertificate()},
+                        TestCertificates.INSTANCE.getServerKey().getPrivate());
                 TrustManager[] trustManagers = initializeTrustManager(signingCaCert);
 
                 SSLContext sslContext = SSLContext.getInstance(TLS_1_3);
@@ -143,10 +126,6 @@ class FakeSslServer {
 
   void stop() {
     this.thread.interrupt();
-  }
-
-  private byte[] decodeBase64StripWhitespace(String b64) {
-    return Base64.getDecoder().decode(b64.replaceAll("\\s", ""));
   }
 
   private TrustManager[] initializeTrustManager(X509Certificate caCertificate)

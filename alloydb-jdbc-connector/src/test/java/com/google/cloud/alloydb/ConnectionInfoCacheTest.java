@@ -45,7 +45,6 @@ public class ConnectionInfoCacheTest {
   private static final Instant ONE_HOUR_FROM_NOW = Instant.now().plus(1, ChronoUnit.HOURS);
   private InstanceName instanceName;
   private KeyPair keyPair;
-  private TestCertificates testCertificates;
   private static final long TEST_TIMEOUT_MS = 1000L;
   ListeningScheduledExecutorService executor;
 
@@ -55,7 +54,6 @@ public class ConnectionInfoCacheTest {
         InstanceName.parse(
             "projects/<PROJECT>/locations/<REGION>/clusters/<CLUSTER>/instances/<INSTANCE>");
     keyPair = RsaKeyPairGenerator.generateKeyPair();
-    testCertificates = new TestCertificates();
     ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(4);
     exec.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
     exec.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
@@ -76,11 +74,12 @@ public class ConnectionInfoCacheTest {
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_PUBLIC_IP,
                 TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
+                TestCertificates.INSTANCE.getEphemeralCertificate(
+                    keyPair.getPublic(), ONE_HOUR_FROM_NOW),
                 Arrays.asList(
-                    testCertificates.getIntermediateCertificate(),
-                    testCertificates.getRootCertificate()),
-                testCertificates.getRootCertificate()));
+                    TestCertificates.INSTANCE.getIntermediateCertificate(),
+                    TestCertificates.INSTANCE.getRootCertificate()),
+                TestCertificates.INSTANCE.getRootCertificate()));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
             MoreExecutors.listeningDecorator(executor),
@@ -111,7 +110,8 @@ public class ConnectionInfoCacheTest {
     InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
     List<X509Certificate> certificateChain =
         Arrays.asList(
-            testCertificates.getIntermediateCertificate(), testCertificates.getRootCertificate());
+            TestCertificates.INSTANCE.getIntermediateCertificate(),
+            TestCertificates.INSTANCE.getRootCertificate());
     connectionInfoRepo.addResponses(
         () -> {
           throw new ApiException(
@@ -135,9 +135,10 @@ public class ConnectionInfoCacheTest {
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_PUBLIC_IP,
                 TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
+                TestCertificates.INSTANCE.getEphemeralCertificate(
+                    keyPair.getPublic(), ONE_HOUR_FROM_NOW),
                 certificateChain,
-                testCertificates.getRootCertificate()));
+                TestCertificates.INSTANCE.getRootCertificate()));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
             MoreExecutors.listeningDecorator(executor),
@@ -169,7 +170,8 @@ public class ConnectionInfoCacheTest {
     InMemoryConnectionInfoRepo connectionInfoRepo = new InMemoryConnectionInfoRepo();
     List<X509Certificate> certificateChain =
         Arrays.asList(
-            testCertificates.getIntermediateCertificate(), testCertificates.getRootCertificate());
+            TestCertificates.INSTANCE.getIntermediateCertificate(),
+            TestCertificates.INSTANCE.getRootCertificate());
     connectionInfoRepo.addResponses(
         () -> {
           throw new CertificateException();
@@ -179,9 +181,10 @@ public class ConnectionInfoCacheTest {
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_PUBLIC_IP,
                 TEST_INSTANCE_ID,
-                testCertificates.getEphemeralCertificate(keyPair.getPublic(), ONE_HOUR_FROM_NOW),
+                TestCertificates.INSTANCE.getEphemeralCertificate(
+                    keyPair.getPublic(), ONE_HOUR_FROM_NOW),
                 certificateChain,
-                testCertificates.getRootCertificate()));
+                TestCertificates.INSTANCE.getRootCertificate()));
     DefaultConnectionInfoCache connectionInfoCache =
         new DefaultConnectionInfoCache(
             MoreExecutors.listeningDecorator(executor),

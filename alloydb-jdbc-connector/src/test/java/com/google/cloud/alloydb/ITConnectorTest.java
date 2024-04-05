@@ -104,19 +104,18 @@ public class ITConnectorTest {
   public void testConnect_whenTlsHandshakeFails()
       throws IOException, CertificateException, OperatorCreationException {
     KeyPair clientConnectorKeyPair = RsaKeyPairGenerator.generateKeyPair();
-    TestCertificates testCertificates = new TestCertificates();
     StubConnectionInfoCache stubConnectionInfoCache = new StubConnectionInfoCache();
     stubConnectionInfoCache.setConnectionInfo(
         new ConnectionInfo(
             "127.0.0.1", // localhost doesn't do TLS
             "127.0.0.1", // localhost doesn't do TLS
             "some-instance",
-            testCertificates.getEphemeralCertificate(
+            TestCertificates.INSTANCE.getEphemeralCertificate(
                 clientConnectorKeyPair.getPublic(), Instant.now()),
             Arrays.asList(
-                testCertificates.getIntermediateCertificate(),
-                testCertificates.getRootCertificate()),
-            testCertificates.getRootCertificate()));
+                TestCertificates.INSTANCE.getIntermediateCertificate(),
+                TestCertificates.INSTANCE.getRootCertificate()),
+            TestCertificates.INSTANCE.getRootCertificate()));
     StubConnectionInfoCacheFactory connectionInfoCacheFactory =
         new StubConnectionInfoCacheFactory(stubConnectionInfoCache);
     SSLSocket socket = null;

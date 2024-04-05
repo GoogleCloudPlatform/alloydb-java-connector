@@ -16,20 +16,25 @@
 
 package com.google.cloud.alloydb;
 
+import com.google.common.io.BaseEncoding;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.KeyUsage;
 import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -54,44 +59,79 @@ import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
  *   <li>An ephemeral certificate signed by the intermediate CA
  * </ol>
  */
-public class TestCertificates {
+enum TestCertificates {
+  INSTANCE;
 
-  private static final String DEFAULT_INSTANCE_ID = "00000000-0000-0000-0000-000000000000";
-  private static final String DEFAULT_SERVER_NAME =
+  private final String DEFAULT_INSTANCE_ID = "00000000-0000-0000-0000-000000000000";
+  private final String DEFAULT_SERVER_NAME =
       String.format("%s.server.alloydb", DEFAULT_INSTANCE_ID);
-  private static final String SHA_256_WITH_RSA = "SHA256WithRSA";
-  private static final X500Name ROOT_CERT_SUBJECT = new X500Name("CN=root.alloydb");
-  private static final X500Name INTERMEDIATE_CERT_SUBJECT = new X500Name("CN=client.alloydb");
-  private static final X500Name SERVER_CERT_SUBJECT = new X500Name("CN=" + DEFAULT_SERVER_NAME);
-  public static final Instant ONE_YEAR_FROM_NOW = Instant.now().plus(365, ChronoUnit.DAYS);
+  private final String SHA_256_WITH_RSA = "SHA256WithRSA";
+  private final String PRIVATE_IP = "127.0.0.2";
+  private final String DNS_NAME = "localhost";
 
+  @SuppressWarnings("ImmutableEnumChecker")
+  private final X500Name ROOT_CERT_SUBJECT = new X500Name("CN=root.alloydb");
+
+  @SuppressWarnings("ImmutableEnumChecker")
+  private final X500Name INTERMEDIATE_CERT_SUBJECT = new X500Name("CN=client.alloydb");
+
+  @SuppressWarnings("ImmutableEnumChecker")
+  private final X500Name SERVER_CERT_SUBJECT = new X500Name("CN=" + DEFAULT_SERVER_NAME);
+
+  private final String PEM_HEADER = "-----BEGIN CERTIFICATE-----";
+  private final String PEM_FOOTER = "-----END CERTIFICATE-----";
+  private final int PEM_LINE_LENGTH = 64;
+  private final Instant ONE_HOUR_FROM_NOW = Instant.now().plus(1, ChronoUnit.HOURS);
+  private final Instant ONE_YEAR_FROM_NOW = Instant.now().plus(365, ChronoUnit.DAYS);
+
+  @SuppressWarnings("ImmutableEnumChecker")
   private final X509Certificate rootCertificate;
+
+  @SuppressWarnings("ImmutableEnumChecker")
   private final X509Certificate intermediateCertificate;
+
+  @SuppressWarnings("ImmutableEnumChecker")
   private final X509Certificate serverCertificate;
 
+  @SuppressWarnings("ImmutableEnumChecker")
   private final KeyPair intermediateKeyPair;
 
-  public TestCertificates() throws CertificateException, IOException, OperatorCreationException {
+  @SuppressWarnings("ImmutableEnumChecker")
+  private final KeyPair serverKeyPair;
 
-    KeyPair rootKeyPair = RsaKeyPairGenerator.generateKeyPair();
+  @SuppressWarnings("ImmutableEnumChecker")
+  private final KeyPair rootKeyPair;
+
+  @SuppressWarnings("ImmutableEnumChecker")
+  private final KeyPair clientKeyPair;
+
+  TestCertificates() {
+
+    rootKeyPair = RsaKeyPairGenerator.generateKeyPair();
     intermediateKeyPair = RsaKeyPairGenerator.generateKeyPair();
-    KeyPair serverKeyPair = RsaKeyPairGenerator.generateKeyPair();
+    serverKeyPair = RsaKeyPairGenerator.generateKeyPair();
+    clientKeyPair = RsaKeyPairGenerator.generateKeyPair();
 
-    this.rootCertificate = buildRootCertificate(rootKeyPair);
-    this.intermediateCertificate =
-        buildSignedCertificate(
-            INTERMEDIATE_CERT_SUBJECT,
-            intermediateKeyPair.getPublic(),
-            ROOT_CERT_SUBJECT,
-            rootKeyPair.getPrivate(),
-            ONE_YEAR_FROM_NOW);
-    this.serverCertificate =
-        buildSignedCertificate(
-            SERVER_CERT_SUBJECT,
-            serverKeyPair.getPublic(),
-            ROOT_CERT_SUBJECT,
-            rootKeyPair.getPrivate(),
-            ONE_YEAR_FROM_NOW);
+    try {
+      this.rootCertificate = buildRootCertificate(rootKeyPair);
+
+      this.intermediateCertificate =
+          buildSignedCertificate(
+              INTERMEDIATE_CERT_SUBJECT,
+              intermediateKeyPair.getPublic(),
+              ROOT_CERT_SUBJECT,
+              rootKeyPair.getPrivate(),
+              ONE_YEAR_FROM_NOW);
+      this.serverCertificate =
+          buildSignedCertificate(
+              SERVER_CERT_SUBJECT,
+              serverKeyPair.getPublic(),
+              ROOT_CERT_SUBJECT,
+              rootKeyPair.getPrivate(),
+              ONE_YEAR_FROM_NOW);
+    } catch (OperatorCreationException | CertificateException | IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /** Returns the ephemeral client certificate as signed by the intermediate certificate. */
@@ -103,6 +143,16 @@ public class TestCertificates {
         INTERMEDIATE_CERT_SUBJECT,
         this.intermediateKeyPair.getPrivate(),
         notAfter);
+  }
+
+  /** Returns the server-side proxy key pair. */
+  public KeyPair getServerKey() {
+    return serverKeyPair;
+  }
+
+  /** Returns the client key pair. */
+  public KeyPair getClientKey() {
+    return clientKeyPair;
   }
 
   /** Returns the server-side proxy certificate. */
@@ -118,6 +168,33 @@ public class TestCertificates {
   /** Returns the root CA certificate */
   public X509Certificate getRootCertificate() {
     return rootCertificate;
+  }
+
+  /** Returns the PEM encoded intermediate CA certificate */
+  public String getIntermediateCertificateStr() throws CertificateEncodingException {
+    return getPemForCert(intermediateCertificate);
+  }
+
+  /** Returns the PEM encoded root CA certificate */
+  public String getRootCertificateStr() throws CertificateEncodingException {
+    return getPemForCert(rootCertificate);
+  }
+
+  /** Returns the PEM encoded client certificate */
+  public String getClientCertificateStr()
+      throws CertificateException, OperatorCreationException, CertIOException {
+    return getPemForCert(getEphemeralCertificate(clientKeyPair.getPublic(), ONE_HOUR_FROM_NOW));
+  }
+
+  /** Returns the PEM encoded certificate. */
+  private String getPemForCert(X509Certificate certificate) throws CertificateEncodingException {
+    StringBuilder sb = new StringBuilder();
+    sb.append(PEM_HEADER).append("\n");
+    String base64Key =
+        BaseEncoding.base64().withSeparator("\n", PEM_LINE_LENGTH).encode(certificate.getEncoded());
+    sb.append(base64Key).append("\n");
+    sb.append(PEM_FOOTER).append("\n");
+    return sb.toString();
   }
 
   /** Creates a certificate with the given subject and signed by the root CA cert. */
@@ -145,7 +222,17 @@ public class TestCertificates {
 
     certificateBuilder.addExtension(Extension.basicConstraints, true, new BasicConstraints(true));
     certificateBuilder.addExtension(
-        Extension.keyUsage, false, new KeyUsage(KeyUsage.cRLSign | KeyUsage.keyCertSign));
+        Extension.keyUsage,
+        false,
+        new KeyUsage(KeyUsage.cRLSign | KeyUsage.keyCertSign | KeyUsage.digitalSignature));
+    certificateBuilder.addExtension(
+        Extension.subjectAlternativeName,
+        false,
+        new DERSequence(
+            new ASN1Encodable[] {
+              new GeneralName(GeneralName.dNSName, DNS_NAME),
+              new GeneralName(GeneralName.iPAddress, PRIVATE_IP)
+            }));
 
     X509CertificateHolder certificateHolder = certificateBuilder.build(csrContentSigner);
     return new JcaX509CertificateConverter().getCertificate(certificateHolder);
