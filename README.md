@@ -54,6 +54,16 @@ for more information.
 [set-adc]: https://cloud.google.com/docs/authentication/provide-credentials-adc
 [iam-docs]: https://cloud.google.com/alloydb/docs/reference/iam-roles-permissions#roles
 
+### Debug Logging
+
+The Java Connector supports optional debug logging to help diagnose problems with
+the background certificate refresh. To enable it, add the following to the file
+`/src/main/resources/application.yml`:
+
+```
+logging.level.root=DEBUG
+```
+
 ## Support policy
 
 ### Major version lifecycle

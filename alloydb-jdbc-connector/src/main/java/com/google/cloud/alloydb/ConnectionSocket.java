@@ -115,6 +115,8 @@ class ConnectionSocket {
       serverName = connectionInfo.getIpAddress();
     }
 
+    logger.debug(String.format("[%s] Connecting to instance.", address));
+
     SSLParameters sslParameters = socket.getSSLParameters();
     // Set HTTPS as the the endpoint identification algorithm
     // in order to verify the identity of the certificate as
@@ -126,11 +128,19 @@ class ConnectionSocket {
     socket.setKeepAlive(true);
     socket.setTcpNoDelay(true);
     socket.connect(new InetSocketAddress(address, SERVER_SIDE_PROXY_PORT));
-    socket.startHandshake();
+
+    try {
+      socket.startHandshake();
+    } catch (IOException e) {
+      logger.debug("TLS handshake failed!");
+      throw e;
+    }
 
     // The metadata exchange must occur after the TLS connection is established
     // to avoid leaking sensitive information.
     metadataExchange(socket);
+
+    logger.debug(String.format("[%s] Connected to instance successfully.", address));
 
     return socket;
   }
