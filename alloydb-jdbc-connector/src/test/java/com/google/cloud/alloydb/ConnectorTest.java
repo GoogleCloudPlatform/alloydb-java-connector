@@ -41,6 +41,7 @@ public class ConnectorTest {
   private static final String INSTANCE_NAME =
       "projects/<PROJECT>/locations/<REGION>/clusters/<CLUSTER>/instances/<INSTANCE>";
   private static final String PRIVATE_IP = "127.0.0.2";
+  private static final String DNS_NAME = "localhost";
   private static final String SERVER_MESSAGE = "HELLO";
   private static final String ERROR_MESSAGE_NOT_FOUND = "Resource 'instance' was not found";
   private static final String ERROR_MESSAGE_PERMISSION_DENIED =
@@ -68,7 +69,27 @@ public class ConnectorTest {
     ConnectionConfig config =
         new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(INSTANCE_NAME)).build();
 
-    MockAlloyDBAdminGrpc mock = new MockAlloyDBAdminGrpc(PRIVATE_IP);
+    MockAlloyDBAdminGrpc mock = new MockAlloyDBAdminGrpc(PRIVATE_IP, IpType.PRIVATE);
+    Connector connector = newConnector(config.getConnectorConfig(), mock);
+    Socket socket = connector.connect(config);
+
+    assertThat(readLine(socket)).isEqualTo(SERVER_MESSAGE);
+    sslServer.stop();
+  }
+
+  @Test
+  public void create_successfulPscConnection()
+      throws IOException, InterruptedException, NoSuchAlgorithmException, InvalidKeySpecException {
+    FakeSslServer sslServer = new FakeSslServer(SERVER_MESSAGE);
+    sslServer.start(DNS_NAME);
+
+    ConnectionConfig config =
+        new ConnectionConfig.Builder()
+            .withInstanceName(InstanceName.parse(INSTANCE_NAME))
+            .withIpType(IpType.PSC)
+            .build();
+
+    MockAlloyDBAdminGrpc mock = new MockAlloyDBAdminGrpc(DNS_NAME, IpType.PSC);
     Connector connector = newConnector(config.getConnectorConfig(), mock);
     Socket socket = connector.connect(config);
 

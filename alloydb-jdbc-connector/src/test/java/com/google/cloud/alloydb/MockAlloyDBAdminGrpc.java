@@ -30,9 +30,11 @@ class MockAlloyDBAdminGrpc extends AlloyDBAdminGrpc.AlloyDBAdminImplBase {
   private int errorCode;
   private String errorMessage;
   private String ipAddress;
+  private IpType ipType;
 
-  MockAlloyDBAdminGrpc(String ipAddress) {
+  MockAlloyDBAdminGrpc(String ipAddress, IpType ipType) {
     this.ipAddress = ipAddress;
+    this.ipType = ipType;
   }
 
   MockAlloyDBAdminGrpc(int errorCode, String errorMessage) {
@@ -74,7 +76,24 @@ class MockAlloyDBAdminGrpc extends AlloyDBAdminGrpc.AlloyDBAdminImplBase {
       Status status = Status.newBuilder().setCode(errorCode).setMessage(errorMessage).build();
       responseObserver.onError(StatusProto.toStatusRuntimeException(status));
     } else {
-      responseObserver.onNext(ConnectionInfo.newBuilder().setIpAddress(ipAddress).build());
+      ConnectionInfo.Builder builder = ConnectionInfo.newBuilder();
+
+      switch (ipType) {
+        case PUBLIC:
+          builder = builder.setPublicIpAddress(ipAddress);
+          break;
+        case PSC:
+          // TODO: set only the DNS name once PSC DNS is populated in all
+          // existing clusters. When that happens, delete setIpAddress().
+          // https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/499
+          builder = builder.setPscDnsName(ipAddress).setIpAddress(ipAddress);
+          break;
+        default:
+          builder = builder.setIpAddress(ipAddress);
+          break;
+      }
+
+      responseObserver.onNext(builder.build());
       responseObserver.onCompleted();
     }
   }
