@@ -109,6 +109,7 @@ public class ITConnectorTest {
         new ConnectionInfo(
             "127.0.0.1", // localhost doesn't do TLS
             "127.0.0.1", // localhost doesn't do TLS
+            "abcde.12345.us-central1.alloydb.goog",
             "some-instance",
             TestCertificates.INSTANCE.getEphemeralCertificate(
                 clientConnectorKeyPair.getPublic(), Instant.now()),

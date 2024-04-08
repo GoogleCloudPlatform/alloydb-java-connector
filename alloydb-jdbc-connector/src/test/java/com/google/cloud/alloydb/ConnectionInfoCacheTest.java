@@ -41,6 +41,7 @@ public class ConnectionInfoCacheTest {
 
   private static final String TEST_INSTANCE_IP = "10.0.0.1";
   private static final String TEST_INSTANCE_PUBLIC_IP = "34.0.0.1";
+  private static final String TEST_INSTANCE_DNS_NAME = "abcde.12345.us-central1.alloydb.goog";
   private static final String TEST_INSTANCE_ID = "some-instance-id";
   private static final Instant ONE_HOUR_FROM_NOW = Instant.now().plus(1, ChronoUnit.HOURS);
   private InstanceName instanceName;
@@ -73,6 +74,7 @@ public class ConnectionInfoCacheTest {
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_PUBLIC_IP,
+                TEST_INSTANCE_DNS_NAME,
                 TEST_INSTANCE_ID,
                 TestCertificates.INSTANCE.getEphemeralCertificate(
                     keyPair.getPublic(), ONE_HOUR_FROM_NOW),
@@ -134,6 +136,7 @@ public class ConnectionInfoCacheTest {
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_PUBLIC_IP,
+                TEST_INSTANCE_DNS_NAME,
                 TEST_INSTANCE_ID,
                 TestCertificates.INSTANCE.getEphemeralCertificate(
                     keyPair.getPublic(), ONE_HOUR_FROM_NOW),
@@ -180,6 +183,7 @@ public class ConnectionInfoCacheTest {
             new ConnectionInfo(
                 TEST_INSTANCE_IP,
                 TEST_INSTANCE_PUBLIC_IP,
+                TEST_INSTANCE_DNS_NAME,
                 TEST_INSTANCE_ID,
                 TestCertificates.INSTANCE.getEphemeralCertificate(
                     keyPair.getPublic(), ONE_HOUR_FROM_NOW),

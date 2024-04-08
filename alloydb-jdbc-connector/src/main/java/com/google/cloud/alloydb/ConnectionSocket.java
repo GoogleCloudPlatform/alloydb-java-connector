@@ -86,22 +86,46 @@ class ConnectionSocket {
             connectionInfo.getCertificateChain(),
             this.clientConnectorKeyPair.getPrivate());
 
-    String ipAddress = connectionInfo.getIpAddress();
-    if (connectionConfig.getIpType().equals(IpType.PUBLIC)) {
-      ipAddress = connectionInfo.getPublicIpAddress();
+    String address;
+    switch (connectionConfig.getIpType()) {
+      case PUBLIC:
+        address = connectionInfo.getPublicIpAddress();
+        break;
+      case PSC:
+        // DNS names always end with a period (.), so remove it.
+        address = connectionInfo.getPscDnsName().replaceFirst("\\.$", "");
+        break;
+      default:
+        address = connectionInfo.getIpAddress();
+        break;
     }
 
-    if (ipAddress == null || ipAddress.isEmpty()) {
-      throw new RuntimeException("No IP address for the instance");
+    if (address == null || address.isEmpty()) {
+      throw new RuntimeException(
+          String.format(
+              "Instance does not have an address matching type: %s", connectionConfig.getIpType()));
     }
 
-    // Use the instance's IP address as a HostName.
+    // Use the instance's address as a HostName.
+    String serverName = address;
+    // TODO: use the correct address as server name once PSC DNS is populated
+    // in all existing clusters. When that happens, delete this if statement.
+    // https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/499
+    if (connectionConfig.getIpType().equals(IpType.PSC)) {
+      serverName = connectionInfo.getIpAddress();
+    }
+
     SSLParameters sslParameters = socket.getSSLParameters();
-    sslParameters.setServerNames(Collections.singletonList(new SNIHostName(ipAddress)));
+    // Set HTTPS as the the endpoint identification algorithm
+    // in order to verify the identity of the certificate as
+    // suggested at https://stackoverflow.com/a/17979954/927514
+    sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+    sslParameters.setServerNames(Collections.singletonList(new SNIHostName(serverName)));
 
+    socket.setSSLParameters(sslParameters);
     socket.setKeepAlive(true);
     socket.setTcpNoDelay(true);
-    socket.connect(new InetSocketAddress(ipAddress, SERVER_SIDE_PROXY_PORT));
+    socket.connect(new InetSocketAddress(address, SERVER_SIDE_PROXY_PORT));
     socket.startHandshake();
 
     // The metadata exchange must occur after the TLS connection is established

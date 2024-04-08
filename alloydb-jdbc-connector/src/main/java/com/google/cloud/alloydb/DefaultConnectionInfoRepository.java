@@ -84,6 +84,7 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Close
               return new ConnectionInfo(
                   info.getIpAddress(),
                   info.getPublicIpAddress(),
+                  info.getPscDnsName(),
                   info.getInstanceUid(),
                   clientCertificate,
                   certificateChain,
