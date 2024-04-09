@@ -40,7 +40,7 @@ Include the following the project's `gradle.build`
 <!-- {x-version-update-start:alloydb-jdbc-connector:released} -->
 ```gradle
 // Add connector with the latest version
-implementation group: 'com.google.cloud.alloydb', name: 'alloydb-jdbc-connector', version: '1.0.0'
+implementation group: 'com.google.cloud', name: 'alloydb-jdbc-connector', version: '1.0.0'
 ```
 <!-- {x-version-update-end} -->
 
