@@ -21,9 +21,12 @@ import java.io.IOException;
 import java.net.Socket;
 import java.security.KeyPair;
 import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class Connector {
 
+  private static final Logger logger = LoggerFactory.getLogger(Connector.class);
   private static final long MIN_RATE_LIMIT_MS = 30000;
 
   private final ListeningScheduledExecutorService executor;
@@ -56,6 +59,7 @@ class Connector {
   }
 
   public void close() {
+    logger.debug("Close all connections and remove them from cache.");
     this.instances.forEach((key, c) -> c.close());
     this.instances.clear();
   }
@@ -69,6 +73,9 @@ class Connector {
           new ConnectionSocket(connectionInfo, config, clientConnectorKeyPair, accessTokenSupplier);
       return socket.connect();
     } catch (IOException e) {
+      logger.debug(
+          String.format(
+              "[%s] Socket connection failed! Trigger a refresh.", config.getInstanceName()));
       connectionInfoCache.forceRefresh();
       // The Socket methods above will throw an IOException or a SocketException (subclass of
       // IOException). Catch that exception, trigger a refresh, and then throw it again so
@@ -93,6 +100,7 @@ class Connector {
   }
 
   private ConnectionInfoCache createConnectionInfo(ConnectionConfig config) {
+    logger.debug(String.format("[%s] Connection info added to cache.", config.getInstanceName()));
     return connectionInfoCacheFactory.create(
         this.executor,
         this.connectionInfoRepo,
