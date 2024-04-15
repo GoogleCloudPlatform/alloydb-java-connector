@@ -294,6 +294,7 @@ public class ITConnectorTest {
                 clientConnectorKeyPair,
                 connectionInfoCacheFactory,
                 instances,
-                accessTokenSupplier));
+                accessTokenSupplier,
+                USER_AGENT));
   }
 }
