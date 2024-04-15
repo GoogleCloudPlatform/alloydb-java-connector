@@ -187,4 +187,12 @@ public class InternalConnectorRegistryTest {
         .hasMessageThat()
         .contains(String.format("Named connection %s does not exist.", namedConnector));
   }
+
+  @Test
+  public void addArtifactId_checkUserAgents() {
+    String artifactId = "unit testing";
+    InternalConnectorRegistry.INSTANCE.addArtifactId(artifactId);
+
+    assertThat(InternalConnectorRegistry.INSTANCE.getUserAgents()).contains(artifactId);
+  }
 }

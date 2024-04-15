@@ -53,4 +53,14 @@ public final class ConnectorRegistry {
   public static void shutdown() {
     InternalConnectorRegistry.INSTANCE.shutdownInstance();
   }
+
+  /**
+   * Adds an external application name to the user agent string for tracking. This is known to be
+   * used by the spring-cloud-gcp project.
+   *
+   * @throws IllegalStateException if the AlloyDB Admin client has already been initialized
+   */
+  public static void addArtifactId(String artifactId) {
+    InternalConnectorRegistry.INSTANCE.addArtifactId(artifactId);
+  }
 }
