@@ -47,6 +47,7 @@ public class ConnectorTest {
   private static final String ERROR_MESSAGE_PERMISSION_DENIED =
       "Location not found or access is unauthorized.";
   private static final String ERROR_MESSAGE_INTERNAL = "Internal Error";
+  private static final String USER_AGENT = "unit tests";
 
   ListeningScheduledExecutorService defaultExecutor;
 
@@ -160,7 +161,8 @@ public class ConnectorTest {
         TestCertificates.INSTANCE.getClientKey(),
         new DefaultConnectionInfoCacheFactory(),
         new ConcurrentHashMap<>(),
-        accessTokenSupplier);
+        accessTokenSupplier,
+        USER_AGENT);
   }
 
   private String readLine(Socket socket) throws IOException {

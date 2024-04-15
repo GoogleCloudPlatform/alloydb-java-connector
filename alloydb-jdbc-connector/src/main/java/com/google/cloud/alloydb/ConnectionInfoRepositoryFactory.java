@@ -16,7 +16,7 @@
 
 package com.google.cloud.alloydb;
 
-/** Factory interface for creating SQLAdmin clients to interact with AlloyDB Admin API. */
+/** Factory interface for creating AlloyDBAdminClient to interact with AlloyDB Admin API. */
 public interface ConnectionInfoRepositoryFactory {
 
   ConnectionInfoRepository create(CredentialFactory credentialFactory, ConnectorConfig config);

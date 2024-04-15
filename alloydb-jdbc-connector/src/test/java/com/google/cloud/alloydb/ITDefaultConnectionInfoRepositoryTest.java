@@ -39,6 +39,7 @@ public class ITDefaultConnectionInfoRepositoryTest {
   private KeyPair keyPair;
   private String instanceUri;
   private ListeningScheduledExecutorService executor;
+  private static final String USER_AGENT = "integration tests";
 
   @Before
   public void setUp() throws Exception {
@@ -61,7 +62,7 @@ public class ITDefaultConnectionInfoRepositoryTest {
     CredentialFactory instanceCredentialFactory =
         credentialFactoryProvider.getInstanceCredentialFactory(config);
     ConnectionInfoRepositoryFactory connectionInfoRepositoryFactory =
-        new DefaultConnectionInfoRepositoryFactory(executor);
+        new DefaultConnectionInfoRepositoryFactory(executor, USER_AGENT);
     defaultConnectionInfoRepository =
         connectionInfoRepositoryFactory.create(instanceCredentialFactory, config);
   }

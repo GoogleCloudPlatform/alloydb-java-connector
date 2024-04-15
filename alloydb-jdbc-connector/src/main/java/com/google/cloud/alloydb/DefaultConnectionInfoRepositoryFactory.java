@@ -20,12 +20,15 @@ import com.google.cloud.alloydb.v1alpha.AlloyDBAdminClient;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import java.io.IOException;
 
-/** Factory for creating a SQLAdmin client that interacts with the real AlloyDB Admin API. */
+/** Factory for creating a AlloyDBAdminClient that interacts with the real AlloyDB Admin API. */
 class DefaultConnectionInfoRepositoryFactory implements ConnectionInfoRepositoryFactory {
   private final ListeningScheduledExecutorService executor;
+  private final String userAgents;
 
-  DefaultConnectionInfoRepositoryFactory(ListeningScheduledExecutorService executor) {
+  DefaultConnectionInfoRepositoryFactory(
+      ListeningScheduledExecutorService executor, String userAgents) {
     this.executor = executor;
+    this.userAgents = userAgents;
   }
 
   @Override
@@ -34,7 +37,8 @@ class DefaultConnectionInfoRepositoryFactory implements ConnectionInfoRepository
 
     AlloyDBAdminClient alloyDBAdminClient;
     try {
-      alloyDBAdminClient = AlloyDBAdminClientFactory.create(credentialFactory.create(), config);
+      alloyDBAdminClient =
+          AlloyDBAdminClientFactory.create(credentialFactory.create(), config, userAgents);
       return new DefaultConnectionInfoRepository(executor, alloyDBAdminClient);
     } catch (IOException e) {
       throw new RuntimeException(e);

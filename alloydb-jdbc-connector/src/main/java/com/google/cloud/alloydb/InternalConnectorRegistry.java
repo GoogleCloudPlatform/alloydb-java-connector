@@ -23,6 +23,8 @@ import com.google.errorprone.annotations.concurrent.GuardedBy;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 
@@ -53,6 +55,11 @@ enum InternalConnectorRegistry implements Closeable {
   @GuardedBy("shutdownGuard")
   private boolean shutdown = false;
 
+  @SuppressWarnings("ImmutableEnumChecker")
+  private List<String> userAgents = new ArrayList<>();
+
+  private static final String USER_AGENT = "alloydb-java-connector/" + Version.VERSION;
+
   InternalConnectorRegistry() {
     // During refresh, each instance consumes 2 threads from the thread pool. By using 8 threads,
     // there should be enough free threads so that there will not be a deadlock. Most users
@@ -62,6 +69,7 @@ enum InternalConnectorRegistry implements Closeable {
     this.unnamedConnectors = new ConcurrentHashMap<>();
     this.namedConnectors = new ConcurrentHashMap<>();
     this.credentialFactoryProvider = new CredentialFactoryProvider();
+    this.addArtifactId(USER_AGENT);
   }
 
   /** Test use only: Set a new CredentialFactoryProvider */
@@ -154,6 +162,23 @@ enum InternalConnectorRegistry implements Closeable {
     }
   }
 
+  /**
+   * Sets the default string which is appended to the AlloyDB Admin API client User-Agent header.
+   */
+  public void addArtifactId(String artifactId) {
+    if (!userAgents.contains(artifactId)) {
+      userAgents.add(artifactId);
+    }
+  }
+
+  /**
+   * Returns the default string which is appended to the AlloyDB Admin API client User-Agent header.
+   */
+  @VisibleForTesting
+  String getUserAgents() {
+    return String.join(" ", userAgents);
+  }
+
   private Connector getConnector(ConnectionConfig config) {
     return unnamedConnectors.computeIfAbsent(
         config.getConnectorConfig(), k -> createConnector(config.getConnectorConfig()));
@@ -163,7 +188,7 @@ enum InternalConnectorRegistry implements Closeable {
     CredentialFactory instanceCredentialFactory =
         credentialFactoryProvider.getInstanceCredentialFactory(config);
     DefaultConnectionInfoRepositoryFactory connectionInfoRepositoryFactory =
-        new DefaultConnectionInfoRepositoryFactory(executor);
+        new DefaultConnectionInfoRepositoryFactory(executor, getUserAgents());
     DefaultConnectionInfoRepository connectionInfoRepository =
         connectionInfoRepositoryFactory.create(instanceCredentialFactory, config);
     AccessTokenSupplier accessTokenSupplier =
@@ -176,7 +201,8 @@ enum InternalConnectorRegistry implements Closeable {
         RsaKeyPairGenerator.generateKeyPair(),
         new DefaultConnectionInfoCacheFactory(),
         new ConcurrentHashMap<>(),
-        accessTokenSupplier);
+        accessTokenSupplier,
+        getUserAgents());
   }
 
   private Connector getNamedConnector(String name) {

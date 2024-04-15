@@ -60,23 +60,25 @@ class ConnectionSocket {
   private static final String X_509 = "X.509";
   private static final String ROOT_CA_CERT = "rootCaCert";
   private static final String CLIENT_CERT = "clientCert";
-  private static final String USER_AGENT = "alloydb-java-connector/" + Version.VERSION;
   private static final int IO_TIMEOUT_MS = 30000;
   private static final int SERVER_SIDE_PROXY_PORT = 5433;
   private final ConnectionInfo connectionInfo;
   private final ConnectionConfig connectionConfig;
   private final KeyPair clientConnectorKeyPair;
   private final AccessTokenSupplier accessTokenSupplier;
+  private final String userAgents;
 
   ConnectionSocket(
       ConnectionInfo connectionInfo,
       ConnectionConfig connectionConfig,
       KeyPair clientConnectorKeyPair,
-      AccessTokenSupplier accessTokenSupplier) {
+      AccessTokenSupplier accessTokenSupplier,
+      String userAgents) {
     this.connectionInfo = connectionInfo;
     this.connectionConfig = connectionConfig;
     this.clientConnectorKeyPair = clientConnectorKeyPair;
     this.accessTokenSupplier = accessTokenSupplier;
+    this.userAgents = userAgents;
   }
 
   Socket connect() throws IOException {
@@ -234,7 +236,7 @@ class ConnectionSocket {
         MetadataExchangeRequest.newBuilder()
             .setAuthType(authType)
             .setOauth2Token(tokenValue)
-            .setUserAgent(USER_AGENT)
+            .setUserAgent(userAgents)
             .build();
 
     // Write data to the server.

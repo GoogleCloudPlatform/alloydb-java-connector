@@ -36,6 +36,7 @@ class Connector {
   private final ConcurrentHashMap<ConnectionConfig, ConnectionInfoCache> instances;
   private final ConnectorConfig config;
   private final AccessTokenSupplier accessTokenSupplier;
+  private final String userAgents;
 
   Connector(
       ConnectorConfig config,
@@ -44,7 +45,8 @@ class Connector {
       KeyPair clientConnectorKeyPair,
       ConnectionInfoCacheFactory connectionInfoCacheFactory,
       ConcurrentHashMap<ConnectionConfig, ConnectionInfoCache> instances,
-      AccessTokenSupplier accessTokenSupplier) {
+      AccessTokenSupplier accessTokenSupplier,
+      String userAgents) {
     this.config = config;
     this.executor = executor;
     this.connectionInfoRepo = connectionInfoRepo;
@@ -52,6 +54,7 @@ class Connector {
     this.connectionInfoCacheFactory = connectionInfoCacheFactory;
     this.instances = instances;
     this.accessTokenSupplier = accessTokenSupplier;
+    this.userAgents = userAgents;
   }
 
   public ConnectorConfig getConfig() {
@@ -70,7 +73,8 @@ class Connector {
 
     try {
       ConnectionSocket socket =
-          new ConnectionSocket(connectionInfo, config, clientConnectorKeyPair, accessTokenSupplier);
+          new ConnectionSocket(
+              connectionInfo, config, clientConnectorKeyPair, accessTokenSupplier, userAgents);
       return socket.connect();
     } catch (IOException e) {
       logger.debug(
@@ -124,7 +128,8 @@ class Connector {
         && Objects.equal(clientConnectorKeyPair, that.clientConnectorKeyPair)
         && Objects.equal(connectionInfoCacheFactory, that.connectionInfoCacheFactory)
         && Objects.equal(instances, that.instances)
-        && Objects.equal(accessTokenSupplier, that.accessTokenSupplier);
+        && Objects.equal(accessTokenSupplier, that.accessTokenSupplier)
+        && Objects.equal(userAgents, that.userAgents);
   }
 
   @Override
@@ -136,6 +141,7 @@ class Connector {
         clientConnectorKeyPair,
         connectionInfoCacheFactory,
         instances,
-        accessTokenSupplier);
+        accessTokenSupplier,
+        userAgents);
   }
 }
