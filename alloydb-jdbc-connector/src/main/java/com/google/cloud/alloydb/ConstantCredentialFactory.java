@@ -26,8 +26,7 @@ class ConstantCredentialFactory implements CredentialFactory {
 
   public ConstantCredentialFactory(GoogleCredentials credentials) {
     if (credentials.createScopedRequired()) {
-      this.credentials =
-          credentials.createScoped(Arrays.asList(SCOPE_ALLOYDB_LOGIN, SCOPE_CLOUD_PLATFORM));
+      this.credentials = credentials.createScoped(Arrays.asList(SCOPE_CLOUD_PLATFORM));
     } else {
       this.credentials = credentials;
     }

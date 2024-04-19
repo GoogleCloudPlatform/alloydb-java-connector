@@ -21,7 +21,6 @@ import com.google.auth.oauth2.GoogleCredentials;
 
 interface CredentialFactory {
   static final String SCOPE_CLOUD_PLATFORM = "https://www.googleapis.com/auth/cloud-platform";
-  static final String SCOPE_ALLOYDB_LOGIN = "https://www.googleapis.com/auth/alloydb.login";
 
   default FixedCredentialsProvider create() {
     return FixedCredentialsProvider.create(getCredentials());

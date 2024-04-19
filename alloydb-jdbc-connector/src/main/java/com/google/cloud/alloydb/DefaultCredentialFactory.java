@@ -31,8 +31,7 @@ class DefaultCredentialFactory implements CredentialFactory {
     }
 
     if (credentials.createScopedRequired()) {
-      credentials =
-          credentials.createScoped(Arrays.asList(SCOPE_ALLOYDB_LOGIN, SCOPE_CLOUD_PLATFORM));
+      credentials = credentials.createScoped(Arrays.asList(SCOPE_CLOUD_PLATFORM));
     }
 
     return credentials;

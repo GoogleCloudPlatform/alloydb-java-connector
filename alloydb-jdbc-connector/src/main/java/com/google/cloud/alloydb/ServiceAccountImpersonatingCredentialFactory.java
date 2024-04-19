@@ -68,7 +68,7 @@ class ServiceAccountImpersonatingCredentialFactory implements CredentialFactory 
             .setSourceCredentials(credentials)
             .setTargetPrincipal(targetPrincipal)
             .setDelegates(this.delegates)
-            .setScopes(Arrays.asList(SCOPE_ALLOYDB_LOGIN, SCOPE_CLOUD_PLATFORM))
+            .setScopes(Arrays.asList(SCOPE_CLOUD_PLATFORM))
             .build();
     return credentials;
   }
