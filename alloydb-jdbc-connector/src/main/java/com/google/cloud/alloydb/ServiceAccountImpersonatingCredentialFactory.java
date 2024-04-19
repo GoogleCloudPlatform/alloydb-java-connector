@@ -38,8 +38,6 @@ import java.util.List;
  */
 class ServiceAccountImpersonatingCredentialFactory implements CredentialFactory {
 
-  private static final String CLOUD_PLATFORM = "https://www.googleapis.com/auth/cloud-platform";
-  private static final String ALLOYDB_LOGIN = "https://www.googleapis.com/auth/alloydb.login";
   private final CredentialFactory source;
   private final List<String> delegates;
   private final String targetPrincipal;
@@ -70,7 +68,7 @@ class ServiceAccountImpersonatingCredentialFactory implements CredentialFactory 
             .setSourceCredentials(credentials)
             .setTargetPrincipal(targetPrincipal)
             .setDelegates(this.delegates)
-            .setScopes(Arrays.asList(ALLOYDB_LOGIN, CLOUD_PLATFORM))
+            .setScopes(Arrays.asList(SCOPE_ALLOYDB_LOGIN, SCOPE_CLOUD_PLATFORM))
             .build();
     return credentials;
   }

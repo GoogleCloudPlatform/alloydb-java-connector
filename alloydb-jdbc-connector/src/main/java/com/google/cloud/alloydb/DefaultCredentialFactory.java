@@ -18,14 +18,23 @@ package com.google.cloud.alloydb;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import java.io.IOException;
+import java.util.Arrays;
 
 class DefaultCredentialFactory implements CredentialFactory {
   @Override
   public GoogleCredentials getCredentials() {
+    GoogleCredentials credentials;
     try {
-      return GoogleCredentials.getApplicationDefault();
+      credentials = GoogleCredentials.getApplicationDefault();
     } catch (IOException e) {
       throw new RuntimeException("failed to retrieve OAuth2 access token", e);
     }
+
+    if (credentials.createScopedRequired()) {
+      credentials =
+          credentials.createScoped(Arrays.asList(SCOPE_ALLOYDB_LOGIN, SCOPE_CLOUD_PLATFORM));
+    }
+
+    return credentials;
   }
 }

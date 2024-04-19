@@ -19,6 +19,7 @@ package com.google.cloud.alloydb;
 import com.google.auth.oauth2.GoogleCredentials;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 class FileCredentialFactory implements CredentialFactory {
   private final String path;
@@ -29,10 +30,18 @@ class FileCredentialFactory implements CredentialFactory {
 
   @Override
   public GoogleCredentials getCredentials() {
+    GoogleCredentials credentials;
     try {
-      return GoogleCredentials.fromStream(new FileInputStream(path));
+      credentials = GoogleCredentials.fromStream(new FileInputStream(path));
     } catch (IOException e) {
       throw new IllegalStateException("Unable to load GoogleCredentials from file " + path, e);
     }
+
+    if (credentials.createScopedRequired()) {
+      credentials =
+          credentials.createScoped(Arrays.asList(SCOPE_ALLOYDB_LOGIN, SCOPE_CLOUD_PLATFORM));
+    }
+
+    return credentials;
   }
 }

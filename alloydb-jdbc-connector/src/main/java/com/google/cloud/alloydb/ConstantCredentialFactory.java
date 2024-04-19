@@ -18,13 +18,19 @@ package com.google.cloud.alloydb;
 
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.GoogleCredentials;
+import java.util.Arrays;
 
 class ConstantCredentialFactory implements CredentialFactory {
 
   private final GoogleCredentials credentials;
 
   public ConstantCredentialFactory(GoogleCredentials credentials) {
-    this.credentials = credentials;
+    if (credentials.createScopedRequired()) {
+      this.credentials =
+          credentials.createScoped(Arrays.asList(SCOPE_ALLOYDB_LOGIN, SCOPE_CLOUD_PLATFORM));
+    } else {
+      this.credentials = credentials;
+    }
   }
 
   @Override
