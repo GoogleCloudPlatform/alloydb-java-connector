@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.1.1](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.1.0...v1.1.1) (2024-04-19)
+
+
+### Bug Fixes
+
+* Add scope for Credentials ([#517](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/517)) ([5268ce3](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/5268ce3cb8bea986280f5b1460964963403540e7))
+
+
+### Dependencies
+
+* Update bouncycastle.version to v1.78.1 ([#513](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/513)) ([0974f7f](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/0974f7f1c4d76f990064aa3e4fdc53a093ee7e6a))
+* Update dependency com.google.api:gax-grpc to v2.47.0 ([#515](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/515)) ([29daa5b](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/29daa5b2f67f23d6cd7419ca71fb1c01318c1ecb))
+* Update dependency com.google.api.grpc:proto-google-common-protos to v2.38.0 ([#514](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/514)) ([cb4b527](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/cb4b527613f20a900d943b595caf8e9fac6e3e7a))
+* Update dependency com.google.cloud:google-cloud-shared-config to v1.7.7 ([#512](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/512)) ([3dca2a2](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/3dca2a26046ec99a763fd918180993c4105abd95))
+* Update dependency com.google.cloud:google-cloud-shared-dependencies to v3.29.0 ([#516](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/516)) ([7737efc](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/7737efcdce2f7495c5f6180366d9fe970eb35da0))
+
 ## [1.1.0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.0.0...v1.1.0) (2024-04-15)
 
 
