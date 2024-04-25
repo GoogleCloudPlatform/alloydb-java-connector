@@ -29,6 +29,8 @@ permissions: read-all
 
 jobs:
   units:
+    # run job on proper workflow event triggers (skip job for pull_request event from forks and only run pull_request_target for "tests: run" label)  
+    if: "${{ (github.event.action != 'labeled' && github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) || github.event.label.name == 'tests: run' }}"
     name: unit-tests (linux)
     runs-on: ubuntu-latest
     permissions:
@@ -75,6 +77,8 @@ jobs:
         ./flakybot --repo ${{github.repository}} --commit_hash ${{github.sha}} --build_url https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
 
   windows:
+    # run job on proper workflow event triggers (skip job for pull_request event from forks and only run pull_request_target for "tests: run" label)  
+    if: "${{ (github.event.action != 'labeled' && github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) || github.event.label.name == 'tests: run' }}"
     name: unit-tests (windows)
     runs-on: windows-latest
     permissions:
