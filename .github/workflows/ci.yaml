@@ -29,6 +29,8 @@ permissions: read-all
 
 jobs:
   units:
+    # run job on proper workflow event triggers (skip job for pull_request event from forks and only run pull_request_target for "tests: run" label)  
+    if: "${{ (github.event.action != 'labeled' && github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) || github.event.label.name == 'tests: run' }}"
     name: unit-tests (linux)
     runs-on: ubuntu-latest
     permissions:
@@ -40,6 +42,22 @@ jobs:
       matrix:
         java: [8, 11, 17]
     steps:
+    - name: Remove PR label
+      if: "${{ github.event.action == 'labeled' && github.event.label.name == 'tests: run' }}"
+      uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          try {
+            await github.rest.issues.removeLabel({
+              name: 'tests: run',
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number
+            });
+          } catch (e) {
+            console.log('Failed to remove label. Another job may have already removed it!');
+          }
     - name: Checkout code
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
@@ -75,6 +93,8 @@ jobs:
         ./flakybot --repo ${{github.repository}} --commit_hash ${{github.sha}} --build_url https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
 
   windows:
+    # run job on proper workflow event triggers (skip job for pull_request event from forks and only run pull_request_target for "tests: run" label)  
+    if: "${{ (github.event.action != 'labeled' && github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) || github.event.label.name == 'tests: run' }}"
     name: unit-tests (windows)
     runs-on: windows-latest
     permissions:
@@ -82,6 +102,22 @@ jobs:
       id-token: "write"
       issues: write
     steps:
+    - name: Remove PR label
+      if: "${{ github.event.action == 'labeled' && github.event.label.name == 'tests: run' }}"
+      uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          try {
+            await github.rest.issues.removeLabel({
+              name: 'tests: run',
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number
+            });
+          } catch (e) {
+            console.log('Failed to remove label. Another job may have already removed it!');
+          }
     - name: Support longpaths
       run: git config --system core.longpaths true
     - name: Checkout code
