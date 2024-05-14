@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.2](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.1.1...v1.1.2) (2024-05-14)
+
+
+### Dependencies
+
+* Update alloydb BOM & shared dependencies ([#524](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/524)) ([c670b9f](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/c670b9f04c51bbf5ca0528297b67ebdf2c783922))
+* Update com.google.errorprone dependencies to v2.27.1 ([#523](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/523)) ([0c67b1d](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/0c67b1d4fc3e97e6242c1a367c11ddacd5083fdc))
+* Update dependency com.google.api.grpc:proto-google-common-protos to v2.39.0 ([#527](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/527)) ([9809c34](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/9809c34dafbd112325ecf10c37981c6ce0d69021))
+* Update dependency org.apache.maven.plugins:maven-deploy-plugin to v3.1.2 ([#526](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/526)) ([de73ad4](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/de73ad413ce93daf1267281923c4299a039f0885))
+
 ## [1.1.1](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.1.0...v1.1.1) (2024-04-19)
 
 
