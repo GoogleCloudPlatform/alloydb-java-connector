@@ -81,7 +81,9 @@
     {
       "matchPackagePatterns": [
         "^com.google.cloud:google-cloud-shared-dependencies",
-        "^com.google.cloud:google-cloud-alloydb-bom"
+        "^com.google.cloud:google-cloud-alloydb-bom",
+        "^com.google.api:gax-grpc",
+        "^com.google.cloud:google-cloud-alloydb-connectors-bom"
       ],
       "groupName": "alloydb BOM & shared dependencies"
     },
