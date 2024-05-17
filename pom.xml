@@ -60,7 +60,7 @@
     <site.installationModule>alloydb-connector-parent</site.installationModule>
     <project.javadoc.protobufBaseURL>https://googleapis.dev/java/google-api-grpc/latest</project.javadoc.protobufBaseURL>
     <error-prone.version>2.27.1</error-prone.version>
-    <native-image.version>0.10.1</native-image.version>
+    <native-image.version>0.10.2</native-image.version>
     <bouncycastle.version>1.78.1</bouncycastle.version>
   </properties>
 
