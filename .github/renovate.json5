@@ -22,7 +22,7 @@
   ],
   "packageRules": [
     {
-      "groupName": "Non-major dependency updates",
+      "groupName": "Non-major dependencies",
       "matchManagers": ["maven"],
       "matchUpdateTypes": ["minor", "patch"],
     },
