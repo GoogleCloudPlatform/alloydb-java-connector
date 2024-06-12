@@ -22,86 +22,14 @@
   ],
   "packageRules": [
     {
-      "matchPackagePatterns": [
-        "^com.google.guava:"
-      ],
-      "versioning": "docker"
-    },
-    {
-      "matchPackagePatterns": [
-        "*"
-      ],
-      "semanticCommitType": "deps",
-      "semanticCommitScope": null
-    },
-    {
-      "matchPackagePatterns": [
-        "^org.apache.maven",
-        "^org.jacoco:",
-        "^org.codehaus.mojo:",
-        "^org.sonatype.plugins:",
-        "^com.coveo:",
-        "^com.google.cloud:google-cloud-shared-config"
-      ],
-      "semanticCommitType": "build",
-      "semanticCommitScope": "deps"
-    },
-    {
-      "matchPackagePatterns": [
-        "^com.google.cloud.alloydb:alloydb-java-connector-parent",
-        "^com.google.cloud:libraries-bom",
-        "^com.google.cloud.samples:shared-configuration"
-      ],
-      "semanticCommitType": "chore",
-      "semanticCommitScope": "deps"
-    },
-    {
-      "matchPackagePatterns": [
-        "^junit:junit",
-        "^com.google.truth:truth",
-        "^org.mockito:mockito-core",
-        "^org.objenesis:objenesis",
-        "^com.google.cloud:google-cloud-conformance-tests"
-      ],
-      "semanticCommitType": "test",
-      "semanticCommitScope": "deps"
-    },
-    {
-      "matchPackagePatterns": [
-        "^com.google.cloud:google-cloud-"
-      ],
-      "ignoreUnstable": false
-    },
-    {
-      "matchPackagePatterns": [
-        "^com.fasterxml.jackson.core"
-      ],
-      "groupName": "jackson dependencies"
-    },
-    {
-      "matchPackagePatterns": [
-        "^com.google.cloud:google-cloud-shared-dependencies",
-        "^com.google.cloud:google-cloud-alloydb-bom",
-        "^com.google.api:gax-grpc",
-        "^com.google.cloud:google-cloud-alloydb-connectors-bom"
-      ],
-      "groupName": "alloydb BOM & shared dependencies"
+      "groupName": "Non-major dependency updates",
+      "matchManagers": ["maven"],
+      "matchUpdateTypes": ["minor", "patch"],
     },
     {
       "matchManagers": ["github-actions"],
       "groupName": "dependencies for github",
       "commitMessagePrefix": "chore(deps):"
     },
-    {
-      "matchManagers": ["maven"],
-      "matchDepTypes": ["test"],
-      "commitMessagePrefix": "chore(deps):"
-    },
-    {
-      "matchPackagePatterns": [
-        "^com.google.errorprone"
-      ],
-      "groupName": "com.google.errorprone dependencies"
-    }
   ]
 }
