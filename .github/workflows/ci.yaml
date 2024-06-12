@@ -59,7 +59,7 @@ jobs:
             console.log('Failed to remove label. Another job may have already removed it!');
           }
     - name: Checkout code
-      uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -71,7 +71,7 @@ jobs:
     - name: Authenticate to Google Cloud
       # only needed for Flakybot on periodic (schedule) and continuous (push) events
       if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
-      uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+      uses: google-github-actions/auth@71fee32a0bb7e97b4d33d548e7d957010649d8fa # v2.1.3
       with:
         workload_identity_provider: ${{ secrets.PROVIDER_NAME }}
         service_account: ${{ secrets.SERVICE_ACCOUNT }}
@@ -121,7 +121,7 @@ jobs:
     - name: Support longpaths
       run: git config --system core.longpaths true
     - name: Checkout code
-      uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -133,7 +133,7 @@ jobs:
     - name: Authenticate to Google Cloud
       # only needed for Flakybot on periodic (schedule) and continuous (push) events
       if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
-      uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+      uses: google-github-actions/auth@71fee32a0bb7e97b4d33d548e7d957010649d8fa # v2.1.3
       with:
         workload_identity_provider: ${{ secrets.PROVIDER_NAME }}
         service_account: ${{ secrets.SERVICE_ACCOUNT }}
@@ -160,7 +160,7 @@ jobs:
         java: [8, 11, 17]
     steps:
     - name: Checkout code
-      uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -178,7 +178,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -198,7 +198,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -225,13 +225,13 @@ jobs:
       issues: write
     steps:
     - name: Checkout code
-      uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
 
     - name: Setup Maven Action
-      uses: s4u/setup-maven-action@6d44c18d67d9e1549907b8815efa5e4dada1801b
+      uses: s4u/setup-maven-action@489441643219d2b93ee2a127b2402eb640a1b947
       with:
         java-version: 17
 
@@ -244,7 +244,7 @@ jobs:
 
     - id: "auth"
       name: Authenticate to Google Cloud
-      uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+      uses: google-github-actions/auth@71fee32a0bb7e97b4d33d548e7d957010649d8fa # v2.1.3
       with:
         workload_identity_provider: ${{ secrets.PROVIDER_NAME }}
         service_account: ${{ secrets.SERVICE_ACCOUNT }}
@@ -252,7 +252,7 @@ jobs:
 
     - id: "secrets"
       name: Get Secrets
-      uses: google-github-actions/get-secretmanager-secrets@b655b87fa10e527c5c5a3abfd795c6f46e0399b1 # v2.1.1
+      uses: google-github-actions/get-secretmanager-secrets@dc4a1392bad0fd60aee00bb2097e30ef07a1caae # v2.1.3
       with:
         secrets: |-
           ALLOYDB_INSTANCE_NAME:${{ secrets.GOOGLE_CLOUD_PROJECT }}/ALLOYDB_INSTANCE_URI
@@ -311,7 +311,7 @@ jobs:
             }
 
       - name: Checkout code
-        uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -323,13 +323,13 @@ jobs:
           java-version: 8
 
       - name: Setup Maven Action
-        uses: s4u/setup-maven-action@6d44c18d67d9e1549907b8815efa5e4dada1801b
+        uses: s4u/setup-maven-action@489441643219d2b93ee2a127b2402eb640a1b947
         with:
           java-version: 8
 
       - id: 'auth'
         name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+        uses: google-github-actions/auth@71fee32a0bb7e97b4d33d548e7d957010649d8fa # v2.1.3
         with:
           workload_identity_provider: ${{ secrets.PROVIDER_NAME }}
           service_account: ${{ secrets.SERVICE_ACCOUNT }}
@@ -337,7 +337,7 @@ jobs:
 
       - name: Get Secrets
         id: 'secrets'
-        uses: google-github-actions/get-secretmanager-secrets@b655b87fa10e527c5c5a3abfd795c6f46e0399b1 # v2.1.1
+        uses: google-github-actions/get-secretmanager-secrets@dc4a1392bad0fd60aee00bb2097e30ef07a1caae # v2.1.3
         with:
           secrets: |-
             ALLOYDB_INSTANCE_NAME:${{ secrets.GOOGLE_CLOUD_PROJECT }}/ALLOYDB_INSTANCE_URI
