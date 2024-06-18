@@ -137,7 +137,7 @@ ConnectorConfig config = new ConnectorConfig.Builder()
 // Register it with the name "my-connector"
 ConnectorRegistry.register("my-connector", config);
     
-// Configure the datbase connection pool.
+// Configure the database connection pool.
 String jdbcUrl = "jdbc:postgresql:///<DATABASE_NAME>?"+
     +"alloydbInstanceName=<INSTANCE_NAME>"
     +"&alloydbNamedConnector=my-connector"
