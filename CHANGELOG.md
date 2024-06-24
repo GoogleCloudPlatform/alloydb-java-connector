@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.4](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.1.3...v1.1.4) (2024-06-24)
+
+
+### Documentation
+
+* fix typo in configuration.md ([#553](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/553)) ([82945b6](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/82945b6cf4501b2739c5e6bb7811880ce516252e))
+
 ## [1.1.3](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.1.2...v1.1.3) (2024-06-12)
 
 
