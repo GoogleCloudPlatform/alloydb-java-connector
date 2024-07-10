@@ -231,12 +231,12 @@ jobs:
         repository: ${{ github.event.pull_request.head.repo.full_name }}
 
     - name: Setup Maven Action
-      uses: s4u/setup-maven-action@489441643219d2b93ee2a127b2402eb640a1b947
+      uses: s4u/setup-maven-action@2f53a7669c7543a045d0bb6c92436df0c5a726f8
       with:
         java-version: 17
 
     - name: Set up GraalVM
-      uses: graalvm/setup-graalvm@2f25c0caae5b220866f732832d5e3e29ff493338 # v1
+      uses: graalvm/setup-graalvm@2911b2304bee2c2f59b9a67bf45f025a6b6de4b1 # v1
       with:
         distribution: "graalvm"
         java-version: "17"
@@ -323,7 +323,7 @@ jobs:
           java-version: 8
 
       - name: Setup Maven Action
-        uses: s4u/setup-maven-action@489441643219d2b93ee2a127b2402eb640a1b947
+        uses: s4u/setup-maven-action@2f53a7669c7543a045d0bb6c92436df0c5a726f8
         with:
           java-version: 8
 
