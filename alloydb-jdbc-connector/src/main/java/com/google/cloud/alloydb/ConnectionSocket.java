@@ -110,12 +110,6 @@ class ConnectionSocket {
 
     // Use the instance's address as a HostName.
     String serverName = address;
-    // TODO: use the correct address as server name once PSC DNS is populated
-    // in all existing clusters. When that happens, delete this if statement.
-    // https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/499
-    if (connectionConfig.getIpType().equals(IpType.PSC)) {
-      serverName = connectionInfo.getIpAddress();
-    }
 
     logger.debug(String.format("[%s] Connecting to instance.", address));
 
