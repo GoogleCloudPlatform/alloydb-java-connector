@@ -249,6 +249,11 @@ jobs:
   unitsAndE2e:
     name: units + e2e
     runs-on: [self-hosted, linux, x64]
+    # run integration tests on all builds except pull requests from forks
+    # or dependabot
+    if: |
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
     permissions:
       contents: 'read'
       id-token: 'write'
