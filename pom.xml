@@ -60,7 +60,6 @@
     <site.installationModule>alloydb-connector-parent</site.installationModule>
     <project.javadoc.protobufBaseURL>https://googleapis.dev/java/google-api-grpc/latest</project.javadoc.protobufBaseURL>
     <error-prone.version>2.30.0</error-prone.version>
-    <native-image.version>0.10.2</native-image.version>
     <bouncycastle.version>1.78.1</bouncycastle.version>
   </properties>
 
@@ -290,7 +289,7 @@
         <dependency>
           <groupId>org.graalvm.buildtools</groupId>
           <artifactId>junit-platform-native</artifactId>
-          <version>${native-image.version}</version>
+          <version>${native-maven-plugin.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -299,7 +298,7 @@
           <plugin>
             <groupId>org.graalvm.buildtools</groupId>
             <artifactId>native-maven-plugin</artifactId>
-            <version>${native-image.version}</version>
+            <version>${native-maven-plugin.version}</version>
             <extensions>true</extensions>
             <executions>
               <execution>
