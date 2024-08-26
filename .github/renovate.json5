@@ -27,9 +27,17 @@
       "matchUpdateTypes": ["minor", "patch"],
     },
     {
-      "matchManagers": ["github-actions"],
       "groupName": "dependencies for github",
+      "matchManagers": ["github-actions"],
       "commitMessagePrefix": "chore(deps):"
+    },
+    {
+        "groupName": "JUnit dependencies",
+        "matchPackagePatterns": [
+            "^org.junit.platform:junit-platform-engine",
+            "^org.junit.platform:junit-platform-commons",
+            "^org.junit.vintage:junit-vintage-engine",
+        ]
     },
   ]
 }
