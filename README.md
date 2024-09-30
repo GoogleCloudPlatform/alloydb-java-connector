@@ -33,9 +33,12 @@ This library provides a [socket factory][socket-factory] for use with the
 
 For information on configuring a connection, see the [documentation][jdbc-doc].
 
+If you're using Spring Boot, consider using the [Spring Boot AlloyDB starter][spring-boot].
+
 [socket-factory]: https://docs.oracle.com/javase/8/docs/api/javax/net/SocketFactory.html
 [postgres-driver]: https://jdbc.postgresql.org/
 [jdbc-doc]: docs/jdbc.md
+[spring-boot]: https://googlecloudplatform.github.io/spring-cloud-gcp/5.3.0/reference/html/index.html#alloydb
 
 ### Configuring IAM permissions
 
