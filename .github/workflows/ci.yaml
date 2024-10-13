@@ -194,11 +194,6 @@ jobs:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
 
-    - name: Setup Maven Action
-      uses: s4u/setup-maven-action@a37cecafbf1e8d86c1c93d51054a63e228b96b3e
-      with:
-        java-version: 17
-
     - name: Set up GraalVM
       uses: graalvm/setup-graalvm@22cc13fe88ef133134b3798e128fb208df55e1f5 # v1.2.3
       with:
@@ -270,11 +265,6 @@ jobs:
         uses: actions/setup-java@b36c23c0d998641eff861008f374ee103c25ac73 # v4.4.0
         with:
           distribution: 'zulu'
-          java-version: 8
-
-      - name: Setup Maven Action
-        uses: s4u/setup-maven-action@a37cecafbf1e8d86c1c93d51054a63e228b96b3e
-        with:
           java-version: 8
 
       - id: 'auth'
