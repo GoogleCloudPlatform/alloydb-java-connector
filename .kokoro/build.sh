@@ -24,12 +24,12 @@ cd ${scriptDir}/..
 source ${scriptDir}/common.sh
 
 # Print out Maven & Java version
-mvn -version
+./mvnw -version
 echo ${JOB_TYPE}
 
 # attempt to install 3 times with exponential backoff (starting with 10 seconds)
 retry_with_backoff 3 10 \
-  mvn install -B -V -ntp \
+  ./mvnw install -B -V -ntp \
     -DskipTests=true \
     -Dclirr.skip=true \
     -Denforcer.skip=true \
@@ -42,19 +42,19 @@ set +e
 
 case ${JOB_TYPE} in
 test)
-    mvn test -B -ntp -Pcoverage -Dclirr.skip=true -Denforcer.skip=true
+    ./mvnw test -B -ntp -Pcoverage -Dclirr.skip=true -Denforcer.skip=true
     RETURN_CODE=$?
     ;;
 lint)
-    mvn com.coveo:fmt-maven-plugin:check -B -ntp
+    ./mvnw com.coveo:fmt-maven-plugin:check -B -ntp
     RETURN_CODE=$?
     ;;
 javadoc)
-    mvn javadoc:javadoc javadoc:test-javadoc -B -ntp
+    ./mvnw javadoc:javadoc javadoc:test-javadoc -B -ntp
     RETURN_CODE=$?
     ;;
 integration)
-    mvn -B ${INTEGRATION_TEST_ARGS} \
+    ./mvnw -B ${INTEGRATION_TEST_ARGS} \
       -ntp \
       -Penable-integration-tests \
       -DtrimStackTrace=false \
@@ -66,12 +66,12 @@ integration)
     ;;
 graalvm)
     # Run Unit and Integration Tests with Native Image
-    mvn -B ${INTEGRATION_TEST_ARGS} -ntp -Pnative test
+    ./mvnw -B ${INTEGRATION_TEST_ARGS} -ntp -Pnative test
     RETURN_CODE=$?
     ;;
 graalvm17)
     # Run Unit and Integration Tests with Native Image
-    mvn -B ${INTEGRATION_TEST_ARGS} -ntp -Pnative test
+    ./mvnw -B ${INTEGRATION_TEST_ARGS} -ntp -Pnative test
     RETURN_CODE=$?
     ;;
 samples)
@@ -90,7 +90,7 @@ samples)
         done
 
         pushd ${SAMPLES_DIR}
-        mvn -B \
+        ./mvnw -B \
           -ntp \
           -DtrimStackTrace=false \
           -Dclirr.skip=true \
@@ -104,7 +104,7 @@ samples)
     fi
     ;;
 clirr)
-    mvn -B -ntp -Denforcer.skip=true clirr:check
+    ./mvnw -B -ntp -Denforcer.skip=true clirr:check
     RETURN_CODE=$?
     ;;
 *)
