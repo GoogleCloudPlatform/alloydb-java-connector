@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.7](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.1.6...v1.1.7) (2024-10-14)
+
+
+### Documentation
+
+* add link to Spring Boot starter ([#588](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/588)) ([195553b](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/195553b3987b4619063d88c9df1be598fb324112))
+* add steps for testing the connector ([#582](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/582)) ([83acba1](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/83acba14ff79b24785783913243895bcc9a81865))
+
 ## [1.1.6](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.1.5...v1.1.6) (2024-09-10)
 
 
