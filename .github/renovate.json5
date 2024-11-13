@@ -1,43 +1,54 @@
 {
-  "extends": [
-    "config:recommended",
-    "helpers:pinGitHubActionDigests",
-    ":separateMajorReleases",
-    ":combinePatchMinorReleases",
-    ":ignoreUnstable",
-    ":prImmediately",
-    ":updateNotScheduled",
-    ":automergeDisabled",
-    ":ignoreModulesAndTests",
-    ":maintainLockFilesDisabled"
+  extends: [
+    'config:recommended',
+    'helpers:pinGitHubActionDigests',
+    ':separateMajorReleases',
+    ':combinePatchMinorReleases',
+    ':ignoreUnstable',
+    ':prImmediately',
+    ':updateNotScheduled',
+    ':automergeDisabled',
+    ':ignoreModulesAndTests',
+    ':maintainLockFilesDisabled',
   ],
-  "commitMessagePrefix": "deps: ",
-  "semanticCommits": "enabled",
-  "dependencyDashboard": true,
-  "dependencyDashboardLabels": ["type: process"],
-  "ignorePaths": [".kokoro/requirements.txt"],
-  "ignoreDeps": [
-    "org.graalvm.sdk:graal-sdk",
-    "ch.qos.logback:logback-classic"
+  commitMessagePrefix: 'deps: ',
+  semanticCommits: 'enabled',
+  dependencyDashboard: true,
+  dependencyDashboardLabels: [
+    'type: process',
   ],
-  "packageRules": [
+  ignorePaths: [
+    '.kokoro/requirements.txt',
+  ],
+  ignoreDeps: [
+    'org.graalvm.sdk:graal-sdk',
+    'ch.qos.logback:logback-classic',
+  ],
+  packageRules: [
     {
-      "groupName": "Non-major dependencies",
-      "matchManagers": ["maven"],
-      "matchUpdateTypes": ["minor", "patch"],
+      groupName: 'Non-major dependencies',
+      matchManagers: [
+        'maven',
+      ],
+      matchUpdateTypes: [
+        'minor',
+        'patch',
+      ],
     },
     {
-      "groupName": "dependencies for github",
-      "matchManagers": ["github-actions"],
-      "commitMessagePrefix": "chore(deps):"
+      groupName: 'dependencies for github',
+      matchManagers: [
+        'github-actions',
+      ],
+      commitMessagePrefix: 'chore(deps):',
     },
     {
-        "groupName": "JUnit dependencies",
-        "matchPackagePatterns": [
-            "^org.junit.platform:junit-platform-engine",
-            "^org.junit.platform:junit-platform-commons",
-            "^org.junit.vintage:junit-vintage-engine",
-        ]
+      groupName: 'JUnit dependencies',
+      matchPackageNames: [
+        '/^org.junit.platform:junit-platform-engine/',
+        '/^org.junit.platform:junit-platform-commons/',
+        '/^org.junit.vintage:junit-vintage-engine/',
+      ],
     },
-  ]
+  ],
 }
