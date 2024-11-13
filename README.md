@@ -58,10 +58,10 @@ for more information.
 
 The Java Connector supports optional debug logging to help diagnose problems with
 the background certificate refresh. To enable it, add the following to the file
-`/src/main/resources/application.yml`:
+`src/main/resources/application.yml`:
 
 ```
-logging.level.root=DEBUG
+logging.level.com.google.cloud.alloydb=DEBUG
 ```
 
 ## Support policy
