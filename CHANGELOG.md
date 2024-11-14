@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.1.7](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.1.6...v1.1.7) (2024-11-14)
+
+
+### Dependencies
+
+* migrate config .github/renovate.json5 ([#594](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/594)) ([62b5096](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/62b5096a42d180e7082ef325bd776bad2429cea5))
+* Update JUnit dependencies ([#578](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/578)) ([f2852b4](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/f2852b453c9c29f2bec78cdaaf47a3f7292faad5))
+* Update Non-major dependencies ([#584](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/584)) ([0a3d739](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/0a3d73908231ab843dc08a52e6921c6c8038483b))
+
+
+### Documentation
+
+* add link to Spring Boot starter ([#588](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/588)) ([195553b](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/195553b3987b4619063d88c9df1be598fb324112))
+* add steps for testing the connector ([#582](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/582)) ([83acba1](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/83acba14ff79b24785783913243895bcc9a81865))
+* improve debug logging guidance ([#595](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/595)) ([fbac8aa](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/fbac8aa86e4866c424d78daeba422e80e95feabe))
+
 ## [1.1.6](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.1.5...v1.1.6) (2024-09-10)
 
 
