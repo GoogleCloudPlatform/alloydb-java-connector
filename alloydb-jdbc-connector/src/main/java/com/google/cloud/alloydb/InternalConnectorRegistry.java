@@ -199,7 +199,7 @@ enum InternalConnectorRegistry implements Closeable {
         executor,
         connectionInfoRepository,
         RsaKeyPairGenerator.generateKeyPair(),
-        new DefaultConnectionInfoCacheFactory(),
+        new DefaultConnectionInfoCacheFactory(config.getRefreshStrategy()),
         new ConcurrentHashMap<>(),
         accessTokenSupplier,
         getUserAgents());

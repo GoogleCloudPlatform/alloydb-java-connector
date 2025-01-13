@@ -35,6 +35,7 @@ public class ConnectorConfig {
   private final GoogleCredentials googleCredentials;
   private final String googleCredentialsPath;
   private final String quotaProject;
+  private final RefreshStrategy refreshStrategy;
 
   private ConnectorConfig(
       String targetPrincipal,
@@ -43,7 +44,8 @@ public class ConnectorConfig {
       Supplier<GoogleCredentials> googleCredentialsSupplier,
       GoogleCredentials googleCredentials,
       String googleCredentialsPath,
-      String quotaProject) {
+      String quotaProject,
+      RefreshStrategy refreshStrategy) {
     this.targetPrincipal = targetPrincipal;
     this.delegates = delegates;
     this.adminServiceEndpoint = adminServiceEndpoint;
@@ -51,6 +53,7 @@ public class ConnectorConfig {
     this.googleCredentials = googleCredentials;
     this.googleCredentialsPath = googleCredentialsPath;
     this.quotaProject = quotaProject;
+    this.refreshStrategy = refreshStrategy;
   }
 
   @Override
@@ -68,7 +71,8 @@ public class ConnectorConfig {
         && Objects.equal(googleCredentialsSupplier, that.googleCredentialsSupplier)
         && Objects.equal(googleCredentials, that.googleCredentials)
         && Objects.equal(googleCredentialsPath, that.googleCredentialsPath)
-        && Objects.equal(quotaProject, that.quotaProject);
+        && Objects.equal(quotaProject, that.quotaProject)
+        && Objects.equal(refreshStrategy, that.refreshStrategy);
   }
 
   @Override
@@ -80,7 +84,8 @@ public class ConnectorConfig {
         googleCredentialsSupplier,
         googleCredentials,
         googleCredentialsPath,
-        quotaProject);
+        quotaProject,
+        refreshStrategy);
   }
 
   public String getTargetPrincipal() {
@@ -110,6 +115,11 @@ public class ConnectorConfig {
   public String getQuotaProject() {
     return quotaProject;
   }
+
+  public RefreshStrategy getRefreshStrategy() {
+    return refreshStrategy;
+  }
+
   /** The builder for the ConnectionConfig. */
   public static class Builder {
 
@@ -120,6 +130,7 @@ public class ConnectorConfig {
     private GoogleCredentials googleCredentials;
     private String googleCredentialsPath;
     private String quotaProject;
+    private RefreshStrategy refreshStrategy;
 
     public Builder withTargetPrincipal(String targetPrincipal) {
       this.targetPrincipal = targetPrincipal;
@@ -157,6 +168,11 @@ public class ConnectorConfig {
       return this;
     }
 
+    public Builder withRefreshStrategy(RefreshStrategy refreshStrategy) {
+      this.refreshStrategy = refreshStrategy;
+      return this;
+    }
+
     /** Builds a new instance of {@code ConnectionConfig}. */
     public ConnectorConfig build() {
       // validate only one GoogleCredentials configuration field set
@@ -183,7 +199,8 @@ public class ConnectorConfig {
           googleCredentialsSupplier,
           googleCredentials,
           googleCredentialsPath,
-          quotaProject);
+          quotaProject,
+          refreshStrategy);
     }
   }
 }

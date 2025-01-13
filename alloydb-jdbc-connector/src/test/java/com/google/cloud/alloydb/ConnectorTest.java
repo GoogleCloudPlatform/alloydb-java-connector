@@ -159,7 +159,7 @@ public class ConnectorTest {
         defaultExecutor,
         connectionInfoRepository,
         TestCertificates.INSTANCE.getClientKey(),
-        new DefaultConnectionInfoCacheFactory(),
+        new DefaultConnectionInfoCacheFactory(RefreshStrategy.REFRESH_AHEAD),
         new ConcurrentHashMap<>(),
         accessTokenSupplier,
         USER_AGENT);

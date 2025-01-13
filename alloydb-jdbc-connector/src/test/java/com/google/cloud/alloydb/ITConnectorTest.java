@@ -87,7 +87,7 @@ public class ITConnectorTest {
               executor,
               connectionInfoRepo,
               RsaKeyPairGenerator.generateKeyPair(),
-              new DefaultConnectionInfoCacheFactory(),
+              new DefaultConnectionInfoCacheFactory(RefreshStrategy.REFRESH_AHEAD),
               new ConcurrentHashMap<>(),
               accessTokenSupplier,
               USER_AGENT);
@@ -159,7 +159,7 @@ public class ITConnectorTest {
   public void testEquals() {
     KeyPair clientConnectorKeyPair = RsaKeyPairGenerator.generateKeyPair();
     DefaultConnectionInfoCacheFactory connectionInfoCacheFactory =
-        new DefaultConnectionInfoCacheFactory();
+        new DefaultConnectionInfoCacheFactory(RefreshStrategy.REFRESH_AHEAD);
     ListeningScheduledExecutorService exec =
         MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor());
     ConnectorConfig config = new ConnectorConfig.Builder().build();
@@ -236,7 +236,7 @@ public class ITConnectorTest {
                 executor,
                 connectionInfoRepo,
                 clientConnectorKeyPair,
-                new DefaultConnectionInfoCacheFactory(), // Different
+                new DefaultConnectionInfoCacheFactory(RefreshStrategy.REFRESH_AHEAD), // Different
                 new ConcurrentHashMap<>(),
                 accessTokenSupplier,
                 USER_AGENT));
@@ -270,7 +270,7 @@ public class ITConnectorTest {
   public void testHashCode() {
     KeyPair clientConnectorKeyPair = RsaKeyPairGenerator.generateKeyPair();
     DefaultConnectionInfoCacheFactory connectionInfoCacheFactory =
-        new DefaultConnectionInfoCacheFactory();
+        new DefaultConnectionInfoCacheFactory(RefreshStrategy.REFRESH_AHEAD);
     ConcurrentHashMap<ConnectionConfig, ConnectionInfoCache> instances = new ConcurrentHashMap<>();
     ConnectorConfig config = new ConnectorConfig.Builder().build();
 

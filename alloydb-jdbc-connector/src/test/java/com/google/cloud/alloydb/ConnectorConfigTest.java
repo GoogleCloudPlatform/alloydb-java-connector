@@ -40,12 +40,14 @@ public class ConnectorConfigTest {
             .withDelegates(wantDelegates)
             .withAdminServiceEndpoint(wantAdminServiceEndpoint)
             .withQuotaProject(wantQuotaProject)
+            .withRefreshStrategy(RefreshStrategy.REFRESH_AHEAD)
             .build();
 
     assertThat(cc.getTargetPrincipal()).isEqualTo(wantTargetPrincipal);
     assertThat(cc.getDelegates()).isEqualTo(wantDelegates);
     assertThat(cc.getAdminServiceEndpoint()).isEqualTo(wantAdminServiceEndpoint);
     assertThat(cc.getQuotaProject()).isEqualTo(wantQuotaProject);
+    assertThat(cc.getRefreshStrategy()).isEqualTo(RefreshStrategy.REFRESH_AHEAD);
   }
 
   @Test
@@ -141,6 +143,28 @@ public class ConnectorConfigTest {
   }
 
   @Test
+  public void testEqual_withRefreshStrategyEqual() {
+    ConnectorConfig k1 =
+        new ConnectorConfig.Builder().withRefreshStrategy(RefreshStrategy.LAZY).build();
+    ConnectorConfig k2 =
+        new ConnectorConfig.Builder().withRefreshStrategy(RefreshStrategy.LAZY).build();
+
+    assertThat(k1).isEqualTo(k2);
+    assertThat(k1.hashCode()).isEqualTo(k2.hashCode());
+  }
+
+  @Test
+  public void testEqual_withRefreshStrategyNotEqual() {
+    ConnectorConfig k1 =
+        new ConnectorConfig.Builder().withRefreshStrategy(RefreshStrategy.LAZY).build();
+    ConnectorConfig k2 =
+        new ConnectorConfig.Builder().withRefreshStrategy(RefreshStrategy.REFRESH_AHEAD).build();
+
+    assertThat(k1).isNotEqualTo(k2);
+    assertThat(k1.hashCode()).isNotEqualTo(k2.hashCode());
+  }
+
+  @Test
   public void testBuild_withGoogleCredentialsPath() {
     final String wantGoogleCredentialsPath = "/path/to/credentials";
     ConnectorConfig cc =
@@ -219,6 +243,7 @@ public class ConnectorConfigTest {
             .withAdminServiceEndpoint(wantAdminServiceEndpoint)
             .withGoogleCredentialsPath(wantGoogleCredentialsPath)
             .withQuotaProject(wantQuotaProject)
+            .withRefreshStrategy(RefreshStrategy.REFRESH_AHEAD)
             .build();
 
     assertThat(cc.hashCode())
@@ -230,6 +255,7 @@ public class ConnectorConfigTest {
                 null, // googleCredentialsSupplier
                 null, // googleCredentials
                 wantGoogleCredentialsPath,
-                wantQuotaProject));
+                wantQuotaProject,
+                RefreshStrategy.REFRESH_AHEAD));
   }
 }

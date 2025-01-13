@@ -35,6 +35,7 @@ class ConnectionConfig {
   public static final String ALLOYDB_QUOTA_PROJECT = "alloydbQuotaProject";
   public static final String ENABLE_IAM_AUTH_PROPERTY = "alloydbEnableIAMAuth";
   public static final String ALLOYDB_IP_TYPE = "alloydbIpType";
+  public static final String ALLOYDB_REFRESH_STRATEGY = "alloydbRefreshStrategy";
   public static final AuthType DEFAULT_AUTH_TYPE = AuthType.PASSWORD;
   public static final IpType DEFAULT_IP_TYPE = IpType.PRIVATE;
   private final InstanceName instanceName;
@@ -48,29 +49,31 @@ class ConnectionConfig {
     validateProperties(props);
     final String instanceNameStr = props.getProperty(ALLOYDB_INSTANCE_NAME, "");
     final InstanceName instanceName = InstanceName.parse(instanceNameStr);
-    final String namedConnector = props.getProperty(ConnectionConfig.ALLOYDB_NAMED_CONNECTOR);
-    final String adminServiceEndpoint =
-        props.getProperty(ConnectionConfig.ALLOYDB_ADMIN_SERVICE_ENDPOINT);
-    final String targetPrincipal = props.getProperty(ConnectionConfig.ALLOYDB_TARGET_PRINCIPAL);
-    final String delegatesStr = props.getProperty(ConnectionConfig.ALLOYDB_DELEGATES);
+    final String namedConnector = props.getProperty(ALLOYDB_NAMED_CONNECTOR);
+    final String adminServiceEndpoint = props.getProperty(ALLOYDB_ADMIN_SERVICE_ENDPOINT);
+    final String targetPrincipal = props.getProperty(ALLOYDB_TARGET_PRINCIPAL);
+    final String delegatesStr = props.getProperty(ALLOYDB_DELEGATES);
     final List<String> delegates;
     if (delegatesStr != null && !delegatesStr.isEmpty()) {
       delegates = Arrays.asList(delegatesStr.split(","));
     } else {
       delegates = Collections.emptyList();
     }
-    final String googleCredentialsPath =
-        props.getProperty(ConnectionConfig.ALLOYDB_GOOGLE_CREDENTIALS_PATH);
+    final String googleCredentialsPath = props.getProperty(ALLOYDB_GOOGLE_CREDENTIALS_PATH);
     final AuthType authType =
-        Boolean.parseBoolean(props.getProperty(ConnectionConfig.ENABLE_IAM_AUTH_PROPERTY))
+        Boolean.parseBoolean(props.getProperty(ENABLE_IAM_AUTH_PROPERTY))
             ? AuthType.IAM
             : AuthType.PASSWORD;
-    final String quotaProject = props.getProperty(ConnectionConfig.ALLOYDB_QUOTA_PROJECT);
+    final String quotaProject = props.getProperty(ALLOYDB_QUOTA_PROJECT);
     IpType ipType = IpType.PRIVATE;
-    if (props.getProperty(ConnectionConfig.ALLOYDB_IP_TYPE) != null) {
-      ipType =
-          IpType.valueOf(
-              props.getProperty(ConnectionConfig.ALLOYDB_IP_TYPE).toUpperCase(Locale.getDefault()));
+    if (props.getProperty(ALLOYDB_IP_TYPE) != null) {
+      ipType = IpType.valueOf(props.getProperty(ALLOYDB_IP_TYPE).toUpperCase(Locale.getDefault()));
+    }
+    RefreshStrategy refreshStrategy = RefreshStrategy.REFRESH_AHEAD;
+    if (props.getProperty(ALLOYDB_REFRESH_STRATEGY) != null) {
+      refreshStrategy =
+          RefreshStrategy.valueOf(
+              props.getProperty(ALLOYDB_REFRESH_STRATEGY).toUpperCase(Locale.getDefault()));
     }
 
     return new ConnectionConfig(
@@ -84,6 +87,7 @@ class ConnectionConfig {
             .withAdminServiceEndpoint(adminServiceEndpoint)
             .withGoogleCredentialsPath(googleCredentialsPath)
             .withQuotaProject(quotaProject)
+            .withRefreshStrategy(refreshStrategy)
             .build());
   }
 
@@ -110,7 +114,7 @@ class ConnectionConfig {
   private static void validateProperties(Properties props) {
     final String instanceNameStr = props.getProperty(ALLOYDB_INSTANCE_NAME, "");
     Preconditions.checkArgument(
-        InstanceName.isParsableFrom(instanceNameStr) == true,
+        InstanceName.isParsableFrom(instanceNameStr),
         String.format(
             "'%s' must have format: projects/<PROJECT>/locations/<REGION>/clusters/<CLUSTER>/instances/<INSTANCE>",
             ALLOYDB_INSTANCE_NAME));
