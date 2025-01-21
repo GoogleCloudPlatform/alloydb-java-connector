@@ -37,7 +37,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class ConnectionInfoCacheTest {
+public class RefreshAheadConnectionInfoCacheTest {
 
   private static final String TEST_INSTANCE_IP = "10.0.0.1";
   private static final String TEST_INSTANCE_PUBLIC_IP = "34.0.0.1";
@@ -82,8 +82,8 @@ public class ConnectionInfoCacheTest {
                     TestCertificates.INSTANCE.getIntermediateCertificate(),
                     TestCertificates.INSTANCE.getRootCertificate()),
                 TestCertificates.INSTANCE.getRootCertificate()));
-    DefaultConnectionInfoCache connectionInfoCache =
-        new DefaultConnectionInfoCache(
+    RefreshAheadConnectionInfoCache connectionInfoCache =
+        new RefreshAheadConnectionInfoCache(
             MoreExecutors.listeningDecorator(executor),
             connectionInfoRepo,
             instanceName,
@@ -142,8 +142,8 @@ public class ConnectionInfoCacheTest {
                     keyPair.getPublic(), ONE_HOUR_FROM_NOW),
                 certificateChain,
                 TestCertificates.INSTANCE.getRootCertificate()));
-    DefaultConnectionInfoCache connectionInfoCache =
-        new DefaultConnectionInfoCache(
+    RefreshAheadConnectionInfoCache connectionInfoCache =
+        new RefreshAheadConnectionInfoCache(
             MoreExecutors.listeningDecorator(executor),
             connectionInfoRepo,
             instanceName,
@@ -189,8 +189,8 @@ public class ConnectionInfoCacheTest {
                     keyPair.getPublic(), ONE_HOUR_FROM_NOW),
                 certificateChain,
                 TestCertificates.INSTANCE.getRootCertificate()));
-    DefaultConnectionInfoCache connectionInfoCache =
-        new DefaultConnectionInfoCache(
+    RefreshAheadConnectionInfoCache connectionInfoCache =
+        new RefreshAheadConnectionInfoCache(
             MoreExecutors.listeningDecorator(executor),
             connectionInfoRepo,
             instanceName,

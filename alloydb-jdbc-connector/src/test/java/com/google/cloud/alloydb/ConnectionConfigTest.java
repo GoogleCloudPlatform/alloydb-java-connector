@@ -42,6 +42,7 @@ public class ConnectionConfigTest {
     final String iamAuthN = "true";
     final String wantQuotaProject = "myNewProject";
     final String ipType = "PUBLIC";
+    final String refreshStrategy = "REFRESH_AHEAD";
 
     Properties props = new Properties();
     props.setProperty(ConnectionConfig.ALLOYDB_INSTANCE_NAME, INSTANCE_NAME);
@@ -53,6 +54,7 @@ public class ConnectionConfigTest {
     props.setProperty(ConnectionConfig.ENABLE_IAM_AUTH_PROPERTY, iamAuthN);
     props.setProperty(ConnectionConfig.ALLOYDB_QUOTA_PROJECT, wantQuotaProject);
     props.setProperty(ConnectionConfig.ALLOYDB_IP_TYPE, ipType);
+    props.setProperty(ConnectionConfig.ALLOYDB_REFRESH_STRATEGY, refreshStrategy);
 
     ConnectionConfig config = ConnectionConfig.fromConnectionProperties(props);
 
@@ -66,6 +68,8 @@ public class ConnectionConfigTest {
     assertThat(config.getConnectorConfig().getQuotaProject()).isEqualTo(wantQuotaProject);
     assertThat(config.getAuthType()).isEqualTo(AuthType.IAM);
     assertThat(config.getIpType()).isEqualTo(IpType.PUBLIC);
+    assertThat(config.getConnectorConfig().getRefreshStrategy())
+        .isEqualTo(RefreshStrategy.REFRESH_AHEAD);
   }
 
   @Test

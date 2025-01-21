@@ -252,12 +252,13 @@ registered with `ConnectorRegistry.register()`.
 These properties configure the connector which loads AlloyDB instance 
 configuration using the AlloyDB API. 
 
-| JDBC Connection Property | Description | Example |
-|---------------|---------------------|-----------------|
-| alloydbTargetPrincipal   | The service account to impersonate when connecting to the database and database admin API. | `db-user@my-project.iam.gserviceaccount.com` |
-| alloydbDelegates  | A comma-separated list of service accounts delegates. See [Delegated Service Account Impersonation](jdbc.md#delegated-service-account-impersonation) | `application@my-project.iam.gserviceaccount.com,services@my-project.iam.gserviceaccount.com` |
-| alloydbAdminServiceEndpoint  | An alternate AlloyDB API endpoint. | `alloydb.googleapis.com:443` |
-| alloydbGoogleCredentialsPath | A file path to a JSON file containing a GoogleCredentials oauth token.| `/home/alice/secrets/my-credentials.json` |
+| JDBC Connection Property | Description                                                                                                                                                                                                         | Example |
+|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|
+| alloydbTargetPrincipal   | The service account to impersonate when connecting to the database and database admin API.                                                                                                                          | `db-user@my-project.iam.gserviceaccount.com` |
+| alloydbDelegates  | A comma-separated list of service accounts delegates. See [Delegated Service Account Impersonation](jdbc.md#delegated-service-account-impersonation)                                                                | `application@my-project.iam.gserviceaccount.com,services@my-project.iam.gserviceaccount.com` |
+| alloydbAdminServiceEndpoint  | An alternate AlloyDB API endpoint.                                                                                                                                                                                  | `alloydb.googleapis.com:443` |
+| alloydbGoogleCredentialsPath | A file path to a JSON file containing a GoogleCredentials oauth token.                                                                                                                                              | `/home/alice/secrets/my-credentials.json` |
+| alloydbRefreshStrategy | Either `refresh_ahead` where certificates are refreshed in a background thread, or `lazy` where certificates are refreshed as needed. The `lazy` strategy is best when CPU isn't always available (e.g., Cloud Run) |
 
 ### Connection Configuration Properties
 

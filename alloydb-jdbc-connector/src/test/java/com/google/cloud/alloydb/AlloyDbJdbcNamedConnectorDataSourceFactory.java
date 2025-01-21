@@ -16,6 +16,7 @@
 package com.google.cloud.alloydb;
 
 // [START alloydb_hikaricp_connect_connector_named]
+
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -30,7 +31,8 @@ public class AlloyDbJdbcNamedConnectorDataSourceFactory {
   static HikariDataSource createDataSource() {
 
     // Register a named Connector
-    ConnectorConfig namedConnectorConfig = new ConnectorConfig.Builder().build();
+    ConnectorConfig namedConnectorConfig =
+        new ConnectorConfig.Builder().withRefreshStrategy(RefreshStrategy.LAZY).build();
     ConnectorRegistry.register("my-connector", namedConnectorConfig);
 
     HikariConfig config = new HikariConfig();

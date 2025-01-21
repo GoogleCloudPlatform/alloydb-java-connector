@@ -21,16 +21,16 @@ import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import java.security.KeyPair;
 
 /**
- * DefaultConnectionInfoCache is the cache used by default to hold connection info. In testing, this
- * class may be replaced with alternative implementations of ConnectionInfoCache.
+ * RefreshAheadConnectionInfoCache is the cache used by default to hold connection info. In testing,
+ * this class may be replaced with alternative implementations of ConnectionInfoCache.
  */
-class DefaultConnectionInfoCache implements ConnectionInfoCache {
+class RefreshAheadConnectionInfoCache implements ConnectionInfoCache {
 
   private final Refresher refresher;
 
   private static final long DEFAULT_TIMEOUT_MS = 30000;
 
-  DefaultConnectionInfoCache(
+  RefreshAheadConnectionInfoCache(
       ListeningScheduledExecutorService executor,
       ConnectionInfoRepository connectionInfoRepo,
       InstanceName instanceName,

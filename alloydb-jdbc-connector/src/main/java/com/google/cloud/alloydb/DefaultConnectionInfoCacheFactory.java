@@ -25,14 +25,23 @@ import java.security.KeyPair;
  */
 class DefaultConnectionInfoCacheFactory implements ConnectionInfoCacheFactory {
 
+  private final RefreshStrategy refreshStrategy;
+
+  public DefaultConnectionInfoCacheFactory(RefreshStrategy refreshStrategy) {
+    this.refreshStrategy = refreshStrategy;
+  }
+
   @Override
-  public DefaultConnectionInfoCache create(
+  public ConnectionInfoCache create(
       ListeningScheduledExecutorService executor,
       ConnectionInfoRepository connectionInfoRepo,
       InstanceName instanceName,
       KeyPair clientConnectorKeyPair,
       long minRefreshDelayMs) {
-    return new DefaultConnectionInfoCache(
+    if (refreshStrategy == RefreshStrategy.LAZY) {
+      return new LazyConnectionInfoCache(connectionInfoRepo, instanceName, clientConnectorKeyPair);
+    }
+    return new RefreshAheadConnectionInfoCache(
         executor, connectionInfoRepo, instanceName, clientConnectorKeyPair, minRefreshDelayMs);
   }
 }

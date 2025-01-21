@@ -16,6 +16,7 @@
 package com.google.cloud.alloydb;
 
 // [START alloydb_hikaricp_connect_connector]
+
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
