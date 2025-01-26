@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.1.8...v1.2.0) (2025-01-26)
+
+
+### Features
+
+* add support for lazy refresh ([#606](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/606)) ([57e44ff](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/57e44ffcc608b7844947419ab7c8bd1fa472cc19)), closes [#565](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/565)
+
 ## [1.1.8](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.1.7...v1.1.8) (2024-12-10)
 
 
