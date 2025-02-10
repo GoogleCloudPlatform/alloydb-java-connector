@@ -270,12 +270,12 @@
           <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-engine</artifactId>
-            <version>1.11.3</version>
+            <version>1.11.4</version>
           </dependency>
           <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-commons</artifactId>
-            <version>1.11.3</version>
+            <version>1.11.4</version>
           </dependency>
           <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -304,7 +304,7 @@
         <dependency>
           <groupId>org.junit.vintage</groupId>
           <artifactId>junit-vintage-engine</artifactId>
-          <version>5.11.3</version>
+          <version>5.11.4</version>
           <scope>test</scope>
         </dependency>
         <dependency>
