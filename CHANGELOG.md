@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.2.0...v1.2.1) (2025-02-21)
+
+
+### Bug Fixes
+
+* use daemon threads internally ([#618](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/618)) ([6defeb3](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/6defeb36e97be1c1a9e6494f40d3e5c6e7cd92eb)), closes [#617](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/617)
+
 ## [1.2.0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.1.8...v1.2.0) (2025-02-10)
 
 
