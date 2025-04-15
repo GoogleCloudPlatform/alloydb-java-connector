@@ -23,11 +23,11 @@
   <parent>
     <groupId>com.google.cloud</groupId>
     <artifactId>alloydb-connector-parent</artifactId>
-    <version>1.2.2-SNAPSHOT</version><!-- {x-version-update:alloydb-jdbc-connector:current} -->
+    <version>1.2.2</version><!-- {x-version-update:alloydb-jdbc-connector:current} -->
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>alloydb-jdbc-connector</artifactId>
-  <version>1.2.2-SNAPSHOT</version><!-- {x-version-update:alloydb-jdbc-connector:current} -->
+  <version>1.2.2</version><!-- {x-version-update:alloydb-jdbc-connector:current} -->
   <packaging>jar</packaging>
 
   <name>Google Cloud AlloyDB JDBC Connector</name>
