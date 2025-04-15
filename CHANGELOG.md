@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.2.1...v1.2.2) (2025-04-15)
+
+
+### Dependencies
+
+* Update Non-major dependencies ([#613](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/613)) ([4867bba](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/4867bba2ebfe76414e58df11e9b29e71bb630d37))
+
 ## [1.2.1](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.2.0...v1.2.1) (2025-02-21)
 
 
