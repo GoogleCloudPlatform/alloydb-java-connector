@@ -108,15 +108,6 @@ class ConnectionSocket {
               "Instance does not have an address matching type: %s", connectionConfig.getIpType()));
     }
 
-    // Use the instance's address as a HostName.
-    String serverName = address;
-    // TODO: use the correct address as server name once PSC DNS is populated
-    // in all existing clusters. When that happens, delete this if statement.
-    // https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/499
-    if (connectionConfig.getIpType().equals(IpType.PSC)) {
-      serverName = connectionInfo.getIpAddress();
-    }
-
     logger.debug(String.format("[%s] Connecting to instance.", address));
 
     SSLParameters sslParameters = socket.getSSLParameters();
@@ -124,7 +115,7 @@ class ConnectionSocket {
     // in order to verify the identity of the certificate as
     // suggested at https://stackoverflow.com/a/17979954/927514
     sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
-    sslParameters.setServerNames(Collections.singletonList(new SNIHostName(serverName)));
+    sslParameters.setServerNames(Collections.singletonList(new SNIHostName(address)));
 
     socket.setSSLParameters(sslParameters);
     socket.setKeepAlive(true);
