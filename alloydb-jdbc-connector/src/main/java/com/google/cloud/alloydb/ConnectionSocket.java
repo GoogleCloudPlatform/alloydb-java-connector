@@ -120,7 +120,7 @@ class ConnectionSocket {
     logger.debug(String.format("[%s] Connecting to instance.", address));
 
     SSLParameters sslParameters = socket.getSSLParameters();
-    // Set HTTPS as the the endpoint identification algorithm
+    // Set HTTPS as the endpoint identification algorithm
     // in order to verify the identity of the certificate as
     // suggested at https://stackoverflow.com/a/17979954/927514
     sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
@@ -191,8 +191,7 @@ class ConnectionSocket {
         null, // don't load the key store from an input stream
         null // there is no password
         );
-    List<Certificate> chain = new ArrayList<>();
-    chain.addAll(certificateChain);
+    List<Certificate> chain = new ArrayList<>(certificateChain);
     Certificate[] chainArray = chain.toArray(new Certificate[] {});
     PrivateKeyEntry privateKeyEntry = new PrivateKeyEntry(privateKey, chainArray);
     clientAuthenticationKeyStore.setEntry(

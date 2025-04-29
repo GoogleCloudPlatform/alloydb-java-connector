@@ -18,6 +18,7 @@ package com.google.cloud.alloydb;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.function.Supplier;
 
 class SupplierCredentialFactory implements CredentialFactory {
@@ -33,7 +34,7 @@ class SupplierCredentialFactory implements CredentialFactory {
     GoogleCredentials credentials = supplier.get();
 
     if (credentials.createScopedRequired()) {
-      credentials = credentials.createScoped(Arrays.asList(SCOPE_CLOUD_PLATFORM));
+      credentials = credentials.createScoped(Collections.singletonList(SCOPE_CLOUD_PLATFORM));
     }
 
     return credentials;

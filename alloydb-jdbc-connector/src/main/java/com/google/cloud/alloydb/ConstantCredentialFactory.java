@@ -19,6 +19,7 @@ package com.google.cloud.alloydb;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.GoogleCredentials;
 import java.util.Arrays;
+import java.util.Collections;
 
 class ConstantCredentialFactory implements CredentialFactory {
 
@@ -26,7 +27,7 @@ class ConstantCredentialFactory implements CredentialFactory {
 
   public ConstantCredentialFactory(GoogleCredentials credentials) {
     if (credentials.createScopedRequired()) {
-      this.credentials = credentials.createScoped(Arrays.asList(SCOPE_CLOUD_PLATFORM));
+      this.credentials = credentials.createScoped(Collections.singletonList(SCOPE_CLOUD_PLATFORM));
     } else {
       this.credentials = credentials;
     }

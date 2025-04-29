@@ -22,6 +22,7 @@ import static org.junit.Assert.assertThrows;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Objects;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 import org.junit.Test;
@@ -105,9 +106,9 @@ public class ConnectorConfigTest {
   @Test
   public void testNotEqual_withDelegatesNotEqual() {
     ConnectorConfig k1 =
-        new ConnectorConfig.Builder().withDelegates(Arrays.asList("joe@example.com")).build();
+        new ConnectorConfig.Builder().withDelegates(Collections.singletonList("joe@example.com")).build();
     ConnectorConfig k2 =
-        new ConnectorConfig.Builder().withDelegates(Arrays.asList("steve@example.com")).build();
+        new ConnectorConfig.Builder().withDelegates(Collections.singletonList("steve@example.com")).build();
 
     assertThat(k1).isNotEqualTo(k2);
     assertThat(k1.hashCode()).isNotEqualTo(k2.hashCode());
@@ -116,9 +117,9 @@ public class ConnectorConfigTest {
   @Test
   public void testEqual_withDelegatesEqual() {
     ConnectorConfig k1 =
-        new ConnectorConfig.Builder().withDelegates(Arrays.asList("joe@example.com")).build();
+        new ConnectorConfig.Builder().withDelegates(Collections.singletonList("joe@example.com")).build();
     ConnectorConfig k2 =
-        new ConnectorConfig.Builder().withDelegates(Arrays.asList("joe@example.com")).build();
+        new ConnectorConfig.Builder().withDelegates(Collections.singletonList("joe@example.com")).build();
 
     assertThat(k1).isEqualTo(k2);
     assertThat(k1.hashCode()).isEqualTo(k2.hashCode());

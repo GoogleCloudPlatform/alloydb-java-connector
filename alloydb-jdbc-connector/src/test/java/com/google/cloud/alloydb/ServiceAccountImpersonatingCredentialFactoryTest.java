@@ -71,10 +71,9 @@ public class ServiceAccountImpersonatingCredentialFactoryTest {
   @Test
   public void testEmptyDelegatesThrowsIllegalArgumentException() {
     StubCredentialFactory factory = new StubCredentialFactory();
+    //noinspection DataFlowIssue
     assertThrows(
         IllegalArgumentException.class,
-        () -> {
-          new ServiceAccountImpersonatingCredentialFactory(factory, null, Collections.emptyList());
-        });
+        () -> new ServiceAccountImpersonatingCredentialFactory(factory, null, Collections.emptyList()));
   }
 }

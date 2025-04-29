@@ -43,10 +43,10 @@ enum InternalConnectorRegistry implements Closeable {
   private CredentialFactoryProvider credentialFactoryProvider;
 
   @SuppressWarnings("ImmutableEnumChecker")
-  private ConcurrentHashMap<ConnectorConfig, Connector> unnamedConnectors;
+  private final ConcurrentHashMap<ConnectorConfig, Connector> unnamedConnectors;
 
   @SuppressWarnings("ImmutableEnumChecker")
-  private ConcurrentHashMap<String, Connector> namedConnectors;
+  private final ConcurrentHashMap<String, Connector> namedConnectors;
 
   @SuppressWarnings("ImmutableEnumChecker")
   private final Object shutdownGuard = new Object();
@@ -56,7 +56,7 @@ enum InternalConnectorRegistry implements Closeable {
   private boolean shutdown = false;
 
   @SuppressWarnings("ImmutableEnumChecker")
-  private List<String> userAgents = new ArrayList<>();
+  private final List<String> userAgents = new ArrayList<>();
 
   private static final String USER_AGENT = "alloydb-java-connector/" + Version.VERSION;
 

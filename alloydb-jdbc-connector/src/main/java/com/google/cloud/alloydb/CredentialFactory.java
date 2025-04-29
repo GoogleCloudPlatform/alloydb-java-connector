@@ -20,7 +20,7 @@ import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.GoogleCredentials;
 
 interface CredentialFactory {
-  static final String SCOPE_CLOUD_PLATFORM = "https://www.googleapis.com/auth/cloud-platform";
+  String SCOPE_CLOUD_PLATFORM = "https://www.googleapis.com/auth/cloud-platform";
 
   default FixedCredentialsProvider create() {
     return FixedCredentialsProvider.create(getCredentials());

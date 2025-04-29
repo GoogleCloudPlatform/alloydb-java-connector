@@ -62,12 +62,7 @@ import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
 enum TestCertificates {
   INSTANCE;
 
-  private final String DEFAULT_INSTANCE_ID = "00000000-0000-0000-0000-000000000000";
-  private final String DEFAULT_SERVER_NAME =
-      String.format("%s.server.alloydb", DEFAULT_INSTANCE_ID);
   private final String SHA_256_WITH_RSA = "SHA256WithRSA";
-  private final String PRIVATE_IP = "127.0.0.2";
-  private final String DNS_NAME = "localhost";
 
   @SuppressWarnings("ImmutableEnumChecker")
   private final X500Name ROOT_CERT_SUBJECT = new X500Name("CN=root.alloydb");
@@ -75,14 +70,7 @@ enum TestCertificates {
   @SuppressWarnings("ImmutableEnumChecker")
   private final X500Name INTERMEDIATE_CERT_SUBJECT = new X500Name("CN=client.alloydb");
 
-  @SuppressWarnings("ImmutableEnumChecker")
-  private final X500Name SERVER_CERT_SUBJECT = new X500Name("CN=" + DEFAULT_SERVER_NAME);
-
-  private final String PEM_HEADER = "-----BEGIN CERTIFICATE-----";
-  private final String PEM_FOOTER = "-----END CERTIFICATE-----";
-  private final int PEM_LINE_LENGTH = 64;
   private final Instant ONE_HOUR_FROM_NOW = Instant.now().plus(1, ChronoUnit.HOURS);
-  private final Instant ONE_YEAR_FROM_NOW = Instant.now().plus(365, ChronoUnit.DAYS);
 
   @SuppressWarnings("ImmutableEnumChecker")
   private final X509Certificate rootCertificate;
@@ -100,14 +88,11 @@ enum TestCertificates {
   private final KeyPair serverKeyPair;
 
   @SuppressWarnings("ImmutableEnumChecker")
-  private final KeyPair rootKeyPair;
-
-  @SuppressWarnings("ImmutableEnumChecker")
   private final KeyPair clientKeyPair;
 
   TestCertificates() {
 
-    rootKeyPair = RsaKeyPairGenerator.generateKeyPair();
+    KeyPair rootKeyPair = RsaKeyPairGenerator.generateKeyPair();
     intermediateKeyPair = RsaKeyPairGenerator.generateKeyPair();
     serverKeyPair = RsaKeyPairGenerator.generateKeyPair();
     clientKeyPair = RsaKeyPairGenerator.generateKeyPair();
@@ -115,6 +100,7 @@ enum TestCertificates {
     try {
       this.rootCertificate = buildRootCertificate(rootKeyPair);
 
+      Instant ONE_YEAR_FROM_NOW = Instant.now().plus(365, ChronoUnit.DAYS);
       this.intermediateCertificate =
           buildSignedCertificate(
               INTERMEDIATE_CERT_SUBJECT,
@@ -122,6 +108,9 @@ enum TestCertificates {
               ROOT_CERT_SUBJECT,
               rootKeyPair.getPrivate(),
               ONE_YEAR_FROM_NOW);
+      String DEFAULT_INSTANCE_ID = "00000000-0000-0000-0000-000000000000";
+      String DEFAULT_SERVER_NAME = String.format("%s.server.alloydb", DEFAULT_INSTANCE_ID);
+      X500Name SERVER_CERT_SUBJECT = new X500Name("CN=" + DEFAULT_SERVER_NAME);
       this.serverCertificate =
           buildSignedCertificate(
               SERVER_CERT_SUBJECT,
@@ -189,10 +178,13 @@ enum TestCertificates {
   /** Returns the PEM encoded certificate. */
   private String getPemForCert(X509Certificate certificate) throws CertificateEncodingException {
     StringBuilder sb = new StringBuilder();
+    String PEM_HEADER = "-----BEGIN CERTIFICATE-----";
     sb.append(PEM_HEADER).append("\n");
+    int PEM_LINE_LENGTH = 64;
     String base64Key =
         BaseEncoding.base64().withSeparator("\n", PEM_LINE_LENGTH).encode(certificate.getEncoded());
     sb.append(base64Key).append("\n");
+    String PEM_FOOTER = "-----END CERTIFICATE-----";
     sb.append(PEM_FOOTER).append("\n");
     return sb.toString();
   }
@@ -225,6 +217,8 @@ enum TestCertificates {
         Extension.keyUsage,
         false,
         new KeyUsage(KeyUsage.cRLSign | KeyUsage.keyCertSign | KeyUsage.digitalSignature));
+    String PRIVATE_IP = "127.0.0.2";
+    String DNS_NAME = "localhost";
     certificateBuilder.addExtension(
         Extension.subjectAlternativeName,
         false,

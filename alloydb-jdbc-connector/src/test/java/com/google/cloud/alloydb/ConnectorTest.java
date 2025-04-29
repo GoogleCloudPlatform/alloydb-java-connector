@@ -28,8 +28,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import org.junit.After;
@@ -63,7 +61,7 @@ public class ConnectorTest {
 
   @Test
   public void create_successfulPrivateConnection()
-      throws IOException, InterruptedException, NoSuchAlgorithmException, InvalidKeySpecException {
+      throws IOException, InterruptedException {
     FakeSslServer sslServer = new FakeSslServer(SERVER_MESSAGE);
     sslServer.start(PRIVATE_IP);
 
@@ -80,7 +78,7 @@ public class ConnectorTest {
 
   @Test
   public void create_successfulPscConnection()
-      throws IOException, InterruptedException, NoSuchAlgorithmException, InvalidKeySpecException {
+      throws IOException, InterruptedException {
     FakeSslServer sslServer = new FakeSslServer(SERVER_MESSAGE);
     sslServer.start(DNS_NAME);
 
@@ -99,8 +97,7 @@ public class ConnectorTest {
   }
 
   @Test
-  public void create_throwsTerminalException_notFound()
-      throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+  public void create_throwsTerminalException_notFound() {
     MockAlloyDBAdminGrpc mock =
         new MockAlloyDBAdminGrpc(Code.NOT_FOUND.getNumber(), ERROR_MESSAGE_NOT_FOUND);
 
@@ -113,8 +110,7 @@ public class ConnectorTest {
   }
 
   @Test
-  public void create_throwsTerminalException_notAuthorized()
-      throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+  public void create_throwsTerminalException_notAuthorized() {
     MockAlloyDBAdminGrpc mock =
         new MockAlloyDBAdminGrpc(
             Code.PERMISSION_DENIED.getNumber(), ERROR_MESSAGE_PERMISSION_DENIED);
@@ -128,8 +124,7 @@ public class ConnectorTest {
   }
 
   @Test
-  public void create_throwsNonTerminalException_internalError()
-      throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+  public void create_throwsNonTerminalException_internalError() {
     MockAlloyDBAdminGrpc mock =
         new MockAlloyDBAdminGrpc(Code.INTERNAL.getNumber(), ERROR_MESSAGE_INTERNAL);
 
@@ -141,8 +136,7 @@ public class ConnectorTest {
     assertThat(ex).hasMessageThat().contains(ERROR_MESSAGE_INTERNAL);
   }
 
-  private Connector newConnector(ConnectorConfig config, MockAlloyDBAdminGrpc mock)
-      throws NoSuchAlgorithmException, InvalidKeySpecException {
+  private Connector newConnector(ConnectorConfig config, MockAlloyDBAdminGrpc mock) {
     CredentialFactoryProvider stubCredentialFactoryProvider =
         new CredentialFactoryProvider(new StubCredentialFactory());
     CredentialFactory instanceCredentialFactory =

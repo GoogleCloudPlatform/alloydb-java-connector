@@ -21,8 +21,8 @@ import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import java.io.IOException;
 
 public class StubConnectionInfoRepositoryFactory implements ConnectionInfoRepositoryFactory {
-  private ListeningScheduledExecutorService executor;
-  private MockAlloyDBAdminGrpc mock;
+  private final ListeningScheduledExecutorService executor;
+  private final MockAlloyDBAdminGrpc mock;
 
   StubConnectionInfoRepositoryFactory(
       ListeningScheduledExecutorService executor, MockAlloyDBAdminGrpc mock) {

@@ -82,7 +82,7 @@ class PauseCondition {
    * @throws TimeoutException when the timeout expires before pause() is called.
    */
   public void waitForPauseToStart(long timeoutMs) throws TimeoutException, InterruptedException {
-    waitForCondition(() -> beforePause.get(), timeoutMs);
+    waitForCondition(beforePause::get, timeoutMs);
   }
 
   /**
@@ -91,7 +91,7 @@ class PauseCondition {
    * @throws TimeoutException when the timeout expires before pause() has exited.
    */
   public void waitForPauseToEnd(long waitMs) throws InterruptedException, TimeoutException {
-    waitForCondition(() -> afterPause.get(), waitMs);
+    waitForCondition(afterPause::get, waitMs);
   }
 
   /**

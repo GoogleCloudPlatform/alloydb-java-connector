@@ -100,7 +100,7 @@ public class LazyConnectionInfoCache implements ConnectionInfoCache {
   /** Force a new refresh of the instance data if the client certificate has expired. */
   @Override
   public void forceRefresh() {
-    // invalidate connectionInfo so that the next call to getConectionInfo() will
+    // invalidate connectionInfo so that the next call to getConnectionInfo() will
     // fetch new data.
     synchronized (connectionInfoGuard) {
       if (closed) {

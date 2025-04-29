@@ -19,6 +19,7 @@ package com.google.cloud.alloydb;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ImpersonatedCredentials;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -68,7 +69,7 @@ class ServiceAccountImpersonatingCredentialFactory implements CredentialFactory 
             .setSourceCredentials(credentials)
             .setTargetPrincipal(targetPrincipal)
             .setDelegates(this.delegates)
-            .setScopes(Arrays.asList(SCOPE_CLOUD_PLATFORM))
+            .setScopes(Collections.singletonList(SCOPE_CLOUD_PLATFORM))
             .build();
     return credentials;
   }

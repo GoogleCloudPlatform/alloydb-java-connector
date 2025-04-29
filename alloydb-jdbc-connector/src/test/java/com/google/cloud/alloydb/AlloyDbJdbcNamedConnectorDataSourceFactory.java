@@ -26,7 +26,6 @@ public class AlloyDbJdbcNamedConnectorDataSourceFactory {
   public static final String ALLOYDB_USER = System.getenv("ALLOYDB_USER");
   public static final String ALLOYDB_PASS = System.getenv("ALLOYDB_PASS");
   public static final String ALLOYDB_INSTANCE_NAME = System.getenv("ALLOYDB_INSTANCE_NAME");
-  public static final String ALLOYDB_IMPERSONATED_USER = System.getenv("ALLOYDB_IMPERSONATED_USER");
 
   static HikariDataSource createDataSource() {
 

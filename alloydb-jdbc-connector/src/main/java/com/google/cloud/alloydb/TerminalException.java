@@ -16,9 +16,6 @@
 package com.google.cloud.alloydb;
 
 class TerminalException extends RuntimeException {
-  public TerminalException() {
-    super();
-  }
 
   public TerminalException(String message) {
     super(message);

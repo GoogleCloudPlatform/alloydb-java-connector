@@ -70,7 +70,7 @@ public class DefaultAccessTokenSupplierTest {
   }
 
   @Test
-  public void testThrowsOnExpiredTokenRefreshNotSupported() throws Exception {
+  public void testThrowsOnExpiredTokenRefreshNotSupported() {
     GoogleCredentials expiredGoogleCredentials =
         new GoogleCredentials(
             GoogleCredentials.newBuilder()
@@ -90,14 +90,14 @@ public class DefaultAccessTokenSupplierTest {
   }
 
   @Test
-  public void testThrowsOnExpiredTokenRefreshStillExpired() throws Exception {
+  public void testThrowsOnExpiredTokenRefreshStillExpired() {
 
     GoogleCredentials refreshGetsExpiredToken =
         new GoogleCredentials(
             GoogleCredentials.newBuilder()
                 .setAccessToken(new AccessToken("my-expired-token", Date.from(past)))) {
           @Override
-          public AccessToken refreshAccessToken() throws IOException {
+          public AccessToken refreshAccessToken() {
             refreshCounter.incrementAndGet();
             return new AccessToken("my-still-expired-token", Date.from(past));
           }
@@ -117,7 +117,7 @@ public class DefaultAccessTokenSupplierTest {
             GoogleCredentials.newBuilder()
                 .setAccessToken(new AccessToken("my-expired-token", Date.from(past)))) {
           @Override
-          public AccessToken refreshAccessToken() throws IOException {
+          public AccessToken refreshAccessToken() {
             refreshCounter.incrementAndGet();
             return new AccessToken("my-refreshed-token", Date.from(future));
           }
@@ -152,7 +152,7 @@ public class DefaultAccessTokenSupplierTest {
             GoogleCredentials.newBuilder()
                 .setAccessToken(new AccessToken("my-expired-token", Date.from(past)))) {
           @Override
-          public AccessToken refreshAccessToken() throws IOException {
+          public AccessToken refreshAccessToken() {
             refreshCounter.incrementAndGet();
             return new AccessToken("my-refreshed-token", Date.from(past));
           }

@@ -38,7 +38,6 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -54,16 +53,15 @@ class FakeSslServer {
   private static final String X_509 = "X.509";
   private static final String ROOT_CA_CERT = "rootCaCert";
   private static final int IO_TIMEOUT_MS = 30000;
-  private String message;
+  private final String message;
   private Thread thread;
 
   FakeSslServer(String message) {
     this.message = message;
   }
 
-  int start(final String ip) throws InterruptedException {
+  void start(final String ip) throws InterruptedException {
     final CountDownLatch countDownLatch = new CountDownLatch(1);
-    final AtomicInteger pickedPort = new AtomicInteger();
 
     this.thread =
         new Thread(
@@ -86,8 +84,6 @@ class FakeSslServer {
                         sslServerSocketFactory.createServerSocket(
                             5433, 5, InetAddress.getByName(ip));
                 sslServerSocket.setNeedClientAuth(true);
-
-                pickedPort.set(sslServerSocket.getLocalPort());
                 countDownLatch.countDown();
                 MetadataExchangeResponse response =
                     MetadataExchangeResponse.newBuilder().setResponseCode(ResponseCode.OK).build();
@@ -120,8 +116,6 @@ class FakeSslServer {
     this.thread.start();
 
     countDownLatch.await();
-
-    return pickedPort.get();
   }
 
   void stop() {

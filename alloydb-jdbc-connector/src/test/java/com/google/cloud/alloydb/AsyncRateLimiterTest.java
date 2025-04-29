@@ -47,7 +47,7 @@ public class AsyncRateLimiterTest {
   }
 
   @Test
-  public void delayBeforeExpiration() throws InterruptedException {
+  public void delayBeforeExpiration() {
     RateLimiterTestHarness th = new RateLimiterTestHarness(100);
     ListenableFuture<?> f1 = th.rateLimiter.acquireAsync(th.ex);
     assertThat(f1.isDone()).isTrue();
@@ -63,7 +63,7 @@ public class AsyncRateLimiterTest {
   }
 
   @Test
-  public void noDelayExactlyAtExpiration() throws InterruptedException {
+  public void noDelayExactlyAtExpiration() {
     RateLimiterTestHarness th = new RateLimiterTestHarness(100);
     ListenableFuture<?> f1 = th.rateLimiter.acquireAsync(th.ex);
     ListenableFuture<?> f2 = th.rateLimiter.acquireAsync(th.ex);
@@ -78,7 +78,7 @@ public class AsyncRateLimiterTest {
   }
 
   @Test
-  public void noDelayAfterExpiration() throws InterruptedException {
+  public void noDelayAfterExpiration() {
     RateLimiterTestHarness th = new RateLimiterTestHarness(100);
     ListenableFuture<?> f1 = th.rateLimiter.acquireAsync(th.ex);
     assertThat(f1.isDone()).isTrue();

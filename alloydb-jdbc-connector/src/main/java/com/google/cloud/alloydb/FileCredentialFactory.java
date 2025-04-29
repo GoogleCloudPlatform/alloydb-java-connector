@@ -17,11 +17,13 @@
 package com.google.cloud.alloydb;
 
 import com.google.auth.oauth2.GoogleCredentials;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Collections;
 
 class FileCredentialFactory implements CredentialFactory {
+
   private final String path;
 
   FileCredentialFactory(String path) {
@@ -32,13 +34,13 @@ class FileCredentialFactory implements CredentialFactory {
   public GoogleCredentials getCredentials() {
     GoogleCredentials credentials;
     try {
-      credentials = GoogleCredentials.fromStream(new FileInputStream(path));
+      credentials = GoogleCredentials.fromStream(Files.newInputStream(Paths.get(path)));
     } catch (IOException e) {
       throw new IllegalStateException("Unable to load GoogleCredentials from file " + path, e);
     }
 
     if (credentials.createScopedRequired()) {
-      credentials = credentials.createScoped(Arrays.asList(SCOPE_CLOUD_PLATFORM));
+      credentials = credentials.createScoped(Collections.singletonList(SCOPE_CLOUD_PLATFORM));
     }
 
     return credentials;

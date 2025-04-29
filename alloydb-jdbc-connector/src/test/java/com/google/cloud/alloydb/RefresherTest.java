@@ -38,7 +38,7 @@ public class RefresherTest {
 
   public static final long TEST_TIMEOUT_MS = 3000;
 
-  private AsyncRateLimiter rateLimiter = new AsyncRateLimiter(10);
+  private final AsyncRateLimiter rateLimiter = new AsyncRateLimiter(10);
 
   private ListeningScheduledExecutorService executorService;
 
@@ -438,7 +438,7 @@ public class RefresherTest {
     r.close();
 
     assertThrows(IllegalStateException.class, () -> r.getConnectionInfo(TEST_TIMEOUT_MS));
-    assertThrows(IllegalStateException.class, () -> r.forceRefresh());
+    assertThrows(IllegalStateException.class, r::forceRefresh);
   }
 
   @Test
@@ -496,11 +496,8 @@ public class RefresherTest {
             () -> {
               int c = refreshCount.get();
               ExampleData refreshResult = data;
-              switch (c) {
-                case 0:
-                  // refresh 0 should return initialData immediately
-                  refreshResult = initialData;
-                  break;
+              if (c == 0) {// refresh 0 should return initialData immediately
+                refreshResult = initialData;
               }
               // refresh 2 and on should return data immediately
               refreshCount.incrementAndGet();
@@ -531,16 +528,13 @@ public class RefresherTest {
             executorService,
             () -> {
               int c = refreshCount.get();
-              ExampleData refreshResult = data;
-              switch (c) {
-                case 0:
-                  // refresh 0 should throw an exception
-                  refreshCount.incrementAndGet();
-                  throw new TerminalException("Not authorized");
+              if (c == 0) {// refresh 0 should throw an exception
+                refreshCount.incrementAndGet();
+                throw new TerminalException("Not authorized");
               }
               // refresh 2 and on should return data immediately
               refreshCount.incrementAndGet();
-              return Futures.immediateFuture(refreshResult);
+              return Futures.immediateFuture(data);
             },
             rateLimiter);
 
@@ -562,16 +556,13 @@ public class RefresherTest {
             executorService,
             () -> {
               int c = refreshCount.get();
-              ExampleData refreshResult = data;
-              switch (c) {
-                case 0:
-                  // refresh 0 should throw an exception
-                  refreshCount.incrementAndGet();
-                  throw new RuntimeException("Bad Gateway");
+              if (c == 0) {// refresh 0 should throw an exception
+                refreshCount.incrementAndGet();
+                throw new RuntimeException("Bad Gateway");
               }
               // refresh 2 and on should return data immediately
               refreshCount.incrementAndGet();
-              return Futures.immediateFuture(refreshResult);
+              return Futures.immediateFuture(data);
             },
             rateLimiter);
 

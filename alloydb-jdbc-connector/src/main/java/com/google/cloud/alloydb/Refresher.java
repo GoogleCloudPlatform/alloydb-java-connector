@@ -60,7 +60,7 @@ class Refresher {
   private boolean closed;
 
   @GuardedBy("connectionInfoGuard")
-  private boolean triggerNextRefresh = true;
+  private boolean triggerNextRefresh;
 
   Refresher(
       String name,
@@ -307,12 +307,6 @@ class Refresher {
   ListenableFuture<ConnectionInfo> getNext() {
     synchronized (connectionInfoGuard) {
       return this.next;
-    }
-  }
-
-  ListenableFuture<ConnectionInfo> getCurrent() {
-    synchronized (connectionInfoGuard) {
-      return this.current;
     }
   }
 }

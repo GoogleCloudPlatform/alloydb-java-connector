@@ -23,7 +23,6 @@ import com.google.common.base.Objects;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import java.util.stream.Collectors;
 import org.junit.Test;
 
 public class ConnectionConfigTest {
@@ -36,7 +35,7 @@ public class ConnectionConfigTest {
     final String wantNamedConnector = "my-connection";
     final String wantTargetPrincipal = "test@example.com";
     final List<String> wantDelegates = Arrays.asList("test1@example.com", "test2@example.com");
-    final String delegates = wantDelegates.stream().collect(Collectors.joining(","));
+    final String delegates = String.join(",", wantDelegates);
     final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";
     final String wantPath = "my-path";
     final String iamAuthN = "true";

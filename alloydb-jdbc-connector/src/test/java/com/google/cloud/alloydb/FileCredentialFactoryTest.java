@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.*;
 
 import com.google.auth.oauth2.GoogleCredentials;
+import java.util.Objects;
 import org.junit.Test;
 
 public class FileCredentialFactoryTest {
@@ -32,7 +33,8 @@ public class FileCredentialFactoryTest {
 
   @Test
   public void getCredentials_loadsFromFilePath() {
-    String path = FileCredentialFactoryTest.class.getResource("/sample-credentials.json").getFile();
+    String path = Objects.requireNonNull(
+        FileCredentialFactoryTest.class.getResource("/sample-credentials.json")).getFile();
     FileCredentialFactory f = new FileCredentialFactory(path);
     GoogleCredentials c = f.getCredentials();
     assertThat(c.getQuotaProjectId()).isEqualTo("sample");
