@@ -66,7 +66,7 @@ enum TestCertificates {
   private final String DEFAULT_SERVER_NAME =
       String.format("%s.server.alloydb", DEFAULT_INSTANCE_ID);
   private final String SHA_256_WITH_RSA = "SHA256WithRSA";
-  private final String PRIVATE_IP = "127.0.0.2";
+  private final String PRIVATE_IP = "127.0.0.1";
   private final String DNS_NAME = "localhost";
 
   @SuppressWarnings("ImmutableEnumChecker")
