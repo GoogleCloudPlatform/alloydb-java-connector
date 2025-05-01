@@ -19,6 +19,7 @@ package com.google.cloud.alloydb;
 import com.google.cloud.alloydb.v1alpha.InstanceName;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import java.io.IOException;
 import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,5 +56,10 @@ class InMemoryConnectionInfoRepo implements ConnectionInfoRepository {
 
   public final int getIndex() {
     return this.index.get();
+  }
+
+  @Override
+  public void close() throws IOException {
+    // no-op
   }
 }

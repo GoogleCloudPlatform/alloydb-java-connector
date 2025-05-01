@@ -140,14 +140,32 @@ enum InternalConnectorRegistry implements Closeable {
     if (connector == null) {
       throw new IllegalArgumentException("Named connection " + name + " does not exist.");
     }
-    connector.close();
+    try {
+      connector.close();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /** Shutdown all connectors. */
   private void shutdownConnectors() {
-    this.unnamedConnectors.forEach((key, c) -> c.close());
+    this.unnamedConnectors.forEach(
+        (key, c) -> {
+          try {
+            c.close();
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        });
     this.unnamedConnectors.clear();
-    this.namedConnectors.forEach((key, c) -> c.close());
+    this.namedConnectors.forEach(
+        (key, c) -> {
+          try {
+            c.close();
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        });
     this.namedConnectors.clear();
   }
 
