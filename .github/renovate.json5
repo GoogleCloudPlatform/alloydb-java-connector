@@ -48,5 +48,12 @@
         '/^com.google.errorprone:error_prone_core/',
       ],
     },
+    {
+      groupName: 'junit platform dependencies',
+      matchPackageNames: [
+        '/^org.junit.platform:/',
+        '/^org.junit.juputer:/',
+      ],
+    },
   ],
 }
