@@ -62,6 +62,8 @@
     <error-prone.version>2.31.0</error-prone.version>
     <error-prone-annotations.version>2.37.0</error-prone-annotations.version>
     <bouncycastle.version>1.80</bouncycastle.version>
+    <junit.jupiter.version>5.11.4</junit.jupiter.version>
+    <junit.platform.version>1.11.4</junit.platform.version>
   </properties>
 
   <dependencyManagement>
@@ -270,48 +272,47 @@
           <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-engine</artifactId>
-            <version>1.12.2</version>
+            <version>${junit.platform.version}</version>
           </dependency>
           <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-commons</artifactId>
-            <version>1.12.2</version>
+            <version>${junit.platform.version}</version>
           </dependency>
           <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.12.2</version>
+            <version>${junit.jupiter.version}</version>
           </dependency>
           <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>5.12.2</version>
+            <version>${junit.jupiter.version}</version>
           </dependency>
           <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
-            <version>5.12.2</version>
+            <version>${junit.jupiter.version}</version>
           </dependency>
           <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.12.2</version>
+            <version>${junit.jupiter.version}</version>
           </dependency>
         </dependencies>
       </dependencyManagement>
       <dependencies>
-        <!-- GraalVM native image test needs newer JUnit platform -->
-        <dependency>
-          <groupId>org.junit.vintage</groupId>
-          <artifactId>junit-vintage-engine</artifactId>
-          <version>5.12.2</version>
-          <scope>test</scope>
-        </dependency>
         <dependency>
           <groupId>org.graalvm.buildtools</groupId>
           <artifactId>junit-platform-native</artifactId>
           <version>${native-maven-plugin.version}</version>
           <scope>test</scope>
+          <exclusions>
+            <exclusion>
+                <groupId>org.junit.vintage</groupId>
+                <artifactId>junit-vintage-engine</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
       </dependencies>
       <build>
