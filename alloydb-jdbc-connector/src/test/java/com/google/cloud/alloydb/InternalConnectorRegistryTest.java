@@ -20,7 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.alloydb.v1alpha.InstanceName;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Properties;
 import org.junit.Before;
@@ -38,7 +37,7 @@ public class InternalConnectorRegistryTest {
   }
 
   @Test
-  public void create_failOnInvalidInstanceName() throws IOException {
+  public void create_failOnInvalidInstanceName() {
     IllegalArgumentException ex =
         assertThrows(
             IllegalArgumentException.class,
@@ -53,7 +52,7 @@ public class InternalConnectorRegistryTest {
   }
 
   @Test
-  public void create_failOnEmptyTargetPrincipal() throws IOException, InterruptedException {
+  public void create_failOnEmptyTargetPrincipal() {
     IllegalArgumentException ex =
         assertThrows(
             IllegalArgumentException.class,
@@ -72,7 +71,7 @@ public class InternalConnectorRegistryTest {
   }
 
   @Test
-  public void registerConnection_failWithDuplicateName() throws InterruptedException {
+  public void registerConnection_failWithDuplicateName() {
     // Register a Connection
     String namedConnector = "my-connection-name";
     ConnectorConfig configWithDetails = new ConnectorConfig.Builder().build();
@@ -89,8 +88,7 @@ public class InternalConnectorRegistryTest {
   }
 
   @Test
-  public void registerConnection_failWithDuplicateNameAndDifferentConfig()
-      throws InterruptedException {
+  public void registerConnection_failWithDuplicateNameAndDifferentConfig() {
     String namedConnector = "test-connection";
     ConnectorConfig config =
         new ConnectorConfig.Builder().withTargetPrincipal("joe@test.com").build();
@@ -110,7 +108,7 @@ public class InternalConnectorRegistryTest {
   }
 
   @Test
-  public void closeNamedConnection_failWhenNotFound() throws InterruptedException {
+  public void closeNamedConnection_failWhenNotFound() {
     String namedConnector = "a-connection";
     // Assert that you can't close a connection that doesn't exist
     IllegalArgumentException ex =
@@ -123,7 +121,7 @@ public class InternalConnectorRegistryTest {
   }
 
   @Test
-  public void connect_failOnClosedNamedConnection() throws InterruptedException {
+  public void connect_failOnClosedNamedConnection() {
     // Register a Connection
     String namedConnector = "my-connection";
     ConnectorConfig configWithDetails = new ConnectorConfig.Builder().build();
@@ -149,7 +147,7 @@ public class InternalConnectorRegistryTest {
   }
 
   @Test
-  public void connect_failOnUnknownNamedConnection() throws InterruptedException {
+  public void connect_failOnUnknownNamedConnection() {
     // Attempt and fail to connect using the Named Connection not registered
     String namedConnector = "first-connection";
     Properties connProps = new Properties();
@@ -166,7 +164,7 @@ public class InternalConnectorRegistryTest {
   }
 
   @Test
-  public void connect_failOnNamedConnectionAfterResetInstance() throws InterruptedException {
+  public void connect_failOnNamedConnectionAfterResetInstance() {
     // Register a Connection
     String namedConnector = "this-connection";
     ConnectorConfig config = new ConnectorConfig.Builder().build();

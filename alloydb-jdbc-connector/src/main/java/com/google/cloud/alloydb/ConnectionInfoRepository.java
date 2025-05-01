@@ -18,8 +18,9 @@ package com.google.cloud.alloydb;
 
 import com.google.cloud.alloydb.v1alpha.InstanceName;
 import com.google.common.util.concurrent.ListenableFuture;
+import java.io.Closeable;
 import java.security.KeyPair;
 
-interface ConnectionInfoRepository {
+interface ConnectionInfoRepository extends Closeable {
   ListenableFuture<ConnectionInfo> getConnectionInfo(InstanceName instanceName, KeyPair publicKey);
 }

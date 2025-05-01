@@ -61,10 +61,11 @@ class Connector {
     return config;
   }
 
-  public void close() {
+  public void close() throws IOException {
     logger.debug("Close all connections and remove them from cache.");
     this.instances.forEach((key, c) -> c.close());
     this.instances.clear();
+    this.connectionInfoRepo.close();
   }
 
   Socket connect(ConnectionConfig config) throws IOException {
