@@ -181,6 +181,8 @@ jobs:
         JOB_TYPE: clirr
 
   graalvm17:
+    # run job on periodic (schedule) event
+    if: "${{ github.event_name == 'schedule' }}"
     name: graalvm17
     runs-on: [self-hosted, linux, x64]
     permissions:
