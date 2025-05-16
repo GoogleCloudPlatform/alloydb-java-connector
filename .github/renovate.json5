@@ -46,13 +46,14 @@
       groupName: 'error-prone-core',
       matchPackageNames: [
         '/^com.google.errorprone:error_prone_core/',
+        '/^com.google.errorprone:error_prine_annotations/',
       ],
     },
     {
       groupName: 'junit platform dependencies',
       matchPackageNames: [
         '/^org.junit.platform:/',
-        '/^org.junit.juputer:/',
+        '/^org.junit.juputer/',
       ],
     },
   ],
