@@ -63,7 +63,7 @@
     <error-prone-annotations.version>2.37.0</error-prone-annotations.version>
     <bouncycastle.version>1.80</bouncycastle.version>
     <junit.jupiter.version>5.11.4</junit.jupiter.version>
-    <junit.platform.version>1.11.4</junit.platform.version>
+    <junit.platform.version>1.12.2</junit.platform.version>
   </properties>
 
   <dependencyManagement>
