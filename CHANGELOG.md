@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.3](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.2.2...v1.2.3) (2025-05-19)
+
+
+### Bug Fixes
+
+* close AlloyDB gRPC client on connector close ([#633](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/633)) ([1ac52d5](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/1ac52d591272abfcad20fbd5d7506ce3b4a62ee5))
+* validate PSC DNS name in server certificate ([#628](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/628)) ([32c934f](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/32c934f6e6414d35c0ea459ac6bc19f4ef7558e3))
+
+
+### Dependencies
+
+* Update Non-major dependencies ([#625](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/625)) ([225565f](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/225565fde9fc3ff8ed6595c396a6b61adedac8a4))
+
 ## [1.2.2](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.2.1...v1.2.2) (2025-04-15)
 
 
