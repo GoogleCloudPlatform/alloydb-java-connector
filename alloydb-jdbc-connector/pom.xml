@@ -218,15 +218,6 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- com.google.cloud.alloydb.nativeimage.AlloyDBFeature needs the GraalVM
-      dependencies for compilation. The provided-scope dependencies do not add
-      additional dependencies to library users. -->
-    <dependency>
-      <groupId>org.graalvm.sdk</groupId>
-      <artifactId>graal-sdk</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
   </dependencies>
 
   <profiles>

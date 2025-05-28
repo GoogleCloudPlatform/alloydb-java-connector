@@ -152,11 +152,6 @@
         <version>2.57.0</version>
       </dependency>
       <dependency>
-        <groupId>org.graalvm.sdk</groupId>
-        <artifactId>graal-sdk</artifactId>
-        <version>22.0.0</version>
-      </dependency>
-      <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>failureaccess</artifactId>
         <version>1.0.3</version>
