@@ -52,7 +52,7 @@
       groupName: 'junit platform dependencies',
       matchPackageNames: [
         '/^org.junit.platform:/',
-        '/^org.junit.juputer:/',
+        '/^org.junit.jupiter/',
       ],
     },
   ],
