@@ -21,7 +21,6 @@
     '.kokoro/requirements.txt',
   ],
   ignoreDeps: [
-    'org.graalvm.sdk:graal-sdk',
     'ch.qos.logback:logback-classic',
   ],
   packageRules: [
