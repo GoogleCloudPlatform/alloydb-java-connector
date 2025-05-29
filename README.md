@@ -84,9 +84,11 @@ considered unsupported.
 
 ### Supported JDK versions
 
-We test and support at minimum, any publicly supported LTS JDK version.
-Changes in supported versions will be considered a minor change, and will be
-listed in the release notes.
+> Cloud Client Libraries for Java are compatible with, and tested against
+> Java 8, Java 11, Java 17, and Java 21. Java 8 will continue to be supported
+> by Cloud Client Libraries for Java until at least September 2026.
+
+See [Supported Java Versions](https://cloud.google.com/java/docs/supported-java-versions).
 
 ### Release cadence
 
