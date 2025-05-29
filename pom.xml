@@ -62,8 +62,6 @@
     <error-prone.version>2.31.0</error-prone.version>
     <error-prone-annotations.version>2.38.0</error-prone-annotations.version>
     <bouncycastle.version>1.80</bouncycastle.version>
-    <junit.jupiter.version>5.12.2</junit.jupiter.version>
-    <junit.platform.version>1.11.4</junit.platform.version>
   </properties>
 
   <dependencyManagement>
@@ -252,87 +250,6 @@
                 </configuration>
               </execution>
             </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
-    <profile>
-      <!-- This profile is used to enable GraalVM native image testing
-      (.kokoro/graalvm-native/linux) -->
-      <id>native</id>
-      <dependencyManagement>
-        <!-- Controlling version for dependencyConvergence enforcer rule -->
-        <dependencies>
-          <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-engine</artifactId>
-            <version>${junit.platform.version}</version>
-          </dependency>
-          <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-commons</artifactId>
-            <version>${junit.platform.version}</version>
-          </dependency>
-          <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>${junit.jupiter.version}</version>
-          </dependency>
-          <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.jupiter.version}</version>
-          </dependency>
-          <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-params</artifactId>
-            <version>${junit.jupiter.version}</version>
-          </dependency>
-          <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.jupiter.version}</version>
-          </dependency>
-        </dependencies>
-      </dependencyManagement>
-      <dependencies>
-        <dependency>
-          <groupId>org.graalvm.buildtools</groupId>
-          <artifactId>junit-platform-native</artifactId>
-          <version>${native-maven-plugin.version}</version>
-          <scope>test</scope>
-          <exclusions>
-            <exclusion>
-                <groupId>org.junit.vintage</groupId>
-                <artifactId>junit-vintage-engine</artifactId>
-            </exclusion>
-          </exclusions>
-        </dependency>
-      </dependencies>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.graalvm.buildtools</groupId>
-            <artifactId>native-maven-plugin</artifactId>
-            <version>${native-maven-plugin.version}</version>
-            <extensions>true</extensions>
-            <executions>
-              <execution>
-                <id>test-native</id>
-                <goals>
-                  <goal>test</goal>
-                </goals>
-                <phase>test</phase>
-              </execution>
-            </executions>
-            <configuration>
-              <buildArgs>
-                <buildArg>--no-fallback</buildArg>
-                <buildArg>--no-server</buildArg>
-                <buildArg>-Ob</buildArg>
-              </buildArgs>
-            </configuration>
           </plugin>
         </plugins>
       </build>
