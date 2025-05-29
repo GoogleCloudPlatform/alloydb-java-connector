@@ -180,10 +180,10 @@ jobs:
       env:
         JOB_TYPE: clirr
 
-  graalvm17:
+  graalvm:
     # run job on periodic (schedule) event
-    if: "${{ github.event_name == 'schedule' }}"
-    name: graalvm17
+    # if: "${{ github.event_name == 'schedule' }}"
+    name: graalvm
     runs-on: [self-hosted, linux, x64]
     permissions:
       contents: "read"
@@ -233,7 +233,7 @@ jobs:
         ALLOYDB_INSTANCE_IP: '${{ steps.secrets.outputs.ALLOYDB_INSTANCE_IP }}'
         ALLOYDB_IMPERSONATED_USER: '${{ steps.secrets.outputs.ALLOYDB_IMPERSONATED_USER }}'
         ALLOYDB_PSC_INSTANCE_URI: '${{ steps.secrets.outputs.ALLOYDB_PSC_INSTANCE_URI }}'
-        JOB_TYPE: graalvm17
+        JOB_TYPE: graalvm
       run: .kokoro/build.sh
       shell: bash
 

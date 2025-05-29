@@ -4,17 +4,5 @@
         "allDeclaredConstructors": true,
         "allDeclaredFields": true,
         "allDeclaredMethods": true
-    },
-    {
-        "name": "org.postgresql.PGProperty",
-        "allDeclaredConstructors": true,
-        "allDeclaredFields": true,
-        "allDeclaredMethods": true
-    },
-    {
-        "name": "com.zaxxer.hikari.HikariConfig",
-        "allDeclaredConstructors": true,
-        "allDeclaredFields": true,
-        "allDeclaredMethods": true
     }
 ]
