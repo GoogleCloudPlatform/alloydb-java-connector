@@ -29,7 +29,7 @@
   <parent>
     <groupId>com.google.cloud</groupId>
     <artifactId>google-cloud-shared-config</artifactId>
-    <version>1.15.4</version>
+    <version>1.16.0</version>
   </parent>
 
   <organization>
@@ -62,7 +62,7 @@
     <error-prone.version>2.31.0</error-prone.version>
     <error-prone-annotations.version>2.38.0</error-prone-annotations.version>
     <bouncycastle.version>1.80</bouncycastle.version>
-    <junit.jupiter.version>5.11.4</junit.jupiter.version>
+    <junit.jupiter.version>5.12.2</junit.jupiter.version>
     <junit.platform.version>1.11.4</junit.platform.version>
   </properties>
 
@@ -92,7 +92,7 @@
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-bom</artifactId>
-        <version>1.72.0</version>
+        <version>1.73.0</version>
         <type>pom</type>
         <scope>import</scope>
        </dependency>
