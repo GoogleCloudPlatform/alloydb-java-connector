@@ -40,7 +40,7 @@
   <url>https://github.com/GoogleCloudPlatform/alloydb-java-connector</url>
 
   <properties>
-    <postgresql.version>42.7.6</postgresql.version>
+    <postgresql.version>42.7.7</postgresql.version>
   </properties>
 
   <build>
