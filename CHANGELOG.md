@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.5](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.2.4...v1.2.5) (2025-07-08)
+
+
+### Dependencies
+
+* Update dependency maven to v3.9.10 ([#653](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/653)) ([13dd2a4](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/13dd2a449c054f100af36291f4d9bfaf6e9c5c18))
+* Update Non-major dependencies ([#652](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/652)) ([76cb25a](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/76cb25a184388a80861fe7701335a607fc012cfe))
+
 ## [1.2.4](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.2.3...v1.2.4) (2025-05-29)
 
 
