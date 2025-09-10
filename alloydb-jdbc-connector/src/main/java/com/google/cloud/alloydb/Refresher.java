@@ -59,40 +59,16 @@ class Refresher {
   @GuardedBy("connectionInfoGuard")
   private boolean closed;
 
-  @GuardedBy("connectionInfoGuard")
-  private boolean triggerNextRefresh = true;
-
   Refresher(
       String name,
       ListeningScheduledExecutorService executor,
       Supplier<ListenableFuture<ConnectionInfo>> refreshOperation,
       AsyncRateLimiter rateLimiter) {
-    this(name, executor, new RefreshCalculator(), refreshOperation, rateLimiter, true);
-  }
-
-  /**
-   * Create a new refresher with a special RefreshCalculator
-   *
-   * @param name the name of what is being refreshed, for logging.
-   * @param executor the executor to schedule refresh tasks.
-   * @param refreshCalculator the refresh calculator to determine when to start the next refresh.
-   * @param refreshOperation The supplier that refreshes the data.
-   * @param rateLimiter The rate limiter.
-   * @param triggerNextRefresh The next refresh operation should be triggered.
-   */
-  Refresher(
-      String name,
-      ListeningScheduledExecutorService executor,
-      RefreshCalculator refreshCalculator,
-      Supplier<ListenableFuture<ConnectionInfo>> refreshOperation,
-      AsyncRateLimiter rateLimiter,
-      boolean triggerNextRefresh) {
     this.name = name;
     this.executor = executor;
-    this.refreshCalculator = refreshCalculator;
+    this.refreshCalculator = new RefreshCalculator();
     this.refreshOperation = refreshOperation;
     this.rateLimiter = rateLimiter;
-    this.triggerNextRefresh = triggerNextRefresh;
     synchronized (connectionInfoGuard) {
       forceRefresh();
       this.current = this.next;
@@ -158,18 +134,20 @@ class Refresher {
       // Don't force a refresh until the current refresh operation
       // has produced a successful refresh.
       if (refreshRunning) {
+        logger.debug(
+            String.format("[%s] Force Refresh: a refresh operation is already running...", name));
         return;
       }
 
       if (next != null) {
+        logger.debug(
+            String.format(
+                "[%s] Force Refresh: Canceling the next scheduled refresh operation.", name));
         next.cancel(false);
       }
 
       logger.debug(
-          String.format(
-              "[%s] Force Refresh: the next refresh operation was cancelled."
-                  + " Scheduling new refresh operation immediately.",
-              name));
+          String.format("[%s] Force Refresh: Starting a new refresh operation immediately.", name));
       next = this.startRefreshAttempt();
     }
   }
@@ -241,7 +219,7 @@ class Refresher {
 
         // Now update nextInstanceData to perform a refresh after the
         // scheduled delay
-        if (!closed && triggerNextRefresh) {
+        if (!closed) {
           logger.debug(
               String.format(
                   "[%s] Refresh Operation: Next operation scheduled at %s.",
@@ -265,6 +243,9 @@ class Refresher {
       // No refresh retry when the TerminalException is raised.
       final Throwable cause = e.getCause();
       if (cause instanceof TerminalException) {
+        synchronized (connectionInfoGuard) {
+          refreshRunning = false;
+        }
         logger.debug(String.format("[%s] Refresh Operation: Failed! No retry.", name), e);
         throw (TerminalException) cause;
       }
@@ -307,12 +288,6 @@ class Refresher {
   ListenableFuture<ConnectionInfo> getNext() {
     synchronized (connectionInfoGuard) {
       return this.next;
-    }
-  }
-
-  ListenableFuture<ConnectionInfo> getCurrent() {
-    synchronized (connectionInfoGuard) {
-      return this.current;
     }
   }
 }

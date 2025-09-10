@@ -175,7 +175,10 @@ class ConnectionSocket {
 
   private KeyManager[] initializeKeyManager(
       List<X509Certificate> certificateChain, PrivateKey privateKey)
-      throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException,
+      throws KeyStoreException,
+          IOException,
+          NoSuchAlgorithmException,
+          CertificateException,
           UnrecoverableKeyException {
     KeyStore clientAuthenticationKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
     clientAuthenticationKeyStore.load(
@@ -251,6 +254,9 @@ class ConnectionSocket {
     // Parse the response and raise a RuntimeException if it is not OK.
     MetadataExchangeResponse response = MetadataExchangeResponse.parseFrom(respData);
     if (response == null || !response.getResponseCode().equals(ResponseCode.OK)) {
+      String error = response == null ? "no response" : response.getError();
+      logger.debug(String.format("Metadata exchange failed: %s", error));
+
       throw new RuntimeException(
           response != null ? response.getError() : "Metadata exchange response is null.");
     }

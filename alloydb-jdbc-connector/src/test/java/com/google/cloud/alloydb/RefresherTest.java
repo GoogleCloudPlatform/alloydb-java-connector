@@ -28,6 +28,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Before;
@@ -506,7 +507,6 @@ public class RefresherTest {
         new Refresher(
             "RefresherTest.testRefreshesTokenIfExpired",
             executorService,
-            new RefreshCalculator(),
             () -> {
               int c = refreshCount.get();
               ExampleData refreshResult = data;
@@ -517,8 +517,7 @@ public class RefresherTest {
               refreshCount.incrementAndGet();
               return Futures.immediateFuture(refreshResult);
             },
-            rateLimiter,
-            false);
+            rateLimiter);
 
     // Get the first data that is about to expire
     refresh1.waitForCondition(() -> r.getConnectionInfo(TEST_TIMEOUT_MS) == initialData, 1000L);
@@ -536,9 +535,11 @@ public class RefresherTest {
   }
 
   @Test
-  public void testGetConnectionInfo_throwsTerminalException_refreshOperationNotScheduled() {
+  public void testGetConnectionInfo_throwsTerminalException_refreshOperationNotScheduled()
+      throws InterruptedException, TimeoutException {
     ExampleData data = new ExampleData(Instant.now().plus(1, ChronoUnit.HOURS));
     AtomicInteger refreshCount = new AtomicInteger();
+    PauseCondition refresh = new PauseCondition();
 
     Refresher r =
         new Refresher(
@@ -546,14 +547,12 @@ public class RefresherTest {
             executorService,
             () -> {
               int c = refreshCount.get();
-              ExampleData refreshResult = data;
-              if (c == 0) { // refresh 0 should throw an exception
+              if (c == 0) {
                 refreshCount.incrementAndGet();
                 throw new TerminalException("Not authorized");
               }
-              // refresh 2 and on should return data immediately
               refreshCount.incrementAndGet();
-              return Futures.immediateFuture(refreshResult);
+              return Futures.immediateFuture(data);
             },
             rateLimiter);
 
@@ -561,6 +560,19 @@ public class RefresherTest {
       // Raising TerminalException stops the refresher's executor from running the next task.
       assertThrows(TerminalException.class, () -> r.getConnectionInfo(TEST_TIMEOUT_MS));
       assertThat(refreshCount.get()).isEqualTo(1);
+
+      r.forceRefresh();
+
+      refresh.waitForCondition(
+          () -> {
+            try {
+              return r.getConnectionInfo(TEST_TIMEOUT_MS) == data;
+            } catch (TerminalException exception) {
+              return false;
+            }
+          },
+          1000L);
+      assertThat(refreshCount.get()).isEqualTo(2);
     } finally {
       r.close();
     }
