@@ -142,7 +142,10 @@ class FakeSslServer {
   }
 
   private KeyManager[] initializeKeyManager(Certificate[] chainArray, PrivateKey privateKey)
-      throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException,
+      throws KeyStoreException,
+          IOException,
+          NoSuchAlgorithmException,
+          CertificateException,
           UnrecoverableKeyException {
     KeyStore clientAuthenticationKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
     clientAuthenticationKeyStore.load(
