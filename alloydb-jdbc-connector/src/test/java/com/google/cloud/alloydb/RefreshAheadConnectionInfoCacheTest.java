@@ -37,6 +37,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+@SuppressWarnings("TimeInStaticInitializer")
 public class RefreshAheadConnectionInfoCacheTest {
 
   private static final String TEST_INSTANCE_IP = "10.0.0.1";

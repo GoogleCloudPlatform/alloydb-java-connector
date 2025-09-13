@@ -28,6 +28,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
+@SuppressWarnings("TimeInStaticInitializer")
 public class RefreshCalculatorTest {
 
   private final Duration input;
