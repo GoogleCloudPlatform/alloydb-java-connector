@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.7](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.2.6...v1.2.7) (2025-09-15)
+
+
+### Dependencies
+
+* Update dependency com.google.errorprone:error_prone_core to v2.41.0 ([#612](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/612)) ([8ea3ade](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/8ea3ade7bd603cfb2a5715e662c9608f02f1a6ea))
+
 ## [1.2.6](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.2.5...v1.2.6) (2025-09-12)
 
 
