@@ -59,7 +59,7 @@
     <github.global.server>github</github.global.server>
     <site.installationModule>alloydb-connector-parent</site.installationModule>
     <project.javadoc.protobufBaseURL>https://googleapis.dev/java/google-api-grpc/latest</project.javadoc.protobufBaseURL>
-    <error-prone.version>2.31.0</error-prone.version>
+    <error-prone.version>2.41.0</error-prone.version>
     <error-prone-annotations.version>2.41.0</error-prone-annotations.version>
     <bouncycastle.version>1.81</bouncycastle.version>
   </properties>
@@ -179,9 +179,9 @@
 
   <profiles>
     <profile>
-      <id>java9</id>
+      <id>java17</id>
       <activation>
-        <jdk>[9,)</jdk>
+        <jdk>[17,)</jdk>
       </activation>
       <build>
         <plugins>
@@ -194,6 +194,7 @@
               <fork>true</fork>
               <compilerArgs>
                 <arg>-XDcompilePolicy=simple</arg>
+                <arg>--should-stop=ifError=FLOW</arg>
                 <arg>-Xplugin:ErrorProne</arg>
                 <arg>-Xlint:-options</arg>
                 <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>

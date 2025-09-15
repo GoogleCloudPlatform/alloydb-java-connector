@@ -115,9 +115,8 @@ class ConnectionConfig {
     final String instanceNameStr = props.getProperty(ALLOYDB_INSTANCE_NAME, "");
     Preconditions.checkArgument(
         InstanceName.isParsableFrom(instanceNameStr),
-        String.format(
-            "'%s' must have format: projects/<PROJECT>/locations/<REGION>/clusters/<CLUSTER>/instances/<INSTANCE>",
-            ALLOYDB_INSTANCE_NAME));
+        "'%s' must have format: projects/<PROJECT>/locations/<REGION>/clusters/<CLUSTER>/instances/<INSTANCE>",
+        ALLOYDB_INSTANCE_NAME);
   }
 
   private ConnectionConfig(

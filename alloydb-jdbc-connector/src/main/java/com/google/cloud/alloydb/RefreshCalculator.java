@@ -29,6 +29,7 @@ class RefreshCalculator {
   // time to complete.
   static final Duration DEFAULT_REFRESH_BUFFER = Duration.ofMinutes(4);
 
+  @SuppressWarnings("JavaDurationGetSecondsToToSeconds")
   long calculateSecondsUntilNextRefresh(Instant now, Instant expiration) {
     Duration timeUntilExp = Duration.between(now, expiration);
 
