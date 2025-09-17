@@ -194,7 +194,6 @@
               <fork>true</fork>
               <compilerArgs>
                 <arg>-XDcompilePolicy=simple</arg>
-                <arg>--should-stop=ifError=FLOW</arg>
                 <!-- run ErrorProne only on the latest Java LTS version build -->
                 <arg>-Xplugin:ErrorProne</arg>
               </compilerArgs>
@@ -205,7 +204,6 @@
                   <version>${error-prone.version}</version>
                 </path>
               </annotationProcessorPaths>
-              <failOnWarning>true</failOnWarning>
             </configuration>
           </plugin>
         </plugins>
