@@ -42,12 +42,6 @@
       commitMessagePrefix: 'chore(deps):',
     },
     {
-      groupName: 'error-prone-core',
-      matchPackageNames: [
-        '/^com.google.errorprone:error_prone_core/',
-      ],
-    },
-    {
       groupName: 'junit platform dependencies',
       matchPackageNames: [
         '/^org.junit.platform:/',
