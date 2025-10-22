@@ -29,7 +29,7 @@ import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.junit.Test;
 
-@SuppressWarnings("TimeInStaticInitializer")
+// @SuppressWarnings("TimeInStaticInitializer")
 public class LazyConnectionInfoCacheTest {
 
   private static final Instant ONE_HOUR_AGO =

@@ -20,16 +20,11 @@ scriptDir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
 ## cd to the parent directory, i.e. the root of the git repo
 cd ${scriptDir}/..
 
-# include common functions
-source ${scriptDir}/common.sh
-
 # Print out Maven & Java version
 ./mvnw -version
 echo ${JOB_TYPE}
 
-# attempt to install 3 times with exponential backoff (starting with 10 seconds)
-retry_with_backoff 3 10 \
-  ./mvnw install -B -V -ntp \
+./mvnw install -B -V -ntp \
     -DskipTests=true \
     -Dclirr.skip=true \
     -Denforcer.skip=true \
