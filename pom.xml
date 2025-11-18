@@ -76,21 +76,21 @@
       <dependency>
         <groupId>com.google.cloud</groupId>
         <artifactId>google-cloud-alloydb-bom</artifactId>
-        <version>0.67.0</version>
+        <version>0.69.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>com.google.cloud</groupId>
         <artifactId>google-cloud-alloydb-connectors-bom</artifactId>
-        <version>0.56.0</version>
+        <version>0.58.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-bom</artifactId>
-        <version>1.76.0</version>
+        <version>1.77.0</version>
         <type>pom</type>
         <scope>import</scope>
        </dependency>
