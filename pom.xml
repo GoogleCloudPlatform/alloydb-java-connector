@@ -59,9 +59,9 @@
     <github.global.server>github</github.global.server>
     <site.installationModule>alloydb-connector-parent</site.installationModule>
     <project.javadoc.protobufBaseURL>https://googleapis.dev/java/google-api-grpc/latest</project.javadoc.protobufBaseURL>
-    <error-prone.version>2.44.0</error-prone.version>
-    <error-prone-annotations.version>2.44.0</error-prone-annotations.version>
-    <bouncycastle.version>1.82</bouncycastle.version>
+    <error-prone.version>2.45.0</error-prone.version>
+    <error-prone-annotations.version>2.45.0</error-prone-annotations.version>
+    <bouncycastle.version>1.83</bouncycastle.version>
   </properties>
 
   <dependencyManagement>
@@ -76,21 +76,21 @@
       <dependency>
         <groupId>com.google.cloud</groupId>
         <artifactId>google-cloud-alloydb-bom</artifactId>
-        <version>0.67.0</version>
+        <version>0.69.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>com.google.cloud</groupId>
         <artifactId>google-cloud-alloydb-connectors-bom</artifactId>
-        <version>0.56.0</version>
+        <version>0.58.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-bom</artifactId>
-        <version>1.76.0</version>
+        <version>1.77.0</version>
         <type>pom</type>
         <scope>import</scope>
        </dependency>
