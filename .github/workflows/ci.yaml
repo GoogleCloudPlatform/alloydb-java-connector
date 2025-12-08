@@ -43,7 +43,7 @@ jobs:
         java: [8, 11, 17, 21]
     steps:
     - name: Checkout code
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -87,7 +87,7 @@ jobs:
     - name: Support longpaths
       run: git config --system core.longpaths true
     - name: Checkout code
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -126,7 +126,7 @@ jobs:
         java: [8, 11, 17, 21]
     steps:
     - name: Checkout code
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -144,7 +144,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -164,7 +164,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -191,7 +191,7 @@ jobs:
       issues: write
     steps:
     - name: Checkout code
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -258,7 +258,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
