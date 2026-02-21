@@ -61,14 +61,10 @@ enum InternalConnectorRegistry implements Closeable {
   private static final String USER_AGENT = "alloydb-java-connector/" + Version.VERSION;
 
   InternalConnectorRegistry() {
-    // During refresh, each instance consumes 2 threads from the thread pool. By using 8 threads,
-    // there should be enough free threads so that there will not be a deadlock. Most users
-    // configure 3 or fewer instances, requiring 6 threads during refresh. By setting
-    // this to 8, it's enough threads for most users, plus a safety factor of 2.
     this.executor =
         MoreExecutors.listeningDecorator(
             Executors.newScheduledThreadPool(
-                8,
+                2,
                 r -> {
                   Thread t = new Thread(r);
                   t.setDaemon(true);
