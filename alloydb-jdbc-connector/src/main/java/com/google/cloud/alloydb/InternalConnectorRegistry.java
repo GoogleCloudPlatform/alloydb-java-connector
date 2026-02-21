@@ -68,7 +68,7 @@ enum InternalConnectorRegistry implements Closeable {
     this.executor =
         MoreExecutors.listeningDecorator(
             Executors.newScheduledThreadPool(
-                8,
+                1,
                 r -> {
                   Thread t = new Thread(r);
                   t.setDaemon(true);
