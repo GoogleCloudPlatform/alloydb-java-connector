@@ -70,6 +70,7 @@ class AsyncRateLimiter {
    *
    * @param executor the executor to use to schedule future checks for available rate limits.
    */
+  @SuppressWarnings("NullArgumentForNonNullParameter")
   public ListenableFuture<?> acquireAsync(ScheduledExecutorService executor) {
     long limit = this.nextDelayMs(currentTimestampMs.getAsLong());
     if (limit > 0) {

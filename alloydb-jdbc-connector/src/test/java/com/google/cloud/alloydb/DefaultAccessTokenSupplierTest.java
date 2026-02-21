@@ -42,6 +42,7 @@ public class DefaultAccessTokenSupplierTest {
   }
 
   @Test
+  @SuppressWarnings("NullArgumentForNonNullParameter")
   public void testEmptyTokenOnEmptyCredentials() throws IOException {
     DefaultAccessTokenSupplier supplier = new DefaultAccessTokenSupplier(null);
     assertThat(supplier.getTokenValue()).isEqualTo(null);
