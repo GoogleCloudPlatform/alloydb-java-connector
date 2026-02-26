@@ -26,6 +26,7 @@ import java.util.Date;
 
 class DefaultAccessTokenSupplier implements AccessTokenSupplier {
 
+  public static final String ALLOYDB_LOGIN_SCOPE = "https://www.googleapis.com/auth/alloydb.login";
   private final CredentialFactory credentialFactory;
 
   /**
@@ -45,29 +46,26 @@ class DefaultAccessTokenSupplier implements AccessTokenSupplier {
    */
   @Override
   public String getTokenValue() throws IOException {
-    try {
-      if (credentialFactory == null) {
-        return null;
-      }
-
-      final GoogleCredentials credentials = credentialFactory.getCredentials();
-      try {
-        credentials.refreshIfExpired();
-      } catch (IllegalStateException e) {
-        throw new IllegalStateException("Error refreshing credentials " + credentials, e);
-      }
-      if (credentials.getAccessToken() == null
-          || "".equals(credentials.getAccessToken().getTokenValue())) {
-        String errorMessage = "Access Token has length of zero";
-        throw new IllegalStateException(errorMessage);
-      }
-
-      validateAccessTokenExpiration(credentials.getAccessToken());
-      return credentials.getAccessToken().getTokenValue();
-
-    } catch (IOException e) {
-      throw e;
+    if (credentialFactory == null) {
+      return null;
     }
+
+    GoogleCredentials credentials =
+        credentialFactory.getCredentials().createScoped(ALLOYDB_LOGIN_SCOPE);
+
+    try {
+      credentials.refreshIfExpired();
+    } catch (IllegalStateException e) {
+      throw new IllegalStateException("Error refreshing credentials " + credentials, e);
+    }
+    if (credentials.getAccessToken() == null
+        || "".equals(credentials.getAccessToken().getTokenValue())) {
+      String errorMessage = "Access Token has length of zero";
+      throw new IllegalStateException(errorMessage);
+    }
+
+    validateAccessTokenExpiration(credentials.getAccessToken());
+    return credentials.getAccessToken().getTokenValue();
   }
 
   private void validateAccessTokenExpiration(AccessToken accessToken) {
