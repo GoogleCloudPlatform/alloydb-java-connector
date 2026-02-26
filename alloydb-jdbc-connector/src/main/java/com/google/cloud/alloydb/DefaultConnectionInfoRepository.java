@@ -16,15 +16,19 @@
 
 package com.google.cloud.alloydb;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutureToListenableFuture;
 import com.google.cloud.alloydb.v1alpha.AlloyDBAdminClient;
 import com.google.cloud.alloydb.v1alpha.ClusterName;
 import com.google.cloud.alloydb.v1alpha.GenerateClientCertificateRequest;
 import com.google.cloud.alloydb.v1alpha.GenerateClientCertificateResponse;
+import com.google.cloud.alloydb.v1alpha.GetConnectionInfoRequest;
 import com.google.cloud.alloydb.v1alpha.InstanceName;
 import com.google.common.io.BaseEncoding;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
 import io.grpc.Status;
@@ -59,10 +63,26 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Close
   @Override
   public ListenableFuture<ConnectionInfo> getConnectionInfo(
       InstanceName instanceName, KeyPair keyPair) {
+
     ListenableFuture<com.google.cloud.alloydb.v1alpha.ConnectionInfo> infoFuture =
-        executor.submit(() -> getConnectionInfo(instanceName));
+        callAsync(
+            alloyDBAdminClient
+                .getConnectionInfoCallable()
+                .futureCall(
+                    GetConnectionInfoRequest.newBuilder()
+                        .setParent(instanceName.toString())
+                        .build()));
     ListenableFuture<GenerateClientCertificateResponse> clientCertificateResponseFuture =
-        executor.submit(() -> getGenerateClientCertificateResponse(instanceName, keyPair));
+        callAsync(
+            alloyDBAdminClient
+                .generateClientCertificateCallable()
+                .futureCall(
+                    GenerateClientCertificateRequest.newBuilder()
+                        .setParent(getParent(instanceName))
+                        .setCertDuration(Duration.newBuilder().setSeconds(3600 /* 1 hour */))
+                        .setPublicKey(generatePublicKeyCert(keyPair))
+                        .setUseMetadataExchange(true)
+                        .build()));
 
     return Futures.whenAllComplete(infoFuture, clientCertificateResponseFuture)
         .call(
@@ -93,35 +113,19 @@ class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Close
             executor);
   }
 
+  private <T> ListenableFuture<T> callAsync(ApiFuture<T> future) {
+    return Futures.catching(
+        new ApiFutureToListenableFuture<>(future),
+        Exception.class,
+        e -> {
+          throw handleException(e);
+        },
+        MoreExecutors.directExecutor());
+  }
+
   @Override
   public void close() {
     this.alloyDBAdminClient.close();
-  }
-
-  private com.google.cloud.alloydb.v1alpha.ConnectionInfo getConnectionInfo(
-      InstanceName instanceName) {
-    try {
-      return alloyDBAdminClient.getConnectionInfo(instanceName);
-    } catch (Exception e) {
-      throw handleException(e);
-    }
-  }
-
-  private GenerateClientCertificateResponse getGenerateClientCertificateResponse(
-      InstanceName instanceName, KeyPair keyPair) {
-    GenerateClientCertificateRequest request =
-        GenerateClientCertificateRequest.newBuilder()
-            .setParent(getParent(instanceName))
-            .setCertDuration(Duration.newBuilder().setSeconds(3600 /* 1 hour */))
-            .setPublicKey(generatePublicKeyCert(keyPair))
-            .setUseMetadataExchange(true)
-            .build();
-
-    try {
-      return alloyDBAdminClient.generateClientCertificate(request);
-    } catch (Exception e) {
-      throw handleException(e);
-    }
   }
 
   private RuntimeException handleException(Exception e) {

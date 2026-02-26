@@ -71,6 +71,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>com.google.api</groupId>
+      <artifactId>api-common</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>com.google.api.grpc</groupId>
       <artifactId>proto-google-cloud-alloydb-v1alpha</artifactId>
     </dependency>
