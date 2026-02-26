@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.2.10...v1.3.0) (2026-02-26)
+
+
+### Features
+
+* scope OAuth2 token to alloydb login scope ([#701](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/701)) ([b94f2b4](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/b94f2b446f3674d5add1f55f0592783f383960e2))
+
 ## [1.2.10](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.2.9...v1.2.10) (2026-02-21)
 
 
