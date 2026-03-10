@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.2.10...v1.3.0) (2026-03-10)
+
+
+### Features
+
+* scope OAuth2 token to alloydb login scope ([#701](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/701)) ([b94f2b4](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/b94f2b446f3674d5add1f55f0592783f383960e2))
+
+
+### Dependencies
+
+* Update dependency maven to v3.9.13 ([#706](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/706)) ([b1547cf](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/b1547cff836987002ee579153389499ec73dff5a))
+* Update Non-major dependencies ([#702](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/702)) ([9ec3a0c](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/9ec3a0c586a7a775905ee3769a72c4f7e9b5f8c9))
+
 ## [1.2.10](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.2.9...v1.2.10) (2026-02-21)
 
 
