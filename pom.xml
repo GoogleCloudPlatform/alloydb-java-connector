@@ -76,14 +76,14 @@
       <dependency>
         <groupId>com.google.cloud</groupId>
         <artifactId>google-cloud-alloydb-bom</artifactId>
-        <version>0.75.0</version>
+        <version>0.76.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>com.google.cloud</groupId>
         <artifactId>google-cloud-alloydb-connectors-bom</artifactId>
-        <version>0.64.0</version>
+        <version>0.65.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
