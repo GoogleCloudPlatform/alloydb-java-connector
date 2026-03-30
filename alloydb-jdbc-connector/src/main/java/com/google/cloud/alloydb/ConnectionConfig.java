@@ -36,6 +36,7 @@ class ConnectionConfig {
   public static final String ENABLE_IAM_AUTH_PROPERTY = "alloydbEnableIAMAuth";
   public static final String ALLOYDB_IP_TYPE = "alloydbIpType";
   public static final String ALLOYDB_REFRESH_STRATEGY = "alloydbRefreshStrategy";
+  public static final String ALLOYDB_ENABLE_BUILTIN_TELEMETRY = "alloydbEnableBuiltinTelemetry";
   public static final AuthType DEFAULT_AUTH_TYPE = AuthType.PASSWORD;
   public static final IpType DEFAULT_IP_TYPE = IpType.PRIVATE;
   private final InstanceName instanceName;
@@ -76,6 +77,12 @@ class ConnectionConfig {
               props.getProperty(ALLOYDB_REFRESH_STRATEGY).toUpperCase(Locale.getDefault()));
     }
 
+    boolean enableBuiltinTelemetry = true;
+    if (props.getProperty(ALLOYDB_ENABLE_BUILTIN_TELEMETRY) != null) {
+      enableBuiltinTelemetry =
+          Boolean.parseBoolean(props.getProperty(ALLOYDB_ENABLE_BUILTIN_TELEMETRY));
+    }
+
     return new ConnectionConfig(
         instanceName,
         namedConnector,
@@ -88,6 +95,7 @@ class ConnectionConfig {
             .withGoogleCredentialsPath(googleCredentialsPath)
             .withQuotaProject(quotaProject)
             .withRefreshStrategy(refreshStrategy)
+            .withEnableBuiltinTelemetry(enableBuiltinTelemetry)
             .build());
   }
 
