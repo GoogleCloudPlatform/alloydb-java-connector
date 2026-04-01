@@ -63,11 +63,7 @@ jobs:
     - name: Java Version
       run: java -version
     - name: Run tests
-      run: .kokoro/build.sh
-      env:
-        JOB_TYPE: test
-    - name: Check Coverage
-      run: .kokoro/check_coverage.sh
+      run: scripts/test_units.sh
     - name: FlakyBot
       # only run flakybot on periodic (schedule) and continuous (push) events
       if: ${{ (github.event_name == 'schedule' || github.event_name == 'push') && runner.os == 'Linux' && always() }}
@@ -107,11 +103,7 @@ jobs:
     - name: Java Version
       run: java -version
     - name: Run tests
-      run: .kokoro/build.bat
-      env:
-        JOB_TYPE: test
-    - name: Check Coverage
-      run: .kokoro/check_coverage.sh
+      run: scripts/test_units.bat
     - name: FlakyBot
       # only run flakybot on periodic (schedule) and continuous (push) events
       if: ${{ (github.event_name == 'schedule' || github.event_name == 'push') && runner.os == 'Windows' && always() }}
@@ -137,8 +129,8 @@ jobs:
         java-version: ${{matrix.java}}
     - name: Java Version
       run: java -version
-    - name: Build dependencies
-      run: .kokoro/dependencies.sh
+    - name: Check dependencies
+      run: scripts/check_dependencies.sh
 
   lint:
     runs-on: ubuntu-latest
@@ -156,9 +148,7 @@ jobs:
     - name: Java Version
       run: java -version
     - name: Run lint
-      run: .kokoro/build.sh
-      env:
-        JOB_TYPE: lint
+      run: scripts/lint.sh
 
   clirr:
     runs-on: ubuntu-latest
@@ -176,9 +166,7 @@ jobs:
     - name: Java Version
       run: java -version
     - name: Run CLIRR
-      run: .kokoro/build.sh
-      env:
-        JOB_TYPE: clirr
+      run: scripts/check_clirr.sh
 
   graalvm:
     # run job on periodic (schedule) event
@@ -233,8 +221,7 @@ jobs:
         ALLOYDB_INSTANCE_IP: '${{ steps.secrets.outputs.ALLOYDB_INSTANCE_IP }}'
         ALLOYDB_IMPERSONATED_USER: '${{ steps.secrets.outputs.ALLOYDB_IMPERSONATED_USER }}'
         ALLOYDB_PSC_INSTANCE_URI: '${{ steps.secrets.outputs.ALLOYDB_PSC_INSTANCE_URI }}'
-        JOB_TYPE: graalvm
-      run: .kokoro/build.sh
+      run: scripts/test_graalvm.sh
       shell: bash
 
     - name: FlakyBot
@@ -299,8 +286,7 @@ jobs:
           ALLOYDB_INSTANCE_IP: '${{ steps.secrets.outputs.ALLOYDB_INSTANCE_IP }}'
           ALLOYDB_IMPERSONATED_USER: '${{ steps.secrets.outputs.ALLOYDB_IMPERSONATED_USER }}'
           ALLOYDB_PSC_INSTANCE_URI: '${{ steps.secrets.outputs.ALLOYDB_PSC_INSTANCE_URI }}'
-          JOB_TYPE: integration
-        run: .kokoro/build.sh
+        run: scripts/test_system.sh
         shell: bash
 
       - name: FlakyBot
