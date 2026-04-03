@@ -13,8 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-export CUR_COVER=$(cat alloydb-jdbc-connector/target/site/jacoco/index.html | grep -o 'Total[^%]*' | sed 's/<.*>//; s/Total//')
-echo "Current Coverage is $CUR_COVER%"
-if [ "$CUR_COVER" -lt 75  ]; then
-  exit 1;
-fi
+set -eo pipefail
+
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
+# Install dependencies
+./mvnw install -B -V -ntp \
+  -DskipTests=true \
+  -Dmaven.javadoc.skip=true \
+  -Dclirr.skip=true
+
+# Check for unused or undeclared dependencies
+./mvnw -B dependency:analyze -DfailOnWarning=true

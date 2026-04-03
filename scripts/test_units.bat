@@ -11,8 +11,5 @@
 :: WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 :: See the License for the specific language governing permissions and
 :: limitations under the License.
-:: Github action job to test core java library features on
-:: downstream client libraries before they are released.
-:: See documentation in type-shell-output.bat
 
-"C:\Program Files\Git\bin\bash.exe" %~dp0build.sh
+"C:\Program Files\Git\bin\bash.exe" %~dp0test_units.sh
