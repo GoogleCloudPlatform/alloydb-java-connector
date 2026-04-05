@@ -18,6 +18,7 @@ package com.google.cloud.alloydb;
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.KeyPair;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,6 +38,8 @@ class Connector {
   private final ConnectorConfig config;
   private final AccessTokenSupplier accessTokenSupplier;
   private final String userAgents;
+  private final SshTunnel sshTunnel;
+  private final SocketProvider socketProvider;
 
   Connector(
       ConnectorConfig config,
@@ -46,7 +49,8 @@ class Connector {
       ConnectionInfoCacheFactory connectionInfoCacheFactory,
       ConcurrentHashMap<ConnectionConfig, ConnectionInfoCache> instances,
       AccessTokenSupplier accessTokenSupplier,
-      String userAgents) {
+      String userAgents,
+      SshTunnel sshTunnel) {
     this.config = config;
     this.executor = executor;
     this.connectionInfoRepo = connectionInfoRepo;
@@ -55,10 +59,25 @@ class Connector {
     this.instances = instances;
     this.accessTokenSupplier = accessTokenSupplier;
     this.userAgents = userAgents;
+    this.sshTunnel = sshTunnel;
+    if (sshTunnel != null) {
+      this.socketProvider = sshTunnel::createSocket;
+    } else {
+      this.socketProvider =
+          (host, port) -> {
+            Socket s = new Socket();
+            s.connect(new InetSocketAddress(host, port));
+            return s;
+          };
+    }
   }
 
   public ConnectorConfig getConfig() {
     return config;
+  }
+
+  boolean isSshTunnelClosed() {
+    return sshTunnel != null && !sshTunnel.isSessionOpen();
   }
 
   public void close() throws IOException {
@@ -66,6 +85,9 @@ class Connector {
     this.instances.forEach((key, c) -> c.close());
     this.instances.clear();
     this.connectionInfoRepo.close();
+    if (this.sshTunnel != null) {
+      this.sshTunnel.close();
+    }
   }
 
   Socket connect(ConnectionConfig config) throws IOException {
@@ -75,7 +97,12 @@ class Connector {
     try {
       ConnectionSocket socket =
           new ConnectionSocket(
-              connectionInfo, config, clientConnectorKeyPair, accessTokenSupplier, userAgents);
+              connectionInfo,
+              config,
+              clientConnectorKeyPair,
+              accessTokenSupplier,
+              userAgents,
+              socketProvider);
       return socket.connect();
     } catch (IOException e) {
       logger.debug(
@@ -130,7 +157,8 @@ class Connector {
         && Objects.equal(connectionInfoCacheFactory, that.connectionInfoCacheFactory)
         && Objects.equal(instances, that.instances)
         && Objects.equal(accessTokenSupplier, that.accessTokenSupplier)
-        && Objects.equal(userAgents, that.userAgents);
+        && Objects.equal(userAgents, that.userAgents)
+        && Objects.equal(sshTunnel, that.sshTunnel);
   }
 
   @Override
@@ -143,6 +171,7 @@ class Connector {
         connectionInfoCacheFactory,
         instances,
         accessTokenSupplier,
-        userAgents);
+        userAgents,
+        sshTunnel);
   }
 }

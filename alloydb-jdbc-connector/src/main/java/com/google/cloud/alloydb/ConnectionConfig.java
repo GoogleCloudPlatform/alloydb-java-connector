@@ -36,6 +36,11 @@ class ConnectionConfig {
   public static final String ENABLE_IAM_AUTH_PROPERTY = "alloydbEnableIAMAuth";
   public static final String ALLOYDB_IP_TYPE = "alloydbIpType";
   public static final String ALLOYDB_REFRESH_STRATEGY = "alloydbRefreshStrategy";
+  public static final String ALLOYDB_SSH_HOST = "alloydbSshHost";
+  public static final String ALLOYDB_SSH_PORT = "alloydbSshPort";
+  public static final String ALLOYDB_SSH_USER = "alloydbSshUser";
+  public static final String ALLOYDB_SSH_PRIVATE_KEY_PATH = "alloydbSshPrivateKeyPath";
+  public static final String ALLOYDB_SSH_KNOWN_HOSTS_PATH = "alloydbSshKnownHostsPath";
   public static final AuthType DEFAULT_AUTH_TYPE = AuthType.PASSWORD;
   public static final IpType DEFAULT_IP_TYPE = IpType.PRIVATE;
   private final InstanceName instanceName;
@@ -76,6 +81,23 @@ class ConnectionConfig {
               props.getProperty(ALLOYDB_REFRESH_STRATEGY).toUpperCase(Locale.getDefault()));
     }
 
+    final String sshHost = props.getProperty(ALLOYDB_SSH_HOST);
+    final String sshUser = props.getProperty(ALLOYDB_SSH_USER);
+    final String sshPrivateKeyPath = props.getProperty(ALLOYDB_SSH_PRIVATE_KEY_PATH);
+    final String sshKnownHostsPath = props.getProperty(ALLOYDB_SSH_KNOWN_HOSTS_PATH);
+    int sshPort = 0;
+    if (props.getProperty(ALLOYDB_SSH_PORT) != null) {
+      try {
+        sshPort = Integer.parseInt(props.getProperty(ALLOYDB_SSH_PORT));
+      } catch (NumberFormatException e) {
+        throw new IllegalArgumentException(
+            String.format(
+                "Invalid value for %s: '%s' is not a valid integer",
+                ALLOYDB_SSH_PORT, props.getProperty(ALLOYDB_SSH_PORT)),
+            e);
+      }
+    }
+
     return new ConnectionConfig(
         instanceName,
         namedConnector,
@@ -88,6 +110,11 @@ class ConnectionConfig {
             .withGoogleCredentialsPath(googleCredentialsPath)
             .withQuotaProject(quotaProject)
             .withRefreshStrategy(refreshStrategy)
+            .withSshHost(sshHost)
+            .withSshPort(sshPort)
+            .withSshUser(sshUser)
+            .withSshPrivateKeyPath(sshPrivateKeyPath)
+            .withSshKnownHostsPath(sshKnownHostsPath)
             .build());
   }
 

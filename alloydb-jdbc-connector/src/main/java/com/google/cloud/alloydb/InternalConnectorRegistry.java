@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * InternalConnectorRegistry is a singleton that creates a single Executor, KeyPair, and AlloyDB
@@ -36,29 +38,30 @@ import java.util.concurrent.Executors;
 enum InternalConnectorRegistry implements Closeable {
   INSTANCE;
 
+  private static final Logger logger = LoggerFactory.getLogger(InternalConnectorRegistry.class);
+  private static final String USER_AGENT = "alloydb-java-connector/" + Version.VERSION;
+
   @SuppressWarnings("ImmutableEnumChecker")
   private final ListeningScheduledExecutorService executor;
 
   @SuppressWarnings("ImmutableEnumChecker")
-  private CredentialFactoryProvider credentialFactoryProvider;
+  private final ConcurrentHashMap<ConnectorConfig, Connector> unnamedConnectors;
 
   @SuppressWarnings("ImmutableEnumChecker")
-  private ConcurrentHashMap<ConnectorConfig, Connector> unnamedConnectors;
-
-  @SuppressWarnings("ImmutableEnumChecker")
-  private ConcurrentHashMap<String, Connector> namedConnectors;
+  private final ConcurrentHashMap<String, Connector> namedConnectors;
 
   @SuppressWarnings("ImmutableEnumChecker")
   private final Object shutdownGuard = new Object();
 
   @SuppressWarnings("ImmutableEnumChecker")
-  @GuardedBy("shutdownGuard")
-  private boolean shutdown = false;
+  private final List<String> userAgents = new ArrayList<>();
 
   @SuppressWarnings("ImmutableEnumChecker")
-  private List<String> userAgents = new ArrayList<>();
+  private CredentialFactoryProvider credentialFactoryProvider;
 
-  private static final String USER_AGENT = "alloydb-java-connector/" + Version.VERSION;
+  @SuppressWarnings("ImmutableEnumChecker")
+  @GuardedBy("shutdownGuard")
+  private boolean shutdown = false;
 
   InternalConnectorRegistry() {
     this.executor =
@@ -202,8 +205,28 @@ enum InternalConnectorRegistry implements Closeable {
   }
 
   private Connector getConnector(ConnectionConfig config) {
-    return unnamedConnectors.computeIfAbsent(
-        config.getConnectorConfig(), k -> createConnector(config.getConnectorConfig()));
+    ConnectorConfig connectorConfig = config.getConnectorConfig();
+
+    return unnamedConnectors.compute(
+        connectorConfig,
+        (k, existing) -> {
+          if (existing == null) {
+            // No connector was found. Create a new connector.
+            return createConnector(connectorConfig);
+          }
+
+          if (existing.getConfig().isSshEnabled() && existing.isSshTunnelClosed()) {
+            logger.info("SSH tunnel is closed, evicting connector to force reconnection.");
+            try {
+              existing.close();
+            } catch (IOException e) {
+              logger.warn("Error closing connector with closed SSH tunnel", e);
+            }
+            return createConnector(connectorConfig);
+          }
+          // No SSH tunnel is configured. Return the existing connector.
+          return existing;
+        });
   }
 
   private Connector createConnector(ConnectorConfig config) {
@@ -216,6 +239,11 @@ enum InternalConnectorRegistry implements Closeable {
     AccessTokenSupplier accessTokenSupplier =
         new DefaultAccessTokenSupplier(instanceCredentialFactory);
 
+    SshTunnel sshTunnel = null;
+    if (config.isSshEnabled()) {
+      sshTunnel = SshTunnel.open(config.getSshTunnelConfig());
+    }
+
     return new Connector(
         config,
         executor,
@@ -224,11 +252,27 @@ enum InternalConnectorRegistry implements Closeable {
         new DefaultConnectionInfoCacheFactory(config.getRefreshStrategy()),
         new ConcurrentHashMap<>(),
         accessTokenSupplier,
-        getUserAgents());
+        getUserAgents(),
+        sshTunnel);
   }
 
   private Connector getNamedConnector(String name) {
-    Connector connector = namedConnectors.get(name);
+    Connector connector =
+        namedConnectors.computeIfPresent(
+            name,
+            (k, existing) -> {
+              if (existing.getConfig().isSshEnabled() && existing.isSshTunnelClosed()) {
+                logger.info("SSH tunnel is closed, recreating connector.");
+                try {
+                  existing.close();
+                } catch (IOException e) {
+                  logger.warn("Error closing connector with closed SSH tunnel", e);
+                }
+                // Recreate connector with fresh SSH tunnel.
+                return createConnector(existing.getConfig());
+              }
+              return existing;
+            });
     if (connector == null) {
       throw new IllegalArgumentException("Named connection " + name + " does not exist.");
     }

@@ -24,7 +24,6 @@ import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
@@ -67,27 +66,24 @@ class ConnectionSocket {
   private final KeyPair clientConnectorKeyPair;
   private final AccessTokenSupplier accessTokenSupplier;
   private final String userAgents;
+  private final SocketProvider socketProvider;
 
   ConnectionSocket(
       ConnectionInfo connectionInfo,
       ConnectionConfig connectionConfig,
       KeyPair clientConnectorKeyPair,
       AccessTokenSupplier accessTokenSupplier,
-      String userAgents) {
+      String userAgents,
+      SocketProvider socketProvider) {
     this.connectionInfo = connectionInfo;
     this.connectionConfig = connectionConfig;
     this.clientConnectorKeyPair = clientConnectorKeyPair;
     this.accessTokenSupplier = accessTokenSupplier;
     this.userAgents = userAgents;
+    this.socketProvider = socketProvider;
   }
 
   Socket connect() throws IOException {
-    SSLSocket socket =
-        buildSocket(
-            connectionInfo.getCaCertificate(),
-            connectionInfo.getCertificateChain(),
-            this.clientConnectorKeyPair.getPrivate());
-
     String address;
     switch (connectionConfig.getIpType()) {
       case PUBLIC:
@@ -110,22 +106,43 @@ class ConnectionSocket {
 
     logger.debug(String.format("[%s] Connecting to instance.", address));
 
+    // Create the underlying TCP socket using the injected provider.
+    Socket plainSocket = socketProvider.create(address, SERVER_SIDE_PROXY_PORT);
+    plainSocket.setKeepAlive(true);
+    plainSocket.setTcpNoDelay(true);
+
+    // Build the TLS context and wrap the plain socket. The address parameter is used for
+    // SNI and certificate verification regardless of where the TCP socket is connected.
+    SSLContext sslContext =
+        buildSslContext(
+            connectionInfo.getCaCertificate(),
+            connectionInfo.getCertificateChain(),
+            this.clientConnectorKeyPair.getPrivate());
+
+    SSLSocket socket =
+        (SSLSocket)
+            sslContext
+                .getSocketFactory()
+                .createSocket(plainSocket, address, SERVER_SIDE_PROXY_PORT, true);
+
     SSLParameters sslParameters = socket.getSSLParameters();
-    // Set HTTPS as the the endpoint identification algorithm
+    // Set HTTPS as the endpoint identification algorithm
     // in order to verify the identity of the certificate as
     // suggested at https://stackoverflow.com/a/17979954/927514
     sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
     sslParameters.setServerNames(Collections.singletonList(new SNIHostName(address)));
 
     socket.setSSLParameters(sslParameters);
-    socket.setKeepAlive(true);
-    socket.setTcpNoDelay(true);
-    socket.connect(new InetSocketAddress(address, SERVER_SIDE_PROXY_PORT));
 
     try {
       socket.startHandshake();
     } catch (IOException e) {
       logger.debug("TLS handshake failed!");
+      try {
+        socket.close();
+      } catch (IOException suppressed) {
+        e.addSuppressed(suppressed);
+      }
       throw e;
     }
 
@@ -138,7 +155,7 @@ class ConnectionSocket {
     return socket;
   }
 
-  private SSLSocket buildSocket(
+  private SSLContext buildSslContext(
       X509Certificate caCertificate,
       List<X509Certificate> certificateChain,
       PrivateKey privateKey) {
@@ -150,11 +167,10 @@ class ConnectionSocket {
       // Next, initialize a TrustManager with the root CA certificate.
       TrustManager[] trustManagers = initializeTrustManager(caCertificate);
 
-      // Now, create a TLS 1.3 SSLContext initialized with the KeyManager and the TrustManager,
-      // and create the SSL Socket.
+      // Now, create a TLS 1.3 SSLContext initialized with the KeyManager and the TrustManager.
       SSLContext sslContext = SSLContext.getInstance(TLS_1_3);
       sslContext.init(keyManagers, trustManagers, new SecureRandom());
-      return (SSLSocket) sslContext.getSocketFactory().createSocket();
+      return sslContext;
     } catch (GeneralSecurityException | IOException ex) {
       throw new RuntimeException("Unable to create an SSL Context for the instance.", ex);
     }
@@ -185,8 +201,7 @@ class ConnectionSocket {
         null, // don't load the key store from an input stream
         null // there is no password
         );
-    List<Certificate> chain = new ArrayList<>();
-    chain.addAll(certificateChain);
+    List<Certificate> chain = new ArrayList<>(certificateChain);
     Certificate[] chainArray = chain.toArray(new Certificate[] {});
     PrivateKeyEntry privateKeyEntry = new PrivateKeyEntry(privateKey, chainArray);
     clientAuthenticationKeyStore.setEntry(

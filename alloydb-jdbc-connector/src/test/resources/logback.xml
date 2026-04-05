@@ -20,6 +20,11 @@
     </encoder>
   </appender>
 
+  <!-- Silence SSH-related logs unless debugging -->
+  <logger name="org.apache.sshd" level="WARN" />
+  <logger name="org.apache.sshd.server.session" level="WARN" />
+  <logger name="com.google.cloud.alloydb.SshTunnel" level="WARN" />
+
   <!-- Change the level to debug for more test logging information -->
   <root level="info">
     <appender-ref ref="STDOUT" />

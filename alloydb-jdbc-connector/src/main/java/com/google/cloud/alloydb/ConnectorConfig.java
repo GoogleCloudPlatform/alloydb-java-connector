@@ -36,6 +36,7 @@ public class ConnectorConfig {
   private final String googleCredentialsPath;
   private final String quotaProject;
   private final RefreshStrategy refreshStrategy;
+  private final SshTunnelConfig sshTunnelConfig;
 
   private ConnectorConfig(
       String targetPrincipal,
@@ -45,7 +46,8 @@ public class ConnectorConfig {
       GoogleCredentials googleCredentials,
       String googleCredentialsPath,
       String quotaProject,
-      RefreshStrategy refreshStrategy) {
+      RefreshStrategy refreshStrategy,
+      SshTunnelConfig sshTunnelConfig) {
     this.targetPrincipal = targetPrincipal;
     this.delegates = delegates;
     this.adminServiceEndpoint = adminServiceEndpoint;
@@ -54,6 +56,7 @@ public class ConnectorConfig {
     this.googleCredentialsPath = googleCredentialsPath;
     this.quotaProject = quotaProject;
     this.refreshStrategy = refreshStrategy;
+    this.sshTunnelConfig = sshTunnelConfig;
   }
 
   @Override
@@ -72,7 +75,8 @@ public class ConnectorConfig {
         && Objects.equal(googleCredentials, that.googleCredentials)
         && Objects.equal(googleCredentialsPath, that.googleCredentialsPath)
         && Objects.equal(quotaProject, that.quotaProject)
-        && Objects.equal(refreshStrategy, that.refreshStrategy);
+        && Objects.equal(refreshStrategy, that.refreshStrategy)
+        && Objects.equal(sshTunnelConfig, that.sshTunnelConfig);
   }
 
   @Override
@@ -85,7 +89,8 @@ public class ConnectorConfig {
         googleCredentials,
         googleCredentialsPath,
         quotaProject,
-        refreshStrategy);
+        refreshStrategy,
+        sshTunnelConfig);
   }
 
   public String getTargetPrincipal() {
@@ -120,6 +125,16 @@ public class ConnectorConfig {
     return refreshStrategy;
   }
 
+  /** Returns the SSH tunnel configuration, or null if SSH is not configured. */
+  public SshTunnelConfig getSshTunnelConfig() {
+    return sshTunnelConfig;
+  }
+
+  /** Returns true if SSH tunnel configuration is present. */
+  public boolean isSshEnabled() {
+    return sshTunnelConfig != null;
+  }
+
   /** The builder for the ConnectionConfig. */
   public static class Builder {
 
@@ -131,6 +146,11 @@ public class ConnectorConfig {
     private String googleCredentialsPath;
     private String quotaProject;
     private RefreshStrategy refreshStrategy;
+    private String sshHost;
+    private int sshPort;
+    private String sshUser;
+    private String sshPrivateKeyPath;
+    private String sshKnownHostsPath;
 
     public Builder withTargetPrincipal(String targetPrincipal) {
       this.targetPrincipal = targetPrincipal;
@@ -173,6 +193,31 @@ public class ConnectorConfig {
       return this;
     }
 
+    public Builder withSshHost(String sshHost) {
+      this.sshHost = sshHost;
+      return this;
+    }
+
+    public Builder withSshPort(int sshPort) {
+      this.sshPort = sshPort;
+      return this;
+    }
+
+    public Builder withSshUser(String sshUser) {
+      this.sshUser = sshUser;
+      return this;
+    }
+
+    public Builder withSshPrivateKeyPath(String sshPrivateKeyPath) {
+      this.sshPrivateKeyPath = sshPrivateKeyPath;
+      return this;
+    }
+
+    public Builder withSshKnownHostsPath(String sshKnownHostsPath) {
+      this.sshKnownHostsPath = sshKnownHostsPath;
+      return this;
+    }
+
     /** Builds a new instance of {@code ConnectionConfig}. */
     public ConnectorConfig build() {
       // validate only one GoogleCredentials configuration field set
@@ -192,6 +237,19 @@ public class ConnectorConfig {
                 + "(googleCredentials, googleCredentialsPath, googleCredentialsSupplier)");
       }
 
+      // Build SSH tunnel config if host is set
+      SshTunnelConfig sshTunnelConfig = null;
+      if (sshHost != null && !sshHost.isEmpty()) {
+        sshTunnelConfig =
+            new SshTunnelConfig.Builder()
+                .withHost(sshHost)
+                .withPort(sshPort)
+                .withUser(sshUser)
+                .withPrivateKeyPath(sshPrivateKeyPath)
+                .withKnownHostsPath(sshKnownHostsPath)
+                .build();
+      }
+
       return new ConnectorConfig(
           targetPrincipal,
           delegates,
@@ -200,7 +258,8 @@ public class ConnectorConfig {
           googleCredentials,
           googleCredentialsPath,
           quotaProject,
-          refreshStrategy);
+          refreshStrategy,
+          sshTunnelConfig);
     }
   }
 }

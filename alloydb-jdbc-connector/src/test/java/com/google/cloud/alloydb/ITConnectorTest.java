@@ -90,7 +90,8 @@ public class ITConnectorTest {
               new DefaultConnectionInfoCacheFactory(RefreshStrategy.REFRESH_AHEAD),
               new ConcurrentHashMap<>(),
               accessTokenSupplier,
-              USER_AGENT);
+              USER_AGENT,
+              null);
 
       socket = (SSLSocket) connector.connect(config);
 
@@ -136,7 +137,8 @@ public class ITConnectorTest {
               connectionInfoCacheFactory,
               new ConcurrentHashMap<>(),
               accessTokenSupplier,
-              USER_AGENT);
+              USER_AGENT,
+              null);
       socket = (SSLSocket) connector.connect(config);
     } catch (ConnectException ignore) {
       // The socket connect will fail because it's trying to connect to localhost with TLS certs.
@@ -179,7 +181,8 @@ public class ITConnectorTest {
             connectionInfoCacheFactory,
             new ConcurrentHashMap<>(),
             accessTokenSupplier,
-            USER_AGENT);
+            USER_AGENT,
+            null);
 
     assertThat(a)
         .isNotEqualTo(
@@ -191,7 +194,8 @@ public class ITConnectorTest {
                 connectionInfoCacheFactory,
                 new ConcurrentHashMap<>(),
                 accessTokenSupplier,
-                USER_AGENT));
+                USER_AGENT,
+                null));
 
     assertThat(a)
         .isNotEqualTo(
@@ -203,7 +207,8 @@ public class ITConnectorTest {
                 connectionInfoCacheFactory,
                 new ConcurrentHashMap<>(),
                 accessTokenSupplier,
-                USER_AGENT));
+                USER_AGENT,
+                null));
 
     assertThat(a)
         .isNotEqualTo(
@@ -215,7 +220,8 @@ public class ITConnectorTest {
                 connectionInfoCacheFactory,
                 new ConcurrentHashMap<>(),
                 accessTokenSupplier,
-                USER_AGENT));
+                USER_AGENT,
+                null));
 
     assertThat(a)
         .isNotEqualTo(
@@ -227,7 +233,8 @@ public class ITConnectorTest {
                 connectionInfoCacheFactory,
                 new ConcurrentHashMap<>(),
                 accessTokenSupplier,
-                USER_AGENT));
+                USER_AGENT,
+                null));
 
     assertThat(a)
         .isNotEqualTo(
@@ -239,7 +246,8 @@ public class ITConnectorTest {
                 new DefaultConnectionInfoCacheFactory(RefreshStrategy.REFRESH_AHEAD), // Different
                 new ConcurrentHashMap<>(),
                 accessTokenSupplier,
-                USER_AGENT));
+                USER_AGENT,
+                null));
 
     assertThat(a)
         .isNotEqualTo(
@@ -251,7 +259,8 @@ public class ITConnectorTest {
                 connectionInfoCacheFactory,
                 new ConcurrentHashMap<>(),
                 null, // Different
-                USER_AGENT));
+                USER_AGENT,
+                null));
 
     assertThat(a)
         .isNotEqualTo(
@@ -263,7 +272,8 @@ public class ITConnectorTest {
                 connectionInfoCacheFactory,
                 new ConcurrentHashMap<>(),
                 accessTokenSupplier,
-                null)); // Different
+                null, // Different
+                null));
   }
 
   @Test
@@ -283,7 +293,8 @@ public class ITConnectorTest {
             connectionInfoCacheFactory,
             instances,
             accessTokenSupplier,
-            USER_AGENT);
+            USER_AGENT,
+            null);
 
     assertThat(a.hashCode())
         .isEqualTo(
@@ -295,6 +306,7 @@ public class ITConnectorTest {
                 connectionInfoCacheFactory,
                 instances,
                 accessTokenSupplier,
-                USER_AGENT));
+                USER_AGENT,
+                null));
   }
 }

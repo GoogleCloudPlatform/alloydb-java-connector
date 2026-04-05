@@ -49,7 +49,7 @@ public class ConnectorTest {
   public static void beforeClass() throws Exception {
     defaultExecutor = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(8));
     sslServer = new FakeSslServer(SERVER_MESSAGE);
-    sslServer.start("127.0.0.1");
+    sslServer.start();
   }
 
   @AfterClass
@@ -103,7 +103,8 @@ public class ConnectorTest {
         new DefaultConnectionInfoCacheFactory(RefreshStrategy.REFRESH_AHEAD),
         new ConcurrentHashMap<>(),
         accessTokenSupplier,
-        USER_AGENT);
+        USER_AGENT,
+        null);
   }
 
   private String readLine(Socket socket) throws IOException {

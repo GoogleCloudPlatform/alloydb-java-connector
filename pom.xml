@@ -62,6 +62,7 @@
     <error-prone.version>2.48.0</error-prone.version>
     <error-prone-annotations.version>2.48.0</error-prone-annotations.version>
     <bouncycastle.version>1.83</bouncycastle.version>
+    <sshd.version>2.12.1</sshd.version>
   </properties>
 
   <dependencyManagement>
@@ -158,6 +159,16 @@
         <groupId>com.google.guava</groupId>
         <artifactId>failureaccess</artifactId>
         <version>1.0.3</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.sshd</groupId>
+        <artifactId>sshd-core</artifactId>
+        <version>${sshd.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.i2p.crypto</groupId>
+        <artifactId>eddsa</artifactId>
+        <version>0.3.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

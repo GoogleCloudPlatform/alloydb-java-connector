@@ -54,14 +54,14 @@ class FakeSslServer {
   private static final String X_509 = "X.509";
   private static final String ROOT_CA_CERT = "rootCaCert";
   private static final int IO_TIMEOUT_MS = 30000;
-  private String message;
+  private final String message;
   private Thread thread;
 
   FakeSslServer(String message) {
     this.message = message;
   }
 
-  int start(final String ip) throws InterruptedException {
+  void start() throws InterruptedException {
     final CountDownLatch countDownLatch = new CountDownLatch(1);
     final AtomicInteger pickedPort = new AtomicInteger();
 
@@ -84,7 +84,7 @@ class FakeSslServer {
                 SSLServerSocket sslServerSocket =
                     (SSLServerSocket)
                         sslServerSocketFactory.createServerSocket(
-                            5433, 5, InetAddress.getByName(ip));
+                            5433, 5, InetAddress.getLoopbackAddress());
                 sslServerSocket.setNeedClientAuth(true);
 
                 pickedPort.set(sslServerSocket.getLocalPort());
@@ -121,7 +121,7 @@ class FakeSslServer {
 
     countDownLatch.await();
 
-    return pickedPort.get();
+    pickedPort.get();
   }
 
   void stop() {

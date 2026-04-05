@@ -259,6 +259,11 @@ configuration using the AlloyDB API.
 | alloydbAdminServiceEndpoint  | An alternate AlloyDB API endpoint.                                                                                                                                                                                  | `alloydb.googleapis.com:443` |
 | alloydbGoogleCredentialsPath | A file path to a JSON file containing a GoogleCredentials oauth token.                                                                                                                                              | `/home/alice/secrets/my-credentials.json` |
 | alloydbRefreshStrategy | Either `refresh_ahead` where certificates are refreshed in a background thread, or `lazy` where certificates are refreshed as needed. The `lazy` strategy is best when CPU isn't always available (e.g., Cloud Run) |
+| alloydbSshHost | The IP address or hostname of the SSH bastion host to tunnel through. When set, the connector routes all database traffic through an SSH tunnel. Requires `alloydbSshUser` and `alloydbSshPrivateKeyPath`. Requires `org.apache.sshd:sshd-core` on the classpath. | `34.72.1.2` |
+| alloydbSshPort | The SSH port on the bastion host. Defaults to `22`. | `22` |
+| alloydbSshUser | The SSH username for authenticating to the bastion host. Required when `alloydbSshHost` is set. | `myuser` |
+| alloydbSshPrivateKeyPath | The path to the SSH private key file for authenticating to the bastion host. Required when `alloydbSshHost` is set. | `/home/user/.ssh/id_rsa` |
+| alloydbSshKnownHostsPath | The path to an SSH known hosts file for host key verification. Defaults to `~/.ssh/known_hosts`. If no known hosts file is found, the connection will fail. | `/home/user/.ssh/known_hosts` |
 
 ### Connection Configuration Properties
 

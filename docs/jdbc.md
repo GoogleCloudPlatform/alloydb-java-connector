@@ -290,6 +290,129 @@ use the instance's Public IP.
 config.addDataSourceProperty("alloydbIpType", "PUBLIC");
 ```
 
+### SSH Tunnel
+
+The Java Connector supports connecting to AlloyDB instances through an SSH
+tunnel. This is useful when the AlloyDB instance has a private IP address that
+is not directly reachable from the application's network, but is reachable from
+a GCE VM or other bastion host within the VPC.
+
+When SSH tunneling is configured, the connector opens an SSH connection to the
+specified bastion host and forwards database traffic through the tunnel to
+reach the AlloyDB instance's private IP address.
+
+**Prerequisites:**
+
+- A GCE VM or bastion host that can reach the AlloyDB instance's private IP
+- An SSH private key that is authorized to connect to the bastion host
+- The `org.apache.sshd:sshd-core` dependency added to your project
+
+#### Adding the SSH Dependency
+
+The SSH tunnel feature requires Apache MINA SSHD, which is an optional
+dependency. Add it to your project:
+
+Check the parent `pom.xml` for the tested version (property `sshd.version`).
+
+##### Maven
+
+```maven-pom
+<dependency>
+  <groupId>org.apache.sshd</groupId>
+  <artifactId>sshd-core</artifactId>
+  <version>${sshd.version}</version> <!-- see parent pom.xml for tested version -->
+</dependency>
+```
+
+On Java versions before 15, the JVM does not include native Ed25519 support.
+If your `known_hosts` file contains Ed25519 host keys or your SSH private key
+uses Ed25519, you must also add the EdDSA provider:
+
+```maven-pom
+<dependency>
+  <groupId>net.i2p.crypto</groupId>
+  <artifactId>eddsa</artifactId>
+  <version>0.3.0</version>
+</dependency>
+```
+
+##### Gradle
+
+```gradle
+implementation group: 'org.apache.sshd', name: 'sshd-core', version: '2.12.1' // see pom.xml for tested version
+```
+
+On Java versions before 15, if your `known_hosts` file contains Ed25519 host
+keys or your SSH private key uses Ed25519, you must also add the EdDSA provider:
+
+```gradle
+implementation group: 'net.i2p.crypto', name: 'eddsa', version: '0.3.0'
+```
+
+#### Example using JDBC Connection Properties
+
+```java
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
+public class ExampleApplication {
+
+  private HikariDataSource dataSource;
+
+  HikariDataSource getDataSource() {
+    HikariConfig config = new HikariConfig();
+
+    config.setJdbcUrl(String.format("jdbc:postgresql:///%s", System.getenv("ALLOYDB_DB")));
+    config.setUsername(System.getenv("ALLOYDB_USER"));
+    config.setPassword(System.getenv("ALLOYDB_PASS"));
+
+    config.addDataSourceProperty("socketFactory",
+        "com.google.cloud.alloydb.SocketFactory");
+    config.addDataSourceProperty("alloydbInstanceName",
+        System.getenv("ALLOYDB_INSTANCE_NAME"));
+
+    // SSH tunnel configuration
+    config.addDataSourceProperty("alloydbSshHost", "34.72.1.2");
+    config.addDataSourceProperty("alloydbSshUser", "myuser");
+    config.addDataSourceProperty("alloydbSshPrivateKeyPath", "/home/user/.ssh/id_rsa");
+    // Optional: specify a known hosts file (defaults to ~/.ssh/known_hosts)
+    config.addDataSourceProperty("alloydbSshKnownHostsPath", "/home/user/.ssh/known_hosts");
+
+    this.dataSource = new HikariDataSource(config);
+  }
+
+  // Use DataSource as usual ...
+
+}
+```
+
+#### Example using a Named Connector
+
+```java
+ConnectorConfig config = new ConnectorConfig.Builder()
+    .withSshHost("34.72.1.2")
+    .withSshUser("myuser")
+    .withSshPrivateKeyPath("/home/user/.ssh/id_rsa")
+    .withSshKnownHostsPath("/home/user/.ssh/known_hosts")
+    .build();
+
+ConnectorRegistry.register("my-connector", config);
+```
+
+#### Host Key Verification
+
+By default, the connector verifies the bastion host's key against
+`~/.ssh/known_hosts`. You can specify a custom known hosts file using the
+`alloydbSshKnownHostsPath` property or `withSshKnownHostsPath()` builder
+method. If no known hosts file is found, the connector will fail with an
+error — host key verification is always required.
+
+To populate your known hosts file for a GCE VM, run:
+
+```bash
+ssh-keyscan <BASTION_IP> >> ~/.ssh/known_hosts
+```
+
 ## Configuration Reference
 
 - See [Configuration Reference](configuration.md)
