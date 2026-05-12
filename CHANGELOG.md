@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.3.0...v1.3.1) (2026-05-12)
+
+
+### Dependencies
+
+* Update dependency org.postgresql:postgresql to v42.7.11 [SECURITY] ([#718](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/718)) ([270034c](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/270034c27bab470d3402f37fd0641f4a9db618be))
+
 ## [1.3.0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.2.10...v1.3.0) (2026-03-10)
 
 
