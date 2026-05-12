@@ -37,6 +37,7 @@ public class InternalConnectorRegistryTest {
   }
 
   @Test
+  @SuppressWarnings("AssertThrowsMinimizer")
   public void create_failOnInvalidInstanceName() {
     IllegalArgumentException ex =
         assertThrows(
@@ -52,6 +53,7 @@ public class InternalConnectorRegistryTest {
   }
 
   @Test
+  @SuppressWarnings("AssertThrowsMinimizer")
   public void create_failOnEmptyTargetPrincipal() {
     IllegalArgumentException ex =
         assertThrows(

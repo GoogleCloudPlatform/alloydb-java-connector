@@ -89,6 +89,7 @@ public class ITDefaultConnectionInfoRepositoryTest {
   }
 
   @Test
+  @SuppressWarnings("AssertThrowsMinimizer")
   public void testGentConnectionInfo_throwsException_forInvalidInstanceName() {
     InstanceName instanceName =
         InstanceName.parse("projects/BAD/locations/BAD/clusters/BAD/instances/BAD");

@@ -73,8 +73,8 @@ public class ServiceAccountImpersonatingCredentialFactoryTest {
     StubCredentialFactory factory = new StubCredentialFactory();
     assertThrows(
         IllegalArgumentException.class,
-        () -> {
-          new ServiceAccountImpersonatingCredentialFactory(factory, null, Collections.emptyList());
-        });
+        () ->
+            new ServiceAccountImpersonatingCredentialFactory(
+                factory, null, Collections.emptyList()));
   }
 }
