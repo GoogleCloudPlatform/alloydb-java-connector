@@ -37,11 +37,18 @@ class DefaultConnectionInfoCacheFactory implements ConnectionInfoCacheFactory {
       ConnectionInfoRepository connectionInfoRepo,
       InstanceName instanceName,
       KeyPair clientConnectorKeyPair,
-      long minRefreshDelayMs) {
+      long minRefreshDelayMs,
+      MetricRecorder metricRecorder) {
     if (refreshStrategy == RefreshStrategy.LAZY) {
-      return new LazyConnectionInfoCache(connectionInfoRepo, instanceName, clientConnectorKeyPair);
+      return new LazyConnectionInfoCache(
+          connectionInfoRepo, instanceName, clientConnectorKeyPair, metricRecorder);
     }
     return new RefreshAheadConnectionInfoCache(
-        executor, connectionInfoRepo, instanceName, clientConnectorKeyPair, minRefreshDelayMs);
+        executor,
+        connectionInfoRepo,
+        instanceName,
+        clientConnectorKeyPair,
+        minRefreshDelayMs,
+        metricRecorder);
   }
 }

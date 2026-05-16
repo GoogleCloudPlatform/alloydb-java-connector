@@ -89,7 +89,8 @@ public class RefreshAheadConnectionInfoCacheTest {
             connectionInfoRepo,
             instanceName,
             keyPair,
-            TEST_TIMEOUT_MS);
+            TEST_TIMEOUT_MS,
+            new NullMetricRecorder());
 
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
 
@@ -149,7 +150,8 @@ public class RefreshAheadConnectionInfoCacheTest {
             connectionInfoRepo,
             instanceName,
             keyPair,
-            TEST_TIMEOUT_MS);
+            TEST_TIMEOUT_MS,
+            new NullMetricRecorder());
 
     try {
       Thread.sleep(1000);
@@ -196,7 +198,8 @@ public class RefreshAheadConnectionInfoCacheTest {
             connectionInfoRepo,
             instanceName,
             keyPair,
-            TEST_TIMEOUT_MS);
+            TEST_TIMEOUT_MS,
+            new NullMetricRecorder());
 
     try {
       Thread.sleep(1000);

@@ -43,6 +43,7 @@ class Refresher {
   private final RefreshCalculator refreshCalculator;
   private final Supplier<ListenableFuture<ConnectionInfo>> refreshOperation;
   private final String name;
+  private final MetricRecorder metricRecorder;
 
   @GuardedBy("connectionInfoGuard")
   private ListenableFuture<ConnectionInfo> current;
@@ -63,12 +64,14 @@ class Refresher {
       String name,
       ListeningScheduledExecutorService executor,
       Supplier<ListenableFuture<ConnectionInfo>> refreshOperation,
-      AsyncRateLimiter rateLimiter) {
+      AsyncRateLimiter rateLimiter,
+      MetricRecorder metricRecorder) {
     this.name = name;
     this.executor = executor;
     this.refreshCalculator = new RefreshCalculator();
     this.refreshOperation = refreshOperation;
     this.rateLimiter = rateLimiter;
+    this.metricRecorder = metricRecorder;
     synchronized (connectionInfoGuard) {
       forceRefresh();
       this.current = this.next;
@@ -204,6 +207,9 @@ class Refresher {
       // This will throw an exception if the refresh attempt has failed.
       ConnectionInfo info = connectionInfoFuture.get();
 
+      // Record successful refresh
+      recordRefreshCount(TelemetryAttributes.REFRESH_SUCCESS);
+
       logger.debug(
           String.format(
               "[%s] Refresh Operation: Completed refresh with new certificate expiration at %s.",
@@ -240,6 +246,9 @@ class Refresher {
 
     } catch (ExecutionException | InterruptedException e) {
 
+      // Record failed refresh
+      recordRefreshCount(TelemetryAttributes.REFRESH_FAILURE);
+
       // No refresh retry when the TerminalException is raised.
       final Throwable cause = e.getCause();
       if (cause instanceof TerminalException) {
@@ -263,6 +272,13 @@ class Refresher {
         return next;
       }
     }
+  }
+
+  private void recordRefreshCount(String status) {
+    TelemetryAttributes attrs = new TelemetryAttributes();
+    attrs.setRefreshStatus(status);
+    attrs.setRefreshType(TelemetryAttributes.REFRESH_AHEAD_TYPE);
+    metricRecorder.recordRefreshCount(attrs);
   }
 
   void close() {

@@ -62,7 +62,8 @@ public class RefresherTest {
             "RefresherTest.testDataRetrievedSuccessfully",
             executorService,
             () -> Futures.immediateFuture(data),
-            rateLimiter);
+            rateLimiter,
+            new NullMetricRecorder());
     ConnectionInfo gotInfo = r.getConnectionInfo(TEST_TIMEOUT_MS);
     assertThat(gotInfo).isSameInstanceAs(data);
   }
@@ -76,7 +77,8 @@ public class RefresherTest {
             "RefresherTest.testRateLimiterInUse",
             executorService,
             () -> Futures.immediateFuture(data),
-            rl);
+            rl,
+            new NullMetricRecorder());
     ConnectionInfo gotInfo = r.getConnectionInfo(TEST_TIMEOUT_MS);
     assertThat(gotInfo).isSameInstanceAs(data);
     assertThat(rl.counter).isNotEqualTo(0);
@@ -89,7 +91,8 @@ public class RefresherTest {
             "RefresherTest.testInstanceFailsOnConnectionError",
             executorService,
             () -> Futures.immediateFailedFuture(new RuntimeException("always fails")),
-            rateLimiter);
+            rateLimiter,
+            new NullMetricRecorder());
     RuntimeException ex =
         assertThrows(RuntimeException.class, () -> r.getConnectionInfo(TEST_TIMEOUT_MS));
     assertThat(ex).hasMessageThat().contains("always fails");
@@ -107,7 +110,8 @@ public class RefresherTest {
               cond.pause();
               return Futures.immediateFuture(data);
             },
-            rateLimiter);
+            rateLimiter,
+            new NullMetricRecorder());
     try {
       RuntimeException ex =
           assertThrows(RuntimeException.class, () -> r.getConnectionInfo(TEST_TIMEOUT_MS));
@@ -136,7 +140,8 @@ public class RefresherTest {
               refreshCount.incrementAndGet();
               return Futures.immediateFuture(data);
             },
-            rateLimiter);
+            rateLimiter,
+            new NullMetricRecorder());
     try {
       r.getConnectionInfo(TEST_TIMEOUT_MS);
       assertThat(refreshCount.get()).isEqualTo(1);
@@ -180,7 +185,8 @@ public class RefresherTest {
               }
               return Futures.immediateFuture(data);
             },
-            rateLimiter);
+            rateLimiter,
+            new NullMetricRecorder());
 
     // Get the first data that is about to expire
     long until = System.currentTimeMillis() + 3000;
@@ -224,7 +230,8 @@ public class RefresherTest {
               refreshCount.incrementAndGet();
               return Futures.immediateFuture(refreshResult);
             },
-            rateLimiter);
+            rateLimiter,
+            new NullMetricRecorder());
 
     // Get the first data that is about to expire
     ConnectionInfo d = r.getConnectionInfo(TEST_TIMEOUT_MS);
@@ -280,7 +287,8 @@ public class RefresherTest {
               refreshCount.incrementAndGet();
               return Futures.immediateFuture(refreshResult);
             },
-            rateLimiter);
+            rateLimiter,
+            new NullMetricRecorder());
 
     refresh0.proceed();
     refresh0.waitForPauseToEnd(1000);
@@ -340,7 +348,8 @@ public class RefresherTest {
                   return Futures.immediateFuture(data);
               }
             },
-            rateLimiter);
+            rateLimiter,
+            new NullMetricRecorder());
 
     // Get the first data that is about to expire
     ConnectionInfo d = r.getConnectionInfo(TEST_TIMEOUT_MS);
@@ -403,7 +412,8 @@ public class RefresherTest {
                   return Futures.immediateFuture(data);
               }
             },
-            rateLimiter);
+            rateLimiter,
+            new NullMetricRecorder());
 
     // Get the first data that is about to expire
     ConnectionInfo d = r.getConnectionInfo(TEST_TIMEOUT_MS);
@@ -449,7 +459,8 @@ public class RefresherTest {
             "RefresherTest.testClosedInstanceDataThrowsException",
             executorService,
             () -> Futures.immediateFuture(data),
-            rateLimiter);
+            rateLimiter,
+            new NullMetricRecorder());
     r.close();
 
     assertThrows(IllegalStateException.class, () -> r.getConnectionInfo(TEST_TIMEOUT_MS));
@@ -475,7 +486,8 @@ public class RefresherTest {
               refreshCount.incrementAndGet();
               return Futures.immediateFuture(data);
             },
-            rateLimiter);
+            rateLimiter,
+            new NullMetricRecorder());
 
     // Wait for the first refresh attempt to complete.
     refresh0.proceed();
@@ -517,7 +529,8 @@ public class RefresherTest {
               refreshCount.incrementAndGet();
               return Futures.immediateFuture(refreshResult);
             },
-            rateLimiter);
+            rateLimiter,
+            new NullMetricRecorder());
 
     // Get the first data that is about to expire
     refresh1.waitForCondition(() -> r.getConnectionInfo(TEST_TIMEOUT_MS) == initialData, 1000L);
@@ -554,7 +567,8 @@ public class RefresherTest {
               refreshCount.incrementAndGet();
               return Futures.immediateFuture(data);
             },
-            rateLimiter);
+            rateLimiter,
+            new NullMetricRecorder());
 
     try {
       // Raising TerminalException stops the refresher's executor from running the next task.
@@ -600,7 +614,8 @@ public class RefresherTest {
               refreshCount.incrementAndGet();
               return Futures.immediateFuture(refreshResult);
             },
-            rateLimiter);
+            rateLimiter,
+            new NullMetricRecorder());
 
     // getConnectionInfo again, and assert the refresh operation completed.
     refresh1.waitForCondition(() -> r.getConnectionInfo(TEST_TIMEOUT_MS) == data, 1000L);
