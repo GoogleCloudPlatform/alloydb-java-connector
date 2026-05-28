@@ -32,6 +32,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import javax.net.ssl.SSLSocket;
 import org.bouncycastle.operator.OperatorCreationException;
+import org.conscrypt.Conscrypt;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -94,6 +95,53 @@ public class ITConnectorTest {
 
       socket = (SSLSocket) connector.connect(config);
 
+      assertThat(socket.getKeepAlive()).isTrue();
+      assertThat(socket.getTcpNoDelay()).isTrue();
+    } finally {
+      if (socket != null) {
+        socket.close();
+      }
+    }
+  }
+
+  /**
+   * The same connection against the real instance, served by Conscrypt rather than the JRE's
+   * provider. This is the only coverage that the server-side proxy completes a handshake with
+   * BoringSSL and that the connector's Conscrypt trust manager accepts the real certificate chain;
+   * ConnectionSocketConscryptTest can only use a local peer.
+   *
+   * <p>It does not assert that a post-quantum group was negotiated. No JSSE API reports the
+   * negotiated group, and pinning the client to a hybrid group here would change TLS behavior for
+   * everything else in this JVM, including the Admin API calls. See docs/pqc.md for how to confirm
+   * the group on the wire.
+   */
+  @Test
+  public void testConnect_withConscrypt_createsSocketConnection() throws IOException {
+    // The scheduled GraalVM job runs this class -- the native profile's surefire include list
+    // matches IT*.java -- and Conscrypt cannot load there. See NativeImage.
+    NativeImage.assumeConscryptIsLoadable();
+    SSLSocket socket = null;
+    ConnectionConfig config =
+        new ConnectionConfig.Builder()
+            .withInstanceName(InstanceName.parse(instanceName))
+            .withTlsProvider(TlsProvider.CONSCRYPT)
+            .build();
+    try {
+      Connector connector =
+          new Connector(
+              config.getConnectorConfig(),
+              executor,
+              connectionInfoRepo,
+              RsaKeyPairGenerator.generateKeyPair(),
+              new DefaultConnectionInfoCacheFactory(RefreshStrategy.REFRESH_AHEAD),
+              new ConcurrentHashMap<>(),
+              accessTokenSupplier,
+              USER_AGENT);
+
+      socket = (SSLSocket) connector.connect(config);
+
+      assertThat(Conscrypt.isConscrypt(socket)).isTrue();
+      assertThat(socket.getSession().getProtocol()).isEqualTo("TLSv1.3");
       assertThat(socket.getKeepAlive()).isTrue();
       assertThat(socket.getTcpNoDelay()).isTrue();
     } finally {

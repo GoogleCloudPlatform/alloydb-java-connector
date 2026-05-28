@@ -195,6 +195,14 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- Serves the SSLContext for post-quantum key exchange before JDK 27. Already on the
+         classpath transitively via google-cloud-alloydb; declared here so the version the
+         connector needs is the one that resolves. See docs/pqc.md. -->
+    <dependency>
+      <groupId>org.conscrypt</groupId>
+      <artifactId>conscrypt-openjdk-uber</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>com.zaxxer</groupId>
       <artifactId>HikariCP</artifactId>
