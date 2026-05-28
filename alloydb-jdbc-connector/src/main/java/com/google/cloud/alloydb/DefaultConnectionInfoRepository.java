@@ -45,8 +45,8 @@ import java.util.List;
 
 class DefaultConnectionInfoRepository implements ConnectionInfoRepository, Closeable {
 
-  private static final String OPENSSL_PUBLIC_KEY_BEGIN = "-----BEGIN RSA PUBLIC KEY-----";
-  private static final String OPENSSL_PUBLIC_KEY_END = "-----END RSA PUBLIC KEY-----";
+  private static final String OPENSSL_PUBLIC_KEY_BEGIN = "-----BEGIN PUBLIC KEY-----";
+  private static final String OPENSSL_PUBLIC_KEY_END = "-----END PUBLIC KEY-----";
   private static final String X_509 = "X.509";
   private static final int PEM_LINE_LENGTH = 64;
   private static final List<Code> TERMINAL_STATUS_CODES =
