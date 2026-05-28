@@ -19,6 +19,7 @@ package com.google.cloud.alloydb;
 import com.google.cloud.alloydb.connectors.v1.MetadataExchangeRequest;
 import com.google.cloud.alloydb.connectors.v1.MetadataExchangeResponse;
 import com.google.cloud.alloydb.connectors.v1.MetadataExchangeResponse.ResponseCode;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -33,8 +34,10 @@ import java.security.KeyStore.PasswordProtection;
 import java.security.KeyStore.PrivateKeyEntry;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -152,12 +155,53 @@ class ConnectionSocket {
 
       // Now, create a TLS 1.3 SSLContext initialized with the KeyManager and the TrustManager,
       // and create the SSL Socket.
-      SSLContext sslContext = SSLContext.getInstance(TLS_1_3);
+      SSLContext sslContext = getSslContextInstance();
       sslContext.init(keyManagers, trustManagers, new SecureRandom());
       return (SSLSocket) sslContext.getSocketFactory().createSocket();
     } catch (GeneralSecurityException | IOException ex) {
       throw new RuntimeException("Unable to create an SSL Context for the instance.", ex);
     }
+  }
+
+  private static final String BC_PROVIDER = "BCJSSE";
+
+  // Sticky bit: flipped to true the first time we observe BCJSSE in the JCA registry, so we
+  // skip the lookup on subsequent calls. While false we re-scan on every call, so applications
+  // that register BCJSSE after their first connection still get PQC on later connections. If a
+  // later getInstance throws NoSuchProviderException (provider unregistered) or
+  // NoSuchAlgorithmException (provider can't serve TLSv1.3), we flip back to false and fall
+  // through to the default JSSE provider rather than failing the connection.
+  private static volatile boolean bcProviderDetected;
+
+  static SSLContext getSslContextInstance() throws NoSuchAlgorithmException {
+    boolean useBc = bcProviderDetected;
+    if (!useBc && Security.getProvider(BC_PROVIDER) != null) {
+      logger.info("Using Bouncy Castle JSSE provider (BCJSSE) for AlloyDB TLS connection.");
+      bcProviderDetected = true;
+      useBc = true;
+    }
+
+    if (useBc) {
+      try {
+        return SSLContext.getInstance(TLS_1_3, BC_PROVIDER);
+      } catch (NoSuchProviderException e) {
+        logger.warn(
+            "Cached BCJSSE provider is no longer available. Falling back to default JSSE provider.");
+        bcProviderDetected = false;
+      } catch (NoSuchAlgorithmException e) {
+        logger.warn(
+            "BCJSSE provider does not support {}. Falling back to default JSSE provider.",
+            TLS_1_3);
+        bcProviderDetected = false;
+      }
+    }
+
+    return SSLContext.getInstance(TLS_1_3);
+  }
+
+  @VisibleForTesting
+  static void resetProviderCache() {
+    bcProviderDetected = false;
   }
 
   private TrustManager[] initializeTrustManager(X509Certificate caCertificate)
