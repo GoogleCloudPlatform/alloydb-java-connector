@@ -268,3 +268,5 @@ These properties configure the connection to a specific AlloyDB instance.
 |------------------|---------------------|---------------------|
 | alloydbInstanceName (required) | The AlloyDB Instance database server. |  `projects/<PROJECT>/locations/<REGION>/clusters/<CLUSTER>/instances/<INSTANCE>` |
 | alloydbNamedConnector | The name of the named connector created using `ConnectorRegistry.register()` | `my-configuration` |
+| alloydbIpType | The IP type to connect to, one of `PRIVATE` (the default), `PUBLIC`, or `PSC`. | `PUBLIC` |
+| alloydbTlsProvider | The JSSE provider for the mTLS connection, one of `JDK` (the default, the JRE's provider), `AUTO` (Bouncy Castle when registered, otherwise the JRE's), or `BOUNCY_CASTLE` (require Bouncy Castle). Needed for post-quantum key exchange before JDK 27. See the [Post-Quantum Cryptography Guide](pqc.md). | `BOUNCY_CASTLE` |

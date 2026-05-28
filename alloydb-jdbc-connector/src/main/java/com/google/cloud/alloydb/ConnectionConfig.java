@@ -36,13 +36,16 @@ class ConnectionConfig {
   public static final String ENABLE_IAM_AUTH_PROPERTY = "alloydbEnableIAMAuth";
   public static final String ALLOYDB_IP_TYPE = "alloydbIpType";
   public static final String ALLOYDB_REFRESH_STRATEGY = "alloydbRefreshStrategy";
+  public static final String ALLOYDB_TLS_PROVIDER = "alloydbTlsProvider";
   public static final AuthType DEFAULT_AUTH_TYPE = AuthType.PASSWORD;
   public static final IpType DEFAULT_IP_TYPE = IpType.PRIVATE;
+  public static final TlsProvider DEFAULT_TLS_PROVIDER = TlsProvider.JDK;
   private final InstanceName instanceName;
   private final String namedConnector;
   private final ConnectorConfig connectorConfig;
   private final AuthType authType;
   private final IpType ipType;
+  private final TlsProvider tlsProvider;
 
   /** Create a new ConnectionConfig from the well known JDBC Connection properties. */
   static ConnectionConfig fromConnectionProperties(Properties props) {
@@ -69,6 +72,12 @@ class ConnectionConfig {
     if (props.getProperty(ALLOYDB_IP_TYPE) != null) {
       ipType = IpType.valueOf(props.getProperty(ALLOYDB_IP_TYPE).toUpperCase(Locale.getDefault()));
     }
+    TlsProvider tlsProvider = DEFAULT_TLS_PROVIDER;
+    if (props.getProperty(ALLOYDB_TLS_PROVIDER) != null) {
+      tlsProvider =
+          TlsProvider.valueOf(
+              props.getProperty(ALLOYDB_TLS_PROVIDER).toUpperCase(Locale.getDefault()));
+    }
     RefreshStrategy refreshStrategy = RefreshStrategy.REFRESH_AHEAD;
     if (props.getProperty(ALLOYDB_REFRESH_STRATEGY) != null) {
       refreshStrategy =
@@ -81,6 +90,7 @@ class ConnectionConfig {
         namedConnector,
         authType,
         ipType,
+        tlsProvider,
         new ConnectorConfig.Builder()
             .withTargetPrincipal(targetPrincipal)
             .withDelegates(delegates)
@@ -91,6 +101,10 @@ class ConnectionConfig {
             .build());
   }
 
+  // Note: tlsProvider is deliberately left out of equals and hashCode. Connector keys its
+  // ConnectionInfoCache on this class, and the JSSE provider has no bearing on the certificates
+  // that cache holds. Including it would give one instance two caches -- and so two refresh
+  // schedules and two sets of Admin API calls -- whenever connections differ only by provider.
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -124,17 +138,20 @@ class ConnectionConfig {
       String namedConnector,
       AuthType authType,
       IpType ipType,
+      TlsProvider tlsProvider,
       ConnectorConfig connectorConfig) {
     this.instanceName = instanceName;
     this.namedConnector = namedConnector;
     this.connectorConfig = connectorConfig;
     this.authType = authType;
     this.ipType = ipType;
+    this.tlsProvider = tlsProvider;
   }
 
   /** Creates a new instance of the ConnectionConfig with an updated connectorConfig. */
   ConnectionConfig withConnectorConfig(ConnectorConfig config) {
-    return new ConnectionConfig(instanceName, namedConnector, authType, ipType, config);
+    return new ConnectionConfig(
+        instanceName, namedConnector, authType, ipType, tlsProvider, config);
   }
 
   InstanceName getInstanceName() {
@@ -157,6 +174,10 @@ class ConnectionConfig {
     return ipType;
   }
 
+  TlsProvider getTlsProvider() {
+    return tlsProvider;
+  }
+
   /** The builder for the ConnectionConfig. */
   static class Builder {
     private InstanceName instanceName;
@@ -164,6 +185,7 @@ class ConnectionConfig {
     private ConnectorConfig connectorConfig = new ConnectorConfig.Builder().build();
     private AuthType authType = DEFAULT_AUTH_TYPE;
     private IpType ipType = DEFAULT_IP_TYPE;
+    private TlsProvider tlsProvider = DEFAULT_TLS_PROVIDER;
 
     Builder withInstanceName(InstanceName instanceName) {
       this.instanceName = instanceName;
@@ -190,8 +212,14 @@ class ConnectionConfig {
       return this;
     }
 
+    Builder withTlsProvider(TlsProvider tlsProvider) {
+      this.tlsProvider = tlsProvider;
+      return this;
+    }
+
     ConnectionConfig build() {
-      return new ConnectionConfig(instanceName, namedConnector, authType, ipType, connectorConfig);
+      return new ConnectionConfig(
+          instanceName, namedConnector, authType, ipType, tlsProvider, connectorConfig);
     }
   }
 }
