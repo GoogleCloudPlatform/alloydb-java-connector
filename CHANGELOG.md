@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.2](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.3.1...v1.3.2) (2026-07-15)
+
+
+### Bug Fixes
+
+* use algorithm-agnostic PKIX headers ([#722](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/722)) ([41c85cf](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/41c85cf79d992cfb93df0ef4593d0d673239e984))
+
+
+### Dependencies
+
+* Update Non-major dependencies ([#725](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/725)) ([cb433c0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/cb433c0d24ce98901fda7d15cebb15d8dfe929eb))
+
 ## [1.3.1](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.3.0...v1.3.1) (2026-05-21)
 
 
