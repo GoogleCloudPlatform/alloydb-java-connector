@@ -15,11 +15,14 @@
  */
 package com.google.cloud.alloydb;
 
+import com.google.cloud.alloydb.v1alpha.InstanceName;
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.KeyPair;
+import javax.net.ssl.SSLException;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +40,8 @@ class Connector {
   private final ConnectorConfig config;
   private final AccessTokenSupplier accessTokenSupplier;
   private final String userAgents;
+  private final String clientUid;
+  private final ConcurrentHashMap<String, MetricRecorder> metricRecorders;
 
   Connector(
       ConnectorConfig config,
@@ -55,6 +60,8 @@ class Connector {
     this.instances = instances;
     this.accessTokenSupplier = accessTokenSupplier;
     this.userAgents = userAgents;
+    this.clientUid = UUID.randomUUID().toString();
+    this.metricRecorders = new ConcurrentHashMap<>();
   }
 
   public ConnectorConfig getConfig() {
@@ -66,33 +73,89 @@ class Connector {
     this.instances.forEach((key, c) -> c.close());
     this.instances.clear();
     this.connectionInfoRepo.close();
+    // Shut down all metric recorders
+    this.metricRecorders.forEach((key, mr) -> mr.shutdown());
+    this.metricRecorders.clear();
   }
 
   Socket connect(ConnectionConfig config) throws IOException {
-    ConnectionInfoCache connectionInfoCache = getConnection(config);
-    ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
+    long startTimeMs = System.nanoTime() / 1_000_000;
+
+    InstanceName instanceName = config.getInstanceName();
+    MetricRecorder metricRecorder = getMetricRecorder(instanceName);
+
+    TelemetryAttributes attrs = new TelemetryAttributes();
+    attrs.setIamAuthn(config.getAuthType() == AuthType.IAM);
+    attrs.setRefreshType(
+        this.config.getRefreshStrategy() == RefreshStrategy.LAZY
+            ? TelemetryAttributes.REFRESH_LAZY_TYPE
+            : TelemetryAttributes.REFRESH_AHEAD_TYPE);
+
+    // Check if this instance was already cached
+    boolean cacheHit = instances.containsKey(config);
+    attrs.setCacheHit(cacheHit);
+
+    ConnectionInfoCache connectionInfoCache = getConnection(config, metricRecorder);
+    ConnectionInfo connectionInfo;
+    try {
+      connectionInfo = connectionInfoCache.getConnectionInfo();
+    } catch (Exception e) {
+      attrs.setDialStatus(TelemetryAttributes.DIAL_CACHE_ERROR);
+      metricRecorder.recordDialCount(attrs);
+      throw e;
+    }
 
     try {
       ConnectionSocket socket =
           new ConnectionSocket(
               connectionInfo, config, clientConnectorKeyPair, accessTokenSupplier, userAgents);
-      return socket.connect();
+      Socket s = socket.connect();
+
+      // Record successful dial metrics
+      attrs.setDialStatus(TelemetryAttributes.DIAL_SUCCESS);
+      long latencyMs = (System.nanoTime() / 1_000_000) - startTimeMs;
+      metricRecorder.recordDialCount(attrs);
+      metricRecorder.recordDialLatency((double) latencyMs, attrs);
+      metricRecorder.recordOpenConnection(attrs);
+
+      return new InstrumentedSocket(s, metricRecorder, attrs);
+    } catch (SSLException e) {
+      logger.debug(
+          String.format(
+              "[%s] TLS handshake failed! Trigger a refresh.", config.getInstanceName()));
+      attrs.setDialStatus(TelemetryAttributes.DIAL_TLS_ERROR);
+      metricRecorder.recordDialCount(attrs);
+      connectionInfoCache.forceRefresh();
+      throw e;
+    } catch (UserConfigException e) {
+      logger.debug(
+          String.format(
+              "[%s] Connection failed due to user configuration error.", config.getInstanceName()));
+      attrs.setDialStatus(TelemetryAttributes.DIAL_USER_ERROR);
+      metricRecorder.recordDialCount(attrs);
+      throw e;
+    } catch (MetadataExchangeException e) {
+      logger.debug(
+          String.format(
+              "[%s] Metadata exchange failed! Trigger a refresh.", config.getInstanceName()));
+      attrs.setDialStatus(TelemetryAttributes.DIAL_MDX_ERROR);
+      metricRecorder.recordDialCount(attrs);
+      connectionInfoCache.forceRefresh();
+      throw e;
     } catch (IOException e) {
       logger.debug(
           String.format(
               "[%s] Socket connection failed! Trigger a refresh.", config.getInstanceName()));
+      attrs.setDialStatus(TelemetryAttributes.DIAL_TCP_ERROR);
+      metricRecorder.recordDialCount(attrs);
       connectionInfoCache.forceRefresh();
-      // The Socket methods above will throw an IOException or a SocketException (subclass of
-      // IOException). Catch that exception, trigger a refresh, and then throw it again so
-      // the caller sees the problem, but the connector will have a refreshed certificate on the
-      // next invocation.
       throw e;
     }
   }
 
-  ConnectionInfoCache getConnection(ConnectionConfig config) {
+  ConnectionInfoCache getConnection(ConnectionConfig config, MetricRecorder metricRecorder) {
     ConnectionInfoCache instance =
-        instances.computeIfAbsent(config, k -> createConnectionInfo(config));
+        instances.computeIfAbsent(config, k -> createConnectionInfo(config, metricRecorder));
 
     // If the client certificate has expired (as when the computer goes to
     // sleep, and the refresh cycle cannot run), force a refresh immediately.
@@ -104,14 +167,34 @@ class Connector {
     return instance;
   }
 
-  private ConnectionInfoCache createConnectionInfo(ConnectionConfig config) {
+  private ConnectionInfoCache createConnectionInfo(ConnectionConfig config,
+      MetricRecorder metricRecorder) {
     logger.debug(String.format("[%s] Connection info added to cache.", config.getInstanceName()));
+
+    InstanceName instanceName = config.getInstanceName();
+
     return connectionInfoCacheFactory.create(
         this.executor,
         this.connectionInfoRepo,
-        config.getInstanceName(),
+        instanceName,
         this.clientConnectorKeyPair,
-        MIN_RATE_LIMIT_MS);
+        MIN_RATE_LIMIT_MS,
+        metricRecorder);
+  }
+
+  private MetricRecorder getMetricRecorder(InstanceName instanceName) {
+    String key = instanceName.toString();
+    return metricRecorders.computeIfAbsent(
+        key,
+        k ->
+            MetricRecorderFactory.newMetricRecorder(
+                this.config.isEnableBuiltinTelemetry(),
+                instanceName.getProject(),
+                instanceName.getLocation(),
+                instanceName.getCluster(),
+                instanceName.getInstance(),
+                clientUid
+            ));
   }
 
   @Override

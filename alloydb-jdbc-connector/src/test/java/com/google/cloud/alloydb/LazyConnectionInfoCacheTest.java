@@ -49,7 +49,8 @@ public class LazyConnectionInfoCacheTest {
   public void testGetConnectionInfo() {
     InMemoryConnectionInfoRepo repo = new InMemoryConnectionInfoRepo();
     repo.addResponses(() -> buildConnectionInfoWithClientCertExpiration(ONE_HOUR_FROM_NOW));
-    LazyConnectionInfoCache cache = new LazyConnectionInfoCache(repo, TEST_INSTANCE_NAME, keyPair);
+    LazyConnectionInfoCache cache =
+        new LazyConnectionInfoCache(repo, TEST_INSTANCE_NAME, keyPair, new NullMetricRecorder());
 
     ConnectionInfo connectionInfo = cache.getConnectionInfo();
     assertThat(connectionInfo.getClientCertificate().getNotAfter().toInstant())
@@ -62,7 +63,8 @@ public class LazyConnectionInfoCacheTest {
     repo.addResponses(
         () -> buildConnectionInfoWithClientCertExpiration(ONE_HOUR_AGO),
         () -> buildConnectionInfoWithClientCertExpiration(ONE_HOUR_FROM_NOW));
-    LazyConnectionInfoCache cache = new LazyConnectionInfoCache(repo, TEST_INSTANCE_NAME, keyPair);
+    LazyConnectionInfoCache cache =
+        new LazyConnectionInfoCache(repo, TEST_INSTANCE_NAME, keyPair, new NullMetricRecorder());
 
     // seed internal cache with first response from connection info repo (an expired certificate).
     ConnectionInfo connectionInfo = cache.getConnectionInfo();
@@ -80,7 +82,8 @@ public class LazyConnectionInfoCacheTest {
     repo.addResponses(
         () -> buildConnectionInfoWithClientCertExpiration(ONE_HOUR_FROM_NOW),
         () -> buildConnectionInfoWithClientCertExpiration(TWO_HOURS_FROM_NOW));
-    LazyConnectionInfoCache cache = new LazyConnectionInfoCache(repo, TEST_INSTANCE_NAME, keyPair);
+    LazyConnectionInfoCache cache =
+        new LazyConnectionInfoCache(repo, TEST_INSTANCE_NAME, keyPair, new NullMetricRecorder());
 
     // seed the internal cache
     ConnectionInfo connectionInfo = cache.getConnectionInfo();
@@ -97,7 +100,9 @@ public class LazyConnectionInfoCacheTest {
   @Test
   public void testClose() {
     LazyConnectionInfoCache cache =
-        new LazyConnectionInfoCache(new InMemoryConnectionInfoRepo(), TEST_INSTANCE_NAME, keyPair);
+        new LazyConnectionInfoCache(
+            new InMemoryConnectionInfoRepo(), TEST_INSTANCE_NAME, keyPair,
+            new NullMetricRecorder());
 
     cache.close();
 

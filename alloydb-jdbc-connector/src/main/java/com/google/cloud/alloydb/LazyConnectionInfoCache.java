@@ -35,6 +35,7 @@ public class LazyConnectionInfoCache implements ConnectionInfoCache {
   private final ConnectionInfoRepository connectionInfoRepo;
   private final InstanceName instanceURI;
   private final KeyPair clientConnectorKeyPair;
+  private final MetricRecorder metricRecorder;
 
   private final Object connectionInfoGuard = new Object();
 
@@ -47,10 +48,12 @@ public class LazyConnectionInfoCache implements ConnectionInfoCache {
   public LazyConnectionInfoCache(
       ConnectionInfoRepository connectionInfoRepo,
       InstanceName instanceURI,
-      KeyPair clientConnectorKeyPair) {
+      KeyPair clientConnectorKeyPair,
+      MetricRecorder metricRecorder) {
     this.connectionInfoRepo = connectionInfoRepo;
     this.instanceURI = instanceURI;
     this.clientConnectorKeyPair = clientConnectorKeyPair;
+    this.metricRecorder = metricRecorder;
   }
 
   @Override
@@ -72,13 +75,16 @@ public class LazyConnectionInfoCache implements ConnectionInfoCache {
           ListenableFuture<ConnectionInfo> infoFuture =
               connectionInfoRepo.getConnectionInfo(instanceURI, clientConnectorKeyPair);
           this.connectionInfo = infoFuture.get(CLIENT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+          recordRefreshCount(TelemetryAttributes.REFRESH_SUCCESS);
         } catch (TerminalException e) {
+          recordRefreshCount(TelemetryAttributes.REFRESH_FAILURE);
           logger.debug(
               String.format(
                   "[%s] Lazy Refresh Operation: Failed with a terminal error.", instanceURI),
               e);
           throw e;
         } catch (Exception e) {
+          recordRefreshCount(TelemetryAttributes.REFRESH_FAILURE);
           throw new RuntimeException(
               String.format("[%s] Refresh Operation: Failed!", instanceURI), e);
         }
@@ -97,10 +103,17 @@ public class LazyConnectionInfoCache implements ConnectionInfoCache {
     return Instant.now().isAfter(expiration.minus(RefreshCalculator.DEFAULT_REFRESH_BUFFER));
   }
 
+  private void recordRefreshCount(String status) {
+    TelemetryAttributes attrs = new TelemetryAttributes();
+    attrs.setRefreshStatus(status);
+    attrs.setRefreshType(TelemetryAttributes.REFRESH_LAZY_TYPE);
+    metricRecorder.recordRefreshCount(attrs);
+  }
+
   /** Force a new refresh of the instance data if the client certificate has expired. */
   @Override
   public void forceRefresh() {
-    // invalidate connectionInfo so that the next call to getConectionInfo() will
+    // invalidate connectionInfo so that the next call to getConnectionInfo() will
     // fetch new data.
     synchronized (connectionInfoGuard) {
       if (closed) {

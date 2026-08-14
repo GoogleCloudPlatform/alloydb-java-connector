@@ -159,6 +159,28 @@
         <artifactId>failureaccess</artifactId>
         <version>1.0.3</version>
       </dependency>
+      <dependency>
+        <groupId>io.opentelemetry</groupId>
+        <artifactId>opentelemetry-bom</artifactId>
+        <version>1.46.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.google.cloud.opentelemetry</groupId>
+        <artifactId>exporter-metrics</artifactId>
+        <version>0.36.0</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.cloud.opentelemetry</groupId>
+        <artifactId>shared-resourcemapping</artifactId>
+        <version>0.36.0</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.semconv</groupId>
+        <artifactId>opentelemetry-semconv</artifactId>
+        <version>1.32.0</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
