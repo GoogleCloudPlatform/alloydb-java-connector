@@ -209,6 +209,26 @@ enum InternalConnectorRegistry implements Closeable {
   private Connector createConnector(ConnectorConfig config) {
     CredentialFactory instanceCredentialFactory =
         credentialFactoryProvider.getInstanceCredentialFactory(config);
+
+    String universeDomain = config.getUniverseDomain();
+    String credentialsUniverse;
+    try {
+      credentialsUniverse = instanceCredentialFactory.getCredentials().getUniverseDomain();
+    } catch (IOException e) {
+      throw new IllegalStateException("Failed to fetch the credential universe domain", e);
+    }
+
+    if (credentialsUniverse != null
+        && universeDomain != null
+        && !credentialsUniverse.equals(universeDomain)) {
+      throw new IllegalStateException(
+          String.format(
+              "The configured universe domain (%s) does not match "
+                  + "the credential universe domain (%s). If you haven't "
+                  + "configured the universe domain explicitly, `googleapis.com` "
+                  + "is the default.",
+              universeDomain, credentialsUniverse));
+    }
     DefaultConnectionInfoRepositoryFactory connectionInfoRepositoryFactory =
         new DefaultConnectionInfoRepositoryFactory(executor, getUserAgents());
     DefaultConnectionInfoRepository connectionInfoRepository =

@@ -27,6 +27,7 @@ import java.util.Properties;
 
 class ConnectionConfig {
   public static final String ALLOYDB_INSTANCE_NAME = "alloydbInstanceName";
+  public static final String ALLOYDB_UNIVERSE_DOMAIN = "alloydbUniverseDomain";
   public static final String ALLOYDB_TARGET_PRINCIPAL = "alloydbTargetPrincipal";
   public static final String ALLOYDB_DELEGATES = "alloydbDelegates";
   public static final String ALLOYDB_NAMED_CONNECTOR = "alloydbNamedConnector";
@@ -81,13 +82,18 @@ class ConnectionConfig {
         namedConnector,
         authType,
         ipType,
-        new ConnectorConfig.Builder()
+            String universeDomain = props.getProperty(ConnectionConfig.ALLOYDB_UNIVERSE_DOMAIN);
+    if (universeDomain == null || universeDomain.isEmpty()) {
+      universeDomain = System.getenv("GOOGLE_CLOUD_UNIVERSE_DOMAIN");
+    }
+    new ConnectorConfig.Builder()
             .withTargetPrincipal(targetPrincipal)
             .withDelegates(delegates)
             .withAdminServiceEndpoint(adminServiceEndpoint)
             .withGoogleCredentialsPath(googleCredentialsPath)
             .withQuotaProject(quotaProject)
             .withRefreshStrategy(refreshStrategy)
+            .withUniverseDomain(universeDomain)
             .build());
   }
 
