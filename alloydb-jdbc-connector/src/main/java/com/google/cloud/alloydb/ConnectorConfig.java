@@ -126,6 +126,7 @@ public class ConnectorConfig {
     private String targetPrincipal;
     private List<String> delegates;
     private String adminServiceEndpoint;
+    private String universeDomain;
     private Supplier<GoogleCredentials> googleCredentialsSupplier;
     private GoogleCredentials googleCredentials;
     private String googleCredentialsPath;
@@ -146,6 +147,11 @@ public class ConnectorConfig {
       this.adminServiceEndpoint = adminServiceEndpoint;
       return this;
     }
+
+    public Builder withUniverseDomain(String universeDomain) {
+      this.universeDomain = universeDomain;
+      return this;
+    } 
 
     public Builder withGoogleCredentialsSupplier(
         Supplier<GoogleCredentials> googleCredentialsSupplier) {
