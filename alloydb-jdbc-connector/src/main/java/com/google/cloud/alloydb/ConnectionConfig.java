@@ -82,7 +82,7 @@ class ConnectionConfig {
         namedConnector,
         authType,
         ipType,
-            String universeDomain = props.getProperty(ConnectionConfig.ALLOYDB_UNIVERSE_DOMAIN);
+            String universeDomain = props.getProperty(ConnectionConfig.ALLOYDB_UNIVERSE_DOMAIN));
     if (universeDomain == null || universeDomain.isEmpty()) {
       universeDomain = System.getenv("GOOGLE_CLOUD_UNIVERSE_DOMAIN");
     }
@@ -94,7 +94,7 @@ class ConnectionConfig {
             .withQuotaProject(quotaProject)
             .withRefreshStrategy(refreshStrategy)
             .withUniverseDomain(universeDomain)
-            .build());
+            .build();
   }
 
   @Override
