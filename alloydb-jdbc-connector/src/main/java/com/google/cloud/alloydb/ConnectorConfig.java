@@ -42,6 +42,7 @@ public class ConnectorConfig {
       String targetPrincipal,
       List<String> delegates,
       String adminServiceEndpoint,
+      String universeDomain,
       Supplier<GoogleCredentials> googleCredentialsSupplier,
       GoogleCredentials googleCredentials,
       String googleCredentialsPath,
