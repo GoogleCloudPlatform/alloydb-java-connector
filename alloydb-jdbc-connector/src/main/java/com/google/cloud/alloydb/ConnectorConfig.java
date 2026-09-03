@@ -31,6 +31,7 @@ public class ConnectorConfig {
   private final String targetPrincipal;
   private final List<String> delegates;
   private final String adminServiceEndpoint;
+  private final String universeDomain;
   private final Supplier<GoogleCredentials> googleCredentialsSupplier;
   private final GoogleCredentials googleCredentials;
   private final String googleCredentialsPath;
@@ -49,6 +50,7 @@ public class ConnectorConfig {
     this.targetPrincipal = targetPrincipal;
     this.delegates = delegates;
     this.adminServiceEndpoint = adminServiceEndpoint;
+    this.universeDomain = universeDomain;
     this.googleCredentialsSupplier = googleCredentialsSupplier;
     this.googleCredentials = googleCredentials;
     this.googleCredentialsPath = googleCredentialsPath;
@@ -68,6 +70,7 @@ public class ConnectorConfig {
     return Objects.equal(targetPrincipal, that.targetPrincipal)
         && Objects.equal(delegates, that.delegates)
         && Objects.equal(adminServiceEndpoint, that.adminServiceEndpoint)
+        && Objects.equal(universeDomain, that.universeDomain)
         && Objects.equal(googleCredentialsSupplier, that.googleCredentialsSupplier)
         && Objects.equal(googleCredentials, that.googleCredentials)
         && Objects.equal(googleCredentialsPath, that.googleCredentialsPath)
@@ -81,6 +84,7 @@ public class ConnectorConfig {
         targetPrincipal,
         delegates,
         adminServiceEndpoint,
+        universeDomain,
         googleCredentialsSupplier,
         googleCredentials,
         googleCredentialsPath,
@@ -98,6 +102,10 @@ public class ConnectorConfig {
 
   public String getAdminServiceEndpoint() {
     return adminServiceEndpoint;
+  }
+
+  public String getUniverseDomain() {
+    return universeDomain;
   }
 
   public Supplier<GoogleCredentials> getGoogleCredentialsSupplier() {
@@ -192,6 +200,10 @@ public class ConnectorConfig {
       if (googleCredentialsSupplier != null) {
         googleCredsCount++;
       }
+      if (universeDomain != null and adminServiceEndpoint != null) {
+        throw new IllegalStateException(
+            "Invalid configuration, cannot set both universeDomain and adminServiceEndpoint");
+      }
       if (googleCredsCount > 1) {
         throw new IllegalStateException(
             "Invalid configuration, more than one GoogleCredentials field has a value "
@@ -202,6 +214,7 @@ public class ConnectorConfig {
           targetPrincipal,
           delegates,
           adminServiceEndpoint,
+          universeDomain,
           googleCredentialsSupplier,
           googleCredentials,
           googleCredentialsPath,
