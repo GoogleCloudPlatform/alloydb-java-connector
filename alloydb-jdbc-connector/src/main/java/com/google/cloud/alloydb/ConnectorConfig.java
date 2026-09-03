@@ -200,7 +200,7 @@ public class ConnectorConfig {
       if (googleCredentialsSupplier != null) {
         googleCredsCount++;
       }
-      if (universeDomain != null and adminServiceEndpoint != null) {
+      if (universeDomain != null && adminServiceEndpoint != null) {
         throw new IllegalStateException(
             "Invalid configuration, cannot set both universeDomain and adminServiceEndpoint");
       }

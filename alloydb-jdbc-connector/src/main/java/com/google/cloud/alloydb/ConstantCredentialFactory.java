@@ -16,8 +16,6 @@
 
 package com.google.cloud.alloydb;
 
-import java.io.IOException;
-
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.GoogleCredentials;
 import java.util.Arrays;
