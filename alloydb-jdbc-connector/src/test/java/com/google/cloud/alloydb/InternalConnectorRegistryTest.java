@@ -145,8 +145,7 @@ public class InternalConnectorRegistryTest {
 
     IllegalStateException ex =
         assertThrows(
-            IllegalStateException.class,
-            () -> InternalConnectorRegistry.INSTANCE.connect(config));
+            IllegalStateException.class, () -> InternalConnectorRegistry.INSTANCE.connect(config));
     assertThat(ex)
         .hasMessageThat()
         .contains(

@@ -160,7 +160,7 @@ public class ConnectorConfig {
     public Builder withUniverseDomain(String universeDomain) {
       this.universeDomain = universeDomain;
       return this;
-    } 
+    }
 
     public Builder withGoogleCredentialsSupplier(
         Supplier<GoogleCredentials> googleCredentialsSupplier) {

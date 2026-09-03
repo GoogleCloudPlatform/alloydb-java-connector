@@ -28,9 +28,6 @@ import java.util.Map;
  * to create new clients in the Connector.
  */
 class AlloyDBAdminClientFactory {
-
-  private static final String DEFAULT_ENDPOINT = "alloydb.googleapis.com:443";
-
   static AlloyDBAdminClient create(
       FixedCredentialsProvider credentialsProvider, ConnectorConfig config, String userAgents)
       throws IOException {
