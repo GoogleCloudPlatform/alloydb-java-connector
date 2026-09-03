@@ -81,6 +81,28 @@ public class ConnectorConfigTest {
   }
 
   @Test
+  public void testNotEqual_withUniverseDomainNotEqual() {
+    ConnectorConfig k1 =
+        new ConnectorConfig.Builder().withUniverseDomain("test1.googleapis.com").build();
+    ConnectorConfig k2 =
+        new ConnectorConfig.Builder().withUniverseDomain("test2.googleapis.com").build();
+
+    assertThat(k1).isNotEqualTo(k2);
+    assertThat(k1.hashCode()).isNotEqualTo(k2.hashCode());
+  }
+
+  @Test
+  public void testEqual_withUniverseDomainEqual() {
+    ConnectorConfig k1 =
+        new ConnectorConfig.Builder().withUniverseDomain("test.googleapis.com").build();
+    ConnectorConfig k2 =
+        new ConnectorConfig.Builder().withUniverseDomain("test.googleapis.com").build();
+
+    assertThat(k1).isEqualTo(k2);
+    assertThat(k1.hashCode()).isEqualTo(k2.hashCode());
+  }
+
+  @Test
   public void testNotEqual_withTargetPrincipalNotEqual() {
     ConnectorConfig k1 =
         new ConnectorConfig.Builder().withTargetPrincipal("joe@example.com").build();
@@ -192,6 +214,25 @@ public class ConnectorConfigTest {
   }
 
   @Test
+  public void testBuild_withUniverseDomain() {
+    final String wantUniverseDomain = "test-universe.domain";
+    ConnectorConfig cc =
+        new ConnectorConfig.Builder().withUniverseDomain(wantUniverseDomain).build();
+    assertThat(cc.getUniverseDomain()).isEqualTo(wantUniverseDomain);
+  }
+
+  @Test
+  public void testBuild_failsWhenAdminServiceEndpointAndUniverseDomainAreSet() {
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            new ConnectorConfig.Builder()
+                .withAdminServiceEndpoint("alloydb.googleapis.com:443")
+                .withUniverseDomain("test-universe.domain")
+                .build());
+  }
+
+  @Test
   @SuppressWarnings("AssertThrowsMinimizer")
   public void testBuild_failsWhenManyGoogleCredentialFieldsSet() {
     final Supplier<GoogleCredentials> wantGoogleCredentialSupplier =
@@ -234,7 +275,7 @@ public class ConnectorConfigTest {
   public void testHashCode() {
     final String wantTargetPrincipal = "test@example.com";
     final List<String> wantDelegates = Arrays.asList("test1@example.com", "test2@example.com");
-    final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";
+    final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";\
     final String wantGoogleCredentialsPath = "/path/to/credentials";
     final String wantQuotaProject = "myNewProject";
     ConnectorConfig cc =
@@ -253,6 +294,7 @@ public class ConnectorConfigTest {
                 wantTargetPrincipal,
                 wantDelegates,
                 wantAdminServiceEndpoint,
+                null, // universeDomain
                 null, // googleCredentialsSupplier
                 null, // googleCredentials
                 wantGoogleCredentialsPath,

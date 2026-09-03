@@ -110,6 +110,51 @@ public class InternalConnectorRegistryTest {
   }
 
   @Test
+  public void registerConnection_failWithMismatchedUniverseDomain() {
+    String namedConnector = "custom-universe";
+    ConnectorConfig config =
+        new ConnectorConfig.Builder().withUniverseDomain("custom-universe.domain").build();
+
+    IllegalStateException ex =
+        assertThrows(
+            IllegalStateException.class,
+            () -> InternalConnectorRegistry.INSTANCE.register(namedConnector, config));
+    assertThat(ex)
+        .hasMessageThat()
+        .contains(
+            "The configured universe domain (custom-universe.domain) does not match "
+                + "the credential universe domain (googleapis.com)");
+  }
+
+  @Test
+  public void registerConnection_successWithMatchingUniverseDomain() {
+    String namedConnector = "googleapis-universe";
+    ConnectorConfig config =
+        new ConnectorConfig.Builder().withUniverseDomain("googleapis.com").build();
+
+    InternalConnectorRegistry.INSTANCE.register(namedConnector, config);
+    InternalConnectorRegistry.INSTANCE.close(namedConnector);
+  }
+
+  @Test
+  public void connect_failWithMismatchedUniverseDomain() {
+    Properties connProps = new Properties();
+    connProps.setProperty(ConnectionConfig.ALLOYDB_INSTANCE_NAME, INSTANCE_NAME);
+    connProps.setProperty(ConnectionConfig.ALLOYDB_UNIVERSE_DOMAIN, "custom-universe.domain");
+    ConnectionConfig config = ConnectionConfig.fromConnectionProperties(connProps);
+
+    IllegalStateException ex =
+        assertThrows(
+            IllegalStateException.class,
+            () -> InternalConnectorRegistry.INSTANCE.connect(config));
+    assertThat(ex)
+        .hasMessageThat()
+        .contains(
+            "The configured universe domain (custom-universe.domain) does not match "
+                + "the credential universe domain (googleapis.com)");
+  }
+
+  @Test
   public void closeNamedConnection_failWhenNotFound() {
     String namedConnector = "a-connection";
     // Assert that you can't close a connection that doesn't exist
