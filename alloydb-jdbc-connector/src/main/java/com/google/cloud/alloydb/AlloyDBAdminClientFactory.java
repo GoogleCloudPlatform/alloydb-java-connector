@@ -36,18 +36,17 @@ class AlloyDBAdminClientFactory {
       throws IOException {
     AlloyDBAdminSettings.Builder settingsBuilder = AlloyDBAdminSettings.newBuilder();
 
-    String endpoint = config.getAdminServiceEndpoint();
-    if (endpoint == null || endpoint.isEmpty()) {
-      endpoint = DEFAULT_ENDPOINT;
-    }
-
     Map<String, String> headers =
         ImmutableMap.<String, String>builder().put("user-agent", userAgents).build();
 
     settingsBuilder
-        .setEndpoint(endpoint)
         .setHeaderProvider(FixedHeaderProvider.create(headers))
         .setCredentialsProvider(credentialsProvider);
+    if (config.getAdminServiceEndpoint() != null) {
+      settingsBuilder.setEndpoint(config.getAdminServiceEndpoint());
+    } else if (config.getUniverseDomain() != null) {
+      settingsBuilder.setUniverseDomain(config.getUniverseDomain());
+    }
 
     if (config.getQuotaProject() != null) {
       settingsBuilder.setQuotaProjectId(config.getQuotaProject());
