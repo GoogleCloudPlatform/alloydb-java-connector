@@ -275,7 +275,7 @@ public class ConnectorConfigTest {
   public void testHashCode() {
     final String wantTargetPrincipal = "test@example.com";
     final List<String> wantDelegates = Arrays.asList("test1@example.com", "test2@example.com");
-    final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";\
+    final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";
     final String wantGoogleCredentialsPath = "/path/to/credentials";
     final String wantQuotaProject = "myNewProject";
     ConnectorConfig cc =
