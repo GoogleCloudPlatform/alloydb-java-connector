@@ -223,13 +223,11 @@ public class ConnectorConfigTest {
 
   @Test
   public void testBuild_failsWhenAdminServiceEndpointAndUniverseDomainAreSet() {
-    assertThrows(
-        IllegalStateException.class,
-        () ->
-            new ConnectorConfig.Builder()
-                .withAdminServiceEndpoint("alloydb.googleapis.com:443")
-                .withUniverseDomain("test-universe.domain")
-                .build());
+    ConnectorConfig.Builder builder =
+        new ConnectorConfig.Builder()
+            .withAdminServiceEndpoint("alloydb.googleapis.com:443")
+            .withUniverseDomain("test-universe.domain");
+    assertThrows(IllegalStateException.class, builder::build);
   }
 
   @Test
