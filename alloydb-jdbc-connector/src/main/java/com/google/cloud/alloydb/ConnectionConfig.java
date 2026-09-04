@@ -27,6 +27,7 @@ import java.util.Properties;
 
 class ConnectionConfig {
   public static final String ALLOYDB_INSTANCE_NAME = "alloydbInstanceName";
+  public static final String ALLOYDB_UNIVERSE_DOMAIN = "alloydbUniverseDomain";
   public static final String ALLOYDB_TARGET_PRINCIPAL = "alloydbTargetPrincipal";
   public static final String ALLOYDB_DELEGATES = "alloydbDelegates";
   public static final String ALLOYDB_NAMED_CONNECTOR = "alloydbNamedConnector";
@@ -51,6 +52,7 @@ class ConnectionConfig {
     final InstanceName instanceName = InstanceName.parse(instanceNameStr);
     final String namedConnector = props.getProperty(ALLOYDB_NAMED_CONNECTOR);
     final String adminServiceEndpoint = props.getProperty(ALLOYDB_ADMIN_SERVICE_ENDPOINT);
+    final String universeDomain = props.getProperty(ALLOYDB_UNIVERSE_DOMAIN);
     final String targetPrincipal = props.getProperty(ALLOYDB_TARGET_PRINCIPAL);
     final String delegatesStr = props.getProperty(ALLOYDB_DELEGATES);
     final List<String> delegates;
@@ -85,6 +87,7 @@ class ConnectionConfig {
             .withTargetPrincipal(targetPrincipal)
             .withDelegates(delegates)
             .withAdminServiceEndpoint(adminServiceEndpoint)
+            .withUniverseDomain(universeDomain)
             .withGoogleCredentialsPath(googleCredentialsPath)
             .withQuotaProject(quotaProject)
             .withRefreshStrategy(refreshStrategy)

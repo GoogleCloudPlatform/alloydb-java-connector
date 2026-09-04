@@ -73,6 +73,19 @@ public class ConnectionConfigTest {
   }
 
   @Test
+  public void testConfigFromProps_withUniverseDomain() {
+    final String wantUniverseDomain = "test-universe.test";
+
+    Properties props = new Properties();
+    props.setProperty(ConnectionConfig.ALLOYDB_INSTANCE_NAME, INSTANCE_NAME);
+    props.setProperty(ConnectionConfig.ALLOYDB_UNIVERSE_DOMAIN, wantUniverseDomain);
+
+    ConnectionConfig config = ConnectionConfig.fromConnectionProperties(props);
+
+    assertThat(config.getConnectorConfig().getUniverseDomain()).isEqualTo(wantUniverseDomain);
+  }
+
+  @Test
   public void testConfigFromBuilder() {
     final InstanceName wantInstance = InstanceName.parse(INSTANCE_NAME);
     final String wantNamedConnector = "my-connection";
@@ -113,6 +126,22 @@ public class ConnectionConfigTest {
     assertThat(config.getConnectorConfig().getQuotaProject()).isEqualTo(wantQuotaProject);
     assertThat(config.getAuthType()).isEqualTo(wantAuthType);
     assertThat(config.getIpType()).isEqualTo(IpType.PRIVATE);
+  }
+
+  @Test
+  public void testConfigFromBuilder_withUniverseDomain() {
+    final String wantUniverseDomain = "test-universe.test";
+
+    ConnectorConfig connectorConfig =
+        new ConnectorConfig.Builder().withUniverseDomain(wantUniverseDomain).build();
+
+    ConnectionConfig config =
+        new ConnectionConfig.Builder()
+            .withInstanceName(InstanceName.parse(INSTANCE_NAME))
+            .withConnectorConfig(connectorConfig)
+            .build();
+
+    assertThat(config.getConnectorConfig().getUniverseDomain()).isEqualTo(wantUniverseDomain);
   }
 
   @Test

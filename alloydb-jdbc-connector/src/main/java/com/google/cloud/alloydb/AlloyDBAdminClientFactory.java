@@ -28,26 +28,22 @@ import java.util.Map;
  * to create new clients in the Connector.
  */
 class AlloyDBAdminClientFactory {
-
-  private static final String DEFAULT_ENDPOINT = "alloydb.googleapis.com:443";
-
   static AlloyDBAdminClient create(
       FixedCredentialsProvider credentialsProvider, ConnectorConfig config, String userAgents)
       throws IOException {
     AlloyDBAdminSettings.Builder settingsBuilder = AlloyDBAdminSettings.newBuilder();
 
-    String endpoint = config.getAdminServiceEndpoint();
-    if (endpoint == null || endpoint.isEmpty()) {
-      endpoint = DEFAULT_ENDPOINT;
-    }
-
     Map<String, String> headers =
         ImmutableMap.<String, String>builder().put("user-agent", userAgents).build();
 
     settingsBuilder
-        .setEndpoint(endpoint)
         .setHeaderProvider(FixedHeaderProvider.create(headers))
         .setCredentialsProvider(credentialsProvider);
+    if (config.getAdminServiceEndpoint() != null) {
+      settingsBuilder.setEndpoint(config.getAdminServiceEndpoint());
+    } else if (config.getUniverseDomain() != null) {
+      settingsBuilder.setUniverseDomain(config.getUniverseDomain());
+    }
 
     if (config.getQuotaProject() != null) {
       settingsBuilder.setQuotaProjectId(config.getQuotaProject());
