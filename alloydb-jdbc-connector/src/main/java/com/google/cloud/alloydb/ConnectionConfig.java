@@ -52,7 +52,10 @@ class ConnectionConfig {
     final InstanceName instanceName = InstanceName.parse(instanceNameStr);
     final String namedConnector = props.getProperty(ALLOYDB_NAMED_CONNECTOR);
     final String adminServiceEndpoint = props.getProperty(ALLOYDB_ADMIN_SERVICE_ENDPOINT);
-    final String universeDomain = props.getProperty(ALLOYDB_UNIVERSE_DOMAIN);
+    String universeDomain = props.getProperty(ALLOYDB_UNIVERSE_DOMAIN);
+    if (universeDomain == null || universeDomain.isEmpty()) {
+      universeDomain = System.getenv("GOOGLE_CLOUD_UNIVERSE_DOMAIN");
+    }
     final String targetPrincipal = props.getProperty(ALLOYDB_TARGET_PRINCIPAL);
     final String delegatesStr = props.getProperty(ALLOYDB_DELEGATES);
     final List<String> delegates;
