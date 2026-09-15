@@ -15,11 +15,13 @@
  */
 package com.google.cloud.alloydb;
 
+import com.google.cloud.alloydb.v1alpha.InstanceName;
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.KeyPair;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +39,8 @@ class Connector {
   private final ConnectorConfig config;
   private final AccessTokenSupplier accessTokenSupplier;
   private final String userAgents;
+  private final String clientUid;
+  private final ConcurrentHashMap<InstanceName, MetricRecorder> metricRecorders;
 
   Connector(
       ConnectorConfig config,
@@ -55,6 +59,8 @@ class Connector {
     this.instances = instances;
     this.accessTokenSupplier = accessTokenSupplier;
     this.userAgents = userAgents;
+    this.clientUid = UUID.randomUUID().toString();
+    this.metricRecorders = new ConcurrentHashMap<>();
   }
 
   public ConnectorConfig getConfig() {
@@ -66,38 +72,64 @@ class Connector {
     this.instances.forEach((key, c) -> c.close());
     this.instances.clear();
     this.connectionInfoRepo.close();
+    // Shut down all metric recorders. One recorder failing to shut down must not leave the rest
+    // of them running.
+    this.metricRecorders.forEach(
+        (key, mr) -> {
+          try {
+            mr.shutdown();
+          } catch (RuntimeException e) {
+            logger.debug(String.format("[%s] Metric recorder failed to shut down.", key), e);
+          }
+        });
+    this.metricRecorders.clear();
   }
 
   Socket connect(ConnectionConfig config) throws IOException {
-    // Telemetry is wired through the connector but not yet recorded anywhere. The recorder that
-    // reports to Cloud Monitoring arrives in a later change.
-    MetricRecorder metricRecorder = new NullMetricRecorder();
+    long startNanos = System.nanoTime();
+
+    InstanceName instanceName = config.getInstanceName();
+    MetricRecorder metricRecorder = getMetricRecorder(instanceName);
+
+    boolean iamAuthn = config.getAuthType() == AuthType.IAM;
+    // Whether the connector already held connection info for this instance before this dial.
+    boolean cacheHit = instances.containsKey(config);
 
     ConnectionInfoCache connectionInfoCache = getConnection(config, metricRecorder);
-    ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
+    ConnectionInfo connectionInfo;
+    try {
+      connectionInfo = connectionInfoCache.getConnectionInfo();
+    } catch (RuntimeException e) {
+      recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_CACHE_ERROR);
+      throw e;
+    }
 
     try {
       ConnectionSocket socket =
           new ConnectionSocket(
               connectionInfo, config, clientConnectorKeyPair, accessTokenSupplier, userAgents);
-      return socket.connect();
+      Socket s = socket.connect();
+
+      recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_SUCCESS);
+      metricRecorder.recordDialLatency((System.nanoTime() - startNanos) / 1_000_000.0);
+      return s;
     } catch (UserConfigException e) {
       logger.debug(
-          String.format(
-              "[%s] Connection failed due to user configuration error.", config.getInstanceName()));
+          String.format("[%s] Connection failed due to user configuration error.", instanceName));
       // A misconfigured connection will fail the same way on every attempt, so there is nothing
       // to be gained by refreshing the connection info.
+      recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_USER_ERROR);
       throw e;
     } catch (MetadataExchangeException e) {
       logger.debug(
-          String.format(
-              "[%s] Metadata exchange failed! Trigger a refresh.", config.getInstanceName()));
+          String.format("[%s] Metadata exchange failed! Trigger a refresh.", instanceName));
+      recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_MDX_ERROR);
       connectionInfoCache.forceRefresh();
       throw e;
     } catch (IOException e) {
       logger.debug(
-          String.format(
-              "[%s] Socket connection failed! Trigger a refresh.", config.getInstanceName()));
+          String.format("[%s] Socket connection failed! Trigger a refresh.", instanceName));
+      recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_TCP_ERROR);
       connectionInfoCache.forceRefresh();
       // The Socket methods above will throw an IOException or a SocketException (subclass of
       // IOException). Catch that exception, trigger a refresh, and then throw it again so
@@ -105,6 +137,35 @@ class Connector {
       // next invocation.
       throw e;
     }
+  }
+
+  private static void recordDial(
+      MetricRecorder metricRecorder, boolean iamAuthn, boolean cacheHit, String status) {
+    metricRecorder.recordDialCount(TelemetryAttributes.forDial(iamAuthn, cacheHit, status));
+  }
+
+  private MetricRecorder getMetricRecorder(InstanceName instanceName) {
+    MetricRecorder existing = metricRecorders.get(instanceName);
+    if (existing != null) {
+      return existing;
+    }
+    // Building a recorder stands up a gRPC channel, which is far too much work to do inside
+    // computeIfAbsent while holding a bin lock. Build it outside the map and discard the loser of
+    // any race instead.
+    MetricRecorder created =
+        MetricRecorderFactory.newMetricRecorder(
+            this.config.isEnableBuiltinTelemetry(),
+            instanceName.getProject(),
+            instanceName.getLocation(),
+            instanceName.getCluster(),
+            instanceName.getInstance(),
+            clientUid);
+    MetricRecorder raced = metricRecorders.putIfAbsent(instanceName, created);
+    if (raced != null) {
+      created.shutdown();
+      return raced;
+    }
+    return created;
   }
 
   ConnectionInfoCache getConnection(ConnectionConfig config, MetricRecorder metricRecorder) {
