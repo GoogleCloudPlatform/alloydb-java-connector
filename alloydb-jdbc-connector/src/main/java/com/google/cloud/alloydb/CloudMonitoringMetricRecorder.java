@@ -16,10 +16,6 @@
 
 package com.google.cloud.alloydb;
 
-import com.google.cloud.monitoring.v3.MetricServiceSettings;
-import com.google.cloud.opentelemetry.metric.GoogleCloudMetricExporter;
-import com.google.cloud.opentelemetry.metric.MetricConfiguration;
-import com.google.cloud.opentelemetry.metric.MonitoredResourceDescription;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.DoubleHistogram;
@@ -27,13 +23,10 @@ import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.metrics.LongUpDownCounter;
 import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.sdk.metrics.SdkMeterProvider;
-import io.opentelemetry.sdk.metrics.export.MetricExporter;
 import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader;
 import io.opentelemetry.sdk.resources.Resource;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
 /** Records telemetry metrics using OpenTelemetry with Cloud Monitoring exporter. */
@@ -41,7 +34,6 @@ class CloudMonitoringMetricRecorder implements MetricRecorder {
 
   static final String METER_NAME = "alloydb.googleapis.com/client/connector";
   static final String MONITORED_RESOURCE = "alloydb.googleapis.com/InstanceClient";
-  static final String METRIC_PREFIX = "alloydb.googleapis.com/client/connector";
 
   // Resource attribute keys.
   static final String RESOURCE_TYPE_KEY = "gcp.resource_type";
@@ -64,10 +56,6 @@ class CloudMonitoringMetricRecorder implements MetricRecorder {
   private static final long DEFAULT_EXPORT_INTERVAL_MS = 60_000;
   private static final long SHUTDOWN_TIMEOUT_SECONDS = 10;
 
-  // Increase the max inbound metadata size from the default of 8 KB. The Cloud Monitoring
-  // API response headers can exceed the default, causing gRPC HeaderListSizeException errors.
-  private static final int MAX_INBOUND_METADATA_SIZE = 16 * 1024; // 16 KB
-
   // AttributeKey.stringKey() allocates a fresh key on every call, so hoist the keys used on the
   // recording paths to constants rather than rebuilding them per recording.
   private static final AttributeKey<String> CONNECTOR_TYPE_KEY =
@@ -86,6 +74,7 @@ class CloudMonitoringMetricRecorder implements MetricRecorder {
   private static final Attributes CONNECTOR_TYPE_ONLY =
       Attributes.of(CONNECTOR_TYPE_KEY, CONNECTOR_TYPE);
 
+  private final SharedMetricExporter sharedExporter;
   private final SdkMeterProvider meterProvider;
   private final LongCounter dialCount;
   private final DoubleHistogram dialLatency;
@@ -108,36 +97,21 @@ class CloudMonitoringMetricRecorder implements MetricRecorder {
                 AttributeKey.stringKey(INSTANCE_ID), instance,
                 AttributeKey.stringKey(CLIENT_UID), clientUid));
 
-    MonitoredResourceDescription monitoredResourceDescription =
-        new MonitoredResourceDescription(
-            MONITORED_RESOURCE,
-            new HashSet<>(
-                Arrays.asList(PROJECT_ID, LOCATION, CLUSTER_ID, INSTANCE_ID, CLIENT_UID)));
+    // Every instance needs its own meter provider because the monitored resource above is fixed
+    // per provider, but the gRPC channel and the export thread underneath are shared per project.
+    this.sharedExporter = SharedMetricExporter.acquire(projectId);
 
-    MetricServiceSettings metricServiceSettings =
-        MetricServiceSettings.newBuilder()
-            .setTransportChannelProvider(
-                MetricServiceSettings.defaultGrpcTransportProviderBuilder()
-                    .setMaxInboundMetadataSize(MAX_INBOUND_METADATA_SIZE)
-                    .build())
-            .build();
-
-    MetricConfiguration configuration =
-        MetricConfiguration.builder()
-            .setProjectId(projectId)
-            .setPrefix(METRIC_PREFIX)
-            .setUseServiceTimeSeries(true)
-            .setMonitoredResourceDescription(monitoredResourceDescription)
-            .setMetricServiceSettings(metricServiceSettings)
-            .setResourceAttributesFilter(key -> false)
-            .setInstrumentationLibraryLabelsEnabled(false)
-            .build();
-    MetricExporter exporter = GoogleCloudMetricExporter.createWithConfiguration(configuration);
-
-    PeriodicMetricReader reader =
-        PeriodicMetricReader.builder(exporter)
-            .setInterval(Duration.ofMillis(DEFAULT_EXPORT_INTERVAL_MS))
-            .build();
+    PeriodicMetricReader reader;
+    try {
+      reader =
+          PeriodicMetricReader.builder(sharedExporter.exporterView())
+              .setExecutor(sharedExporter.schedulerView())
+              .setInterval(Duration.ofMillis(DEFAULT_EXPORT_INTERVAL_MS))
+              .build();
+    } catch (RuntimeException | Error e) {
+      sharedExporter.release();
+      throw e;
+    }
 
     this.meterProvider =
         SdkMeterProvider.builder().setResource(resource).registerMetricReader(reader).build();
@@ -159,7 +133,11 @@ class CloudMonitoringMetricRecorder implements MetricRecorder {
 
   @Override
   public void shutdown() {
-    meterProvider.shutdown().join(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    try {
+      meterProvider.shutdown().join(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    } finally {
+      sharedExporter.release();
+    }
   }
 
   private static Attributes dialAttributes(TelemetryAttributes attrs) {
