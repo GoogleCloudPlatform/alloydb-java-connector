@@ -54,11 +54,28 @@ class FakeSslServer {
   private static final String X_509 = "X.509";
   private static final String ROOT_CA_CERT = "rootCaCert";
   private static final int IO_TIMEOUT_MS = 30000;
+  private static final MetadataExchangeResponse OK_RESPONSE =
+      MetadataExchangeResponse.newBuilder().setResponseCode(ResponseCode.OK).build();
   private String message;
   private Thread thread;
+  private volatile MetadataExchangeResponse metadataExchangeResponse = OK_RESPONSE;
 
   FakeSslServer(String message) {
     this.message = message;
+  }
+
+  /** Makes every subsequent metadata exchange fail with the given error. */
+  void failMetadataExchange(String error) {
+    this.metadataExchangeResponse =
+        MetadataExchangeResponse.newBuilder()
+            .setResponseCode(ResponseCode.ERROR)
+            .setError(error)
+            .build();
+  }
+
+  /** Restores the default behavior of accepting every metadata exchange. */
+  void succeedMetadataExchange() {
+    this.metadataExchangeResponse = OK_RESPONSE;
   }
 
   int start(final String ip) throws InterruptedException {
@@ -89,8 +106,6 @@ class FakeSslServer {
 
                 pickedPort.set(sslServerSocket.getLocalPort());
                 countDownLatch.countDown();
-                MetadataExchangeResponse response =
-                    MetadataExchangeResponse.newBuilder().setResponseCode(ResponseCode.OK).build();
                 for (; ; ) {
                   SSLSocket socket = (SSLSocket) sslServerSocket.accept();
                   socket.startHandshake();
@@ -102,6 +117,7 @@ class FakeSslServer {
                   int reqSize = in.readInt();
                   byte[] reqData = new byte[reqSize];
                   in.readFully(reqData);
+                  MetadataExchangeResponse response = metadataExchangeResponse;
                   DataOutputStream out =
                       new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
                   out.writeInt(response.getSerializedSize());

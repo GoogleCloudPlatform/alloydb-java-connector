@@ -103,7 +103,7 @@ class ConnectionSocket {
     }
 
     if (address == null || address.isEmpty()) {
-      throw new RuntimeException(
+      throw new UserConfigException(
           String.format(
               "Instance does not have an address matching type: %s", connectionConfig.getIpType()));
     }
@@ -111,7 +111,7 @@ class ConnectionSocket {
     logger.debug(String.format("[%s] Connecting to instance.", address));
 
     SSLParameters sslParameters = socket.getSSLParameters();
-    // Set HTTPS as the the endpoint identification algorithm
+    // Set HTTPS as the endpoint identification algorithm
     // in order to verify the identity of the certificate as
     // suggested at https://stackoverflow.com/a/17979954/927514
     sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
@@ -185,8 +185,7 @@ class ConnectionSocket {
         null, // don't load the key store from an input stream
         null // there is no password
         );
-    List<Certificate> chain = new ArrayList<>();
-    chain.addAll(certificateChain);
+    List<Certificate> chain = new ArrayList<>(certificateChain);
     Certificate[] chainArray = chain.toArray(new Certificate[] {});
     PrivateKeyEntry privateKeyEntry = new PrivateKeyEntry(privateKey, chainArray);
     clientAuthenticationKeyStore.setEntry(
@@ -251,13 +250,13 @@ class ConnectionSocket {
     // Clear the timeout.
     socket.setSoTimeout(0);
 
-    // Parse the response and raise a RuntimeException if it is not OK.
+    // Parse the response and raise a MetadataExchangeException if it is not OK.
     MetadataExchangeResponse response = MetadataExchangeResponse.parseFrom(respData);
     if (response == null || !response.getResponseCode().equals(ResponseCode.OK)) {
       String error = response == null ? "no response" : response.getError();
       logger.debug(String.format("Metadata exchange failed: %s", error));
 
-      throw new RuntimeException(
+      throw new MetadataExchangeException(
           response != null ? response.getError() : "Metadata exchange response is null.");
     }
 

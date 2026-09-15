@@ -77,6 +77,19 @@ class Connector {
           new ConnectionSocket(
               connectionInfo, config, clientConnectorKeyPair, accessTokenSupplier, userAgents);
       return socket.connect();
+    } catch (UserConfigException e) {
+      logger.debug(
+          String.format(
+              "[%s] Connection failed due to user configuration error.", config.getInstanceName()));
+      // A misconfigured connection will fail the same way on every attempt, so there is nothing
+      // to be gained by refreshing the connection info.
+      throw e;
+    } catch (MetadataExchangeException e) {
+      logger.debug(
+          String.format(
+              "[%s] Metadata exchange failed! Trigger a refresh.", config.getInstanceName()));
+      connectionInfoCache.forceRefresh();
+      throw e;
     } catch (IOException e) {
       logger.debug(
           String.format(
