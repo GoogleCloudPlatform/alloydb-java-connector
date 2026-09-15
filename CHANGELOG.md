@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.3.3...v1.4.0) (2026-09-15)
+
+
+### Features
+
+* Add WithUniverseDomain / alloydbUniverseDomain support for TPC … ([#734](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/734)) ([a65fc3a](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/a65fc3a20f0c456e08527c3bdf63979b7c58a167))
+
+
+### Dependencies
+
+* Update Non-major dependencies ([#732](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/732)) ([573033d](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/573033d74478e179ddf4ddce3a0441ac0163d90f))
+
 ## [1.3.3](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.3.2...v1.3.3) (2026-08-14)
 
 
