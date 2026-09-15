@@ -35,13 +35,15 @@ class RefreshAheadConnectionInfoCache implements ConnectionInfoCache {
       ConnectionInfoRepository connectionInfoRepo,
       InstanceName instanceName,
       KeyPair clientConnectorKeyPair,
-      long minRefreshDelayMs) {
+      long minRefreshDelayMs,
+      MetricRecorder metricRecorder) {
     this.refresher =
         new Refresher(
             instanceName.toString(),
             executor,
             () -> connectionInfoRepo.getConnectionInfo(instanceName, clientConnectorKeyPair),
-            new AsyncRateLimiter(minRefreshDelayMs));
+            new AsyncRateLimiter(minRefreshDelayMs),
+            metricRecorder);
   }
 
   /** Returns the most recent connection info. */

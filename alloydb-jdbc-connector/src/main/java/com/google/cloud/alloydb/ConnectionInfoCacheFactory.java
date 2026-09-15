@@ -26,5 +26,6 @@ interface ConnectionInfoCacheFactory {
       ConnectionInfoRepository connectionInfoRepo,
       InstanceName instanceName,
       KeyPair clientConnectorKeyPair,
-      long minRefreshDelayMs);
+      long minRefreshDelayMs,
+      MetricRecorder metricRecorder);
 }
