@@ -32,12 +32,17 @@ This library provides a [socket factory][socket-factory] for use with the
    as a socket factory
 
 For information on configuring a connection, see the [documentation][jdbc-doc].
+Post-quantum key exchange is automatic on JDK 27 and later. On JDK 17 through
+JDK 26 it can be enabled explicitly; see the
+[Post-Quantum Cryptography Guide][pqc-doc]. JDK 11 and earlier cannot negotiate
+a post-quantum group at all.
 
 If you're using Spring Boot, consider using the [Spring Boot AlloyDB starter][spring-boot].
 
 [socket-factory]: https://docs.oracle.com/javase/8/docs/api/javax/net/SocketFactory.html
 [postgres-driver]: https://jdbc.postgresql.org/
 [jdbc-doc]: docs/jdbc.md
+[pqc-doc]: docs/pqc.md
 [spring-boot]: https://googlecloudplatform.github.io/spring-cloud-gcp/5.3.0/reference/html/index.html#alloydb
 
 ### Configuring IAM permissions

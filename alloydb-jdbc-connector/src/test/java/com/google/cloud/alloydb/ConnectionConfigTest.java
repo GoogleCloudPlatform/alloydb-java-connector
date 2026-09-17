@@ -55,6 +55,7 @@ public class ConnectionConfigTest {
     props.setProperty(ConnectionConfig.ALLOYDB_QUOTA_PROJECT, wantQuotaProject);
     props.setProperty(ConnectionConfig.ALLOYDB_IP_TYPE, ipType);
     props.setProperty(ConnectionConfig.ALLOYDB_REFRESH_STRATEGY, refreshStrategy);
+    props.setProperty(ConnectionConfig.ALLOYDB_TLS_PROVIDER, "bouncy_castle");
 
     ConnectionConfig config = ConnectionConfig.fromConnectionProperties(props);
 
@@ -70,6 +71,18 @@ public class ConnectionConfigTest {
     assertThat(config.getIpType()).isEqualTo(IpType.PUBLIC);
     assertThat(config.getConnectorConfig().getRefreshStrategy())
         .isEqualTo(RefreshStrategy.REFRESH_AHEAD);
+    assertThat(config.getTlsProvider()).isEqualTo(TlsProvider.BOUNCY_CASTLE);
+  }
+
+  @Test
+  public void testTlsProviderDefaultsToJdk() {
+    Properties props = new Properties();
+    props.setProperty(ConnectionConfig.ALLOYDB_INSTANCE_NAME, INSTANCE_NAME);
+
+    ConnectionConfig config = ConnectionConfig.fromConnectionProperties(props);
+
+    // Registering BCJSSE elsewhere in an application must not move AlloyDB connections onto it.
+    assertThat(config.getTlsProvider()).isEqualTo(TlsProvider.JDK);
   }
 
   @Test
@@ -113,6 +126,7 @@ public class ConnectionConfigTest {
             .withConnectorConfig(connectorConfig)
             .withAuthType(wantAuthType)
             .withIpType(ipType)
+            .withTlsProvider(TlsProvider.JDK)
             .build();
 
     assertThat(config.getInstanceName()).isEqualTo(wantInstance);
@@ -126,6 +140,7 @@ public class ConnectionConfigTest {
     assertThat(config.getConnectorConfig().getQuotaProject()).isEqualTo(wantQuotaProject);
     assertThat(config.getAuthType()).isEqualTo(wantAuthType);
     assertThat(config.getIpType()).isEqualTo(IpType.PRIVATE);
+    assertThat(config.getTlsProvider()).isEqualTo(TlsProvider.JDK);
   }
 
   @Test
@@ -244,6 +259,28 @@ public class ConnectionConfigTest {
 
     assertThat(k1).isNotEqualTo(k2);
     assertThat(k1.hashCode()).isNotEqualTo(k2.hashCode());
+  }
+
+  /**
+   * Connector keys its ConnectionInfoCache on ConnectionConfig. The TLS provider has no bearing on
+   * the certificates in that cache, so two configs that differ only by provider must share one
+   * cache entry rather than starting a second refresh schedule for the same instance.
+   */
+  @Test
+  public void testEqual_withTlsProviderNotEqual() {
+    ConnectionConfig k1 =
+        new ConnectionConfig.Builder()
+            .withInstanceName(InstanceName.parse(INSTANCE_NAME))
+            .withTlsProvider(TlsProvider.JDK)
+            .build();
+    ConnectionConfig k2 =
+        new ConnectionConfig.Builder()
+            .withInstanceName(InstanceName.parse(INSTANCE_NAME))
+            .withTlsProvider(TlsProvider.BOUNCY_CASTLE)
+            .build();
+
+    assertThat(k1).isEqualTo(k2);
+    assertThat(k1.hashCode()).isEqualTo(k2.hashCode());
   }
 
   @Test

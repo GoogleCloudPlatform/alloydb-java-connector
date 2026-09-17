@@ -187,6 +187,14 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- Exercises the BCJSSE code path in ConnectionSocket. Applications that want
+         post-quantum key exchange add this themselves; see docs/pqc.md. -->
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bctls-jdk18on</artifactId>
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-inprocess</artifactId>

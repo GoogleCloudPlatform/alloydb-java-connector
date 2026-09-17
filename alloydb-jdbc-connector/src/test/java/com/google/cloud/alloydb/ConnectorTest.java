@@ -28,8 +28,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.security.Security;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -68,6 +71,36 @@ public class ConnectorTest {
     Socket socket = connector.connect(config);
 
     assertThat(readLine(socket)).isEqualTo(SERVER_MESSAGE);
+  }
+
+  /**
+   * End-to-end coverage of the BCJSSE path: a BCJSSE SSLContext, key and trust managers from the
+   * default provider, SNI, HTTPS endpoint identification and the metadata exchange all have to work
+   * together. See ConnectionSocketBouncyCastleTest for the certificate identity checks.
+   */
+  @Test
+  public void create_successfulPrivateConnection_withBouncyCastle() throws IOException {
+    ProviderSnapshot bcJsse = ProviderSnapshot.of("BCJSSE");
+    ProviderSnapshot bcJce = ProviderSnapshot.of(BouncyCastleProvider.PROVIDER_NAME);
+    BouncyCastleProvider bcProvider = new BouncyCastleProvider();
+    Security.addProvider(bcProvider);
+    Security.addProvider(new BouncyCastleJsseProvider(bcProvider));
+    try {
+      MockAlloyDBAdminGrpc mock = new MockAlloyDBAdminGrpc("127.0.0.1", IpType.PRIVATE);
+      ConnectionConfig config =
+          new ConnectionConfig.Builder()
+              .withInstanceName(InstanceName.parse(INSTANCE_NAME))
+              .withTlsProvider(TlsProvider.BOUNCY_CASTLE)
+              .build();
+      Connector connector = newConnector(config.getConnectorConfig(), mock);
+
+      Socket socket = connector.connect(config);
+
+      assertThat(readLine(socket)).isEqualTo(SERVER_MESSAGE);
+    } finally {
+      bcJsse.restore();
+      bcJce.restore();
+    }
   }
 
   @Test

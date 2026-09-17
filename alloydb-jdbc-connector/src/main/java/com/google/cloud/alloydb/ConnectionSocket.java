@@ -19,6 +19,7 @@ package com.google.cloud.alloydb;
 import com.google.cloud.alloydb.connectors.v1.MetadataExchangeRequest;
 import com.google.cloud.alloydb.connectors.v1.MetadataExchangeResponse;
 import com.google.cloud.alloydb.connectors.v1.MetadataExchangeResponse.ResponseCode;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -33,8 +34,10 @@ import java.security.KeyStore.PasswordProtection;
 import java.security.KeyStore.PrivateKeyEntry;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -42,11 +45,13 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SNIHostName;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
@@ -57,11 +62,21 @@ class ConnectionSocket {
 
   private static final Logger logger = LoggerFactory.getLogger(ConnectionSocket.class);
   private static final String TLS_1_3 = "TLSv1.3";
+  private static final String BC_PROVIDER = "BCJSSE";
+  private static final String PQC_DOC =
+      "https://github.com/GoogleCloudPlatform/alloydb-java-connector/blob/main/docs/pqc.md";
   private static final String X_509 = "X.509";
   private static final String ROOT_CA_CERT = "rootCaCert";
   private static final String CLIENT_CERT = "clientCert";
   private static final int IO_TIMEOUT_MS = 30000;
   private static final int SERVER_SIDE_PROXY_PORT = 5433;
+
+  // Guards the one-time log line announcing which JSSE provider serves AlloyDB connections.
+  // CAS rather than a plain write so that concurrent first connections log it exactly once.
+  private static final AtomicBoolean BC_PROVIDER_ANNOUNCED = new AtomicBoolean();
+  private static final AtomicBoolean BC_NO_TLS_13_ANNOUNCED = new AtomicBoolean();
+  private static final AtomicBoolean AUTO_FALLBACK_ANNOUNCED = new AtomicBoolean();
+
   private final ConnectionInfo connectionInfo;
   private final ConnectionConfig connectionConfig;
   private final KeyPair clientConnectorKeyPair;
@@ -129,6 +144,8 @@ class ConnectionSocket {
       throw e;
     }
 
+    logHandshake(address, socket);
+
     // The metadata exchange must occur after the TLS connection is established
     // to avoid leaking sensitive information.
     metadataExchange(socket);
@@ -136,6 +153,21 @@ class ConnectionSocket {
     logger.debug(String.format("[%s] Connected to instance successfully.", address));
 
     return socket;
+  }
+
+  // There is no standard JSSE API for the key exchange group that was negotiated -- see
+  // https://bugs.openjdk.org/browse/JDK-8388519 -- so the protocol and cipher suite are all this
+  // can report. docs/pqc.md describes how to read the negotiated group out of the provider's own
+  // handshake trace.
+  private void logHandshake(String address, SSLSocket socket) {
+    if (!logger.isDebugEnabled()) {
+      return;
+    }
+    SSLSession session = socket.getSession();
+    logger.debug(
+        String.format(
+            "[%s] TLS handshake complete: protocol = %s, cipher suite = %s.",
+            address, session.getProtocol(), session.getCipherSuite()));
   }
 
   private SSLSocket buildSocket(
@@ -152,12 +184,102 @@ class ConnectionSocket {
 
       // Now, create a TLS 1.3 SSLContext initialized with the KeyManager and the TrustManager,
       // and create the SSL Socket.
-      SSLContext sslContext = SSLContext.getInstance(TLS_1_3);
+      SSLContext sslContext = getSslContextInstance(connectionConfig.getTlsProvider());
+      if (logger.isDebugEnabled()) {
+        logger.debug(
+            String.format(
+                "[%s] Using the %s JSSE provider for the TLS connection.",
+                connectionConfig.getInstanceName(), sslContext.getProvider().getName()));
+      }
       sslContext.init(keyManagers, trustManagers, new SecureRandom());
       return (SSLSocket) sslContext.getSocketFactory().createSocket();
     } catch (GeneralSecurityException | IOException ex) {
       throw new RuntimeException("Unable to create an SSL Context for the instance.", ex);
     }
+  }
+
+  // Selects the JSSE provider that serves the SSLContext for AlloyDB connections.
+  //
+  // The JCA registry is consulted on every call, so no caching is needed here: applications that
+  // register BCJSSE after their first connection are picked up on the next one, and applications
+  // that unregister it fall back on the next one.
+  @VisibleForTesting
+  static SSLContext getSslContextInstance(TlsProvider tlsProvider) throws NoSuchAlgorithmException {
+    if (tlsProvider == TlsProvider.JDK) {
+      return SSLContext.getInstance(TLS_1_3);
+    }
+
+    boolean required = tlsProvider == TlsProvider.BOUNCY_CASTLE;
+    if (Security.getProvider(BC_PROVIDER) == null) {
+      if (required) {
+        throw bouncyCastleNotRegistered(null);
+      }
+      // AUTO asked for Bouncy Castle and did not get it, which means these connections are not
+      // post-quantum. Say so once: a silent classical handshake is the failure mode this feature
+      // is easiest to get wrong, and nothing else reports the negotiated key exchange group.
+      if (AUTO_FALLBACK_ANNOUNCED.compareAndSet(false, true)) {
+        logger.info(
+            "{} is set to {}, but the Bouncy Castle JSSE provider ({}) is not registered. Using "
+                + "the default JSSE provider, which means AlloyDB connections will not use "
+                + "post-quantum key exchange. See {}.",
+            ConnectionConfig.ALLOYDB_TLS_PROVIDER,
+            TlsProvider.AUTO,
+            BC_PROVIDER,
+            PQC_DOC);
+      }
+      return SSLContext.getInstance(TLS_1_3);
+    }
+
+    try {
+      SSLContext sslContext = SSLContext.getInstance(TLS_1_3, BC_PROVIDER);
+      if (BC_PROVIDER_ANNOUNCED.compareAndSet(false, true)) {
+        logger.info("Using the Bouncy Castle JSSE provider (BCJSSE) for AlloyDB TLS connections.");
+      }
+      return sslContext;
+    } catch (NoSuchProviderException e) {
+      // BCJSSE was unregistered between the check above and this call.
+      if (required) {
+        throw bouncyCastleNotRegistered(e);
+      }
+    } catch (NoSuchAlgorithmException e) {
+      if (required) {
+        throw new IllegalStateException(
+            String.format(
+                "%s is set to %s, but the Bouncy Castle JSSE provider (%s) cannot provide a %s "
+                    + "SSLContext. See %s.",
+                ConnectionConfig.ALLOYDB_TLS_PROVIDER,
+                TlsProvider.BOUNCY_CASTLE,
+                BC_PROVIDER,
+                TLS_1_3,
+                PQC_DOC),
+            e);
+      }
+      if (BC_NO_TLS_13_ANNOUNCED.compareAndSet(false, true)) {
+        logger.warn(
+            "The Bouncy Castle JSSE provider ({}) is registered but cannot provide a {} "
+                + "SSLContext. Falling back to the default JSSE provider, which means AlloyDB "
+                + "connections will not use post-quantum key exchange. See {}.",
+            BC_PROVIDER,
+            TLS_1_3,
+            PQC_DOC);
+      }
+    }
+
+    return SSLContext.getInstance(TLS_1_3);
+  }
+
+  private static IllegalStateException bouncyCastleNotRegistered(Throwable cause) {
+    return new IllegalStateException(
+        String.format(
+            "%s is set to %s, but the Bouncy Castle JSSE provider (%s) is not registered. "
+                + "Register it during application startup, or unset %s to use the JRE default "
+                + "provider. See %s.",
+            ConnectionConfig.ALLOYDB_TLS_PROVIDER,
+            TlsProvider.BOUNCY_CASTLE,
+            BC_PROVIDER,
+            ConnectionConfig.ALLOYDB_TLS_PROVIDER,
+            PQC_DOC),
+        cause);
   }
 
   private TrustManager[] initializeTrustManager(X509Certificate caCertificate)

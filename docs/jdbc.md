@@ -290,6 +290,36 @@ use the instance's Public IP.
 config.addDataSourceProperty("alloydbIpType", "PUBLIC");
 ```
 
+### Post-Quantum Cryptography (PQC)
+
+The Java Connector supports hybrid Post-Quantum Cryptography (PQC) key exchange
+protocols for TLS 1.3. Negotiation is automatic on JDK 27+ (via JEP 527). On
+JDK 17 through JDK 26 it takes two steps: register the Bouncy Castle JSSE
+provider in your application, and point the connector at it with the
+`alloydbTlsProvider` connection property. JDK 11 and earlier cannot negotiate a
+post-quantum group at all. When post-quantum key exchange is unavailable,
+connections still succeed using classical cryptography.
+
+```java
+config.addDataSourceProperty("alloydbTlsProvider", "BOUNCY_CASTLE");
+```
+
+The property accepts:
+
+| Value | Behavior |
+| --- | --- |
+| `JDK` (default) | Always use the JRE's default JSSE provider. |
+| `AUTO` | Use Bouncy Castle when it is registered, otherwise the JRE default. |
+| `BOUNCY_CASTLE` | Require Bouncy Castle, failing the connection rather than falling back. |
+
+The default is `JDK` so that registering Bouncy Castle for some other part of
+an application does not silently move AlloyDB connections onto a different TLS
+stack. Opting in is always explicit.
+
+For details on how to register a post-quantum secure provider with zero global
+JRE side effects, and on how to confirm that a post-quantum group was actually
+negotiated, see the [Post-Quantum Cryptography Guide](pqc.md).
+
 ## Configuration Reference
 
 - See [Configuration Reference](configuration.md)
