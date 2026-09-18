@@ -20,9 +20,11 @@ import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.security.KeyPair;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.net.ssl.SSLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,7 +75,7 @@ class Connector {
     this.instances.clear();
     this.connectionInfoRepo.close();
     // Shut down all metric recorders. One recorder failing to shut down must not leave the rest
-    // of them running.
+    // of them, and the gRPC channel they share, running.
     this.metricRecorders.forEach(
         (key, mr) -> {
           try {
@@ -110,14 +112,36 @@ class Connector {
               connectionInfo, config, clientConnectorKeyPair, accessTokenSupplier, userAgents);
       Socket s = socket.connect();
 
-      recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_SUCCESS);
+      // When telemetry is disabled there is nothing to count, so hand back the socket itself
+      // rather than paying for an instrumented wrapper on every read and write.
+      Socket result = s;
+      TelemetryAttributes connectionAttrs = null;
+      if (metricRecorder.isEnabled()) {
+        connectionAttrs = TelemetryAttributes.forConnection(iamAuthn);
+        try {
+          result = new InstrumentedSocket(s, metricRecorder, connectionAttrs);
+        } catch (SocketException e) {
+          s.close();
+          throw e;
+        }
+      }
+
+      TelemetryAttributes dialAttrs =
+          TelemetryAttributes.forDial(iamAuthn, cacheHit, TelemetryAttributes.DIAL_SUCCESS);
+      metricRecorder.recordDialCount(dialAttrs);
       metricRecorder.recordDialLatency((System.nanoTime() - startNanos) / 1_000_000.0);
-      return s;
+      if (connectionAttrs != null) {
+        metricRecorder.recordOpenConnection(connectionAttrs);
+      }
+      return result;
+    } catch (SSLException e) {
+      logger.debug(String.format("[%s] TLS handshake failed! Trigger a refresh.", instanceName));
+      recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_TLS_ERROR);
+      connectionInfoCache.forceRefresh();
+      throw e;
     } catch (UserConfigException e) {
       logger.debug(
           String.format("[%s] Connection failed due to user configuration error.", instanceName));
-      // A misconfigured connection will fail the same way on every attempt, so there is nothing
-      // to be gained by refreshing the connection info.
       recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_USER_ERROR);
       throw e;
     } catch (MetadataExchangeException e) {
@@ -130,11 +154,11 @@ class Connector {
       logger.debug(
           String.format("[%s] Socket connection failed! Trigger a refresh.", instanceName));
       recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_TCP_ERROR);
-      connectionInfoCache.forceRefresh();
       // The Socket methods above will throw an IOException or a SocketException (subclass of
       // IOException). Catch that exception, trigger a refresh, and then throw it again so
       // the caller sees the problem, but the connector will have a refreshed certificate on the
       // next invocation.
+      connectionInfoCache.forceRefresh();
       throw e;
     }
   }
@@ -142,6 +166,35 @@ class Connector {
   private static void recordDial(
       MetricRecorder metricRecorder, boolean iamAuthn, boolean cacheHit, String status) {
     metricRecorder.recordDialCount(TelemetryAttributes.forDial(iamAuthn, cacheHit, status));
+  }
+
+  ConnectionInfoCache getConnection(ConnectionConfig config, MetricRecorder metricRecorder) {
+    ConnectionInfoCache instance =
+        instances.computeIfAbsent(config, k -> createConnectionInfo(config, metricRecorder));
+
+    // If the client certificate has expired (as when the computer goes to
+    // sleep, and the refresh cycle cannot run), force a refresh immediately.
+    // The TLS handshake will not fail on an expired client certificate. It's
+    // not until the first read where the client cert error will be surfaced.
+    // So check that the certificate is valid before proceeding.
+    instance.refreshIfExpired();
+
+    return instance;
+  }
+
+  private ConnectionInfoCache createConnectionInfo(
+      ConnectionConfig config, MetricRecorder metricRecorder) {
+    logger.debug(String.format("[%s] Connection info added to cache.", config.getInstanceName()));
+
+    InstanceName instanceName = config.getInstanceName();
+
+    return connectionInfoCacheFactory.create(
+        this.executor,
+        this.connectionInfoRepo,
+        instanceName,
+        this.clientConnectorKeyPair,
+        MIN_RATE_LIMIT_MS,
+        metricRecorder);
   }
 
   private MetricRecorder getMetricRecorder(InstanceName instanceName) {
@@ -168,32 +221,6 @@ class Connector {
       return raced;
     }
     return created;
-  }
-
-  ConnectionInfoCache getConnection(ConnectionConfig config, MetricRecorder metricRecorder) {
-    ConnectionInfoCache instance =
-        instances.computeIfAbsent(config, k -> createConnectionInfo(config, metricRecorder));
-
-    // If the client certificate has expired (as when the computer goes to
-    // sleep, and the refresh cycle cannot run), force a refresh immediately.
-    // The TLS handshake will not fail on an expired client certificate. It's
-    // not until the first read where the client cert error will be surfaced.
-    // So check that the certificate is valid before proceeding.
-    instance.refreshIfExpired();
-
-    return instance;
-  }
-
-  private ConnectionInfoCache createConnectionInfo(
-      ConnectionConfig config, MetricRecorder metricRecorder) {
-    logger.debug(String.format("[%s] Connection info added to cache.", config.getInstanceName()));
-    return connectionInfoCacheFactory.create(
-        this.executor,
-        this.connectionInfoRepo,
-        config.getInstanceName(),
-        this.clientConnectorKeyPair,
-        MIN_RATE_LIMIT_MS,
-        metricRecorder);
   }
 
   @Override
