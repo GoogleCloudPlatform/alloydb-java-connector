@@ -46,8 +46,9 @@ class MetricRecorderFactory {
       // in every such application's logs.
       logger.warn(
           "Built-in metrics are disabled: the Cloud Monitoring exporter failed to initialize ({}). "
-              + "Connections are unaffected.",
-          t.toString());
+              + "Connections are unaffected. Set {}=false to disable built-in metrics explicitly.",
+          t.toString(),
+          ConnectionConfig.ALLOYDB_ENABLE_BUILTIN_TELEMETRY);
       logger.debug("Built-in metrics exporter failed to initialize.", t);
       return new NullMetricRecorder();
     }
