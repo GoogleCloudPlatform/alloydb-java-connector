@@ -37,6 +37,7 @@ public class ConnectorConfig {
   private final String googleCredentialsPath;
   private final String quotaProject;
   private final RefreshStrategy refreshStrategy;
+  private final boolean enableBuiltinTelemetry;
 
   private ConnectorConfig(
       String targetPrincipal,
@@ -47,7 +48,8 @@ public class ConnectorConfig {
       GoogleCredentials googleCredentials,
       String googleCredentialsPath,
       String quotaProject,
-      RefreshStrategy refreshStrategy) {
+      RefreshStrategy refreshStrategy,
+      boolean enableBuiltinTelemetry) {
     this.targetPrincipal = targetPrincipal;
     this.delegates = delegates;
     this.adminServiceEndpoint = adminServiceEndpoint;
@@ -57,6 +59,7 @@ public class ConnectorConfig {
     this.googleCredentialsPath = googleCredentialsPath;
     this.quotaProject = quotaProject;
     this.refreshStrategy = refreshStrategy;
+    this.enableBuiltinTelemetry = enableBuiltinTelemetry;
   }
 
   @Override
@@ -76,7 +79,8 @@ public class ConnectorConfig {
         && Objects.equal(googleCredentials, that.googleCredentials)
         && Objects.equal(googleCredentialsPath, that.googleCredentialsPath)
         && Objects.equal(quotaProject, that.quotaProject)
-        && Objects.equal(refreshStrategy, that.refreshStrategy);
+        && Objects.equal(refreshStrategy, that.refreshStrategy)
+        && enableBuiltinTelemetry == that.enableBuiltinTelemetry;
   }
 
   @Override
@@ -90,7 +94,8 @@ public class ConnectorConfig {
         googleCredentials,
         googleCredentialsPath,
         quotaProject,
-        refreshStrategy);
+        refreshStrategy,
+        enableBuiltinTelemetry);
   }
 
   public String getTargetPrincipal() {
@@ -129,6 +134,10 @@ public class ConnectorConfig {
     return refreshStrategy;
   }
 
+  public boolean isEnableBuiltinTelemetry() {
+    return enableBuiltinTelemetry;
+  }
+
   /** The builder for the ConnectionConfig. */
   public static class Builder {
 
@@ -141,6 +150,7 @@ public class ConnectorConfig {
     private String googleCredentialsPath;
     private String quotaProject;
     private RefreshStrategy refreshStrategy;
+    private boolean enableBuiltinTelemetry = true;
 
     public Builder withTargetPrincipal(String targetPrincipal) {
       this.targetPrincipal = targetPrincipal;
@@ -188,6 +198,11 @@ public class ConnectorConfig {
       return this;
     }
 
+    public Builder withEnableBuiltinTelemetry(boolean enableBuiltinTelemetry) {
+      this.enableBuiltinTelemetry = enableBuiltinTelemetry;
+      return this;
+    }
+
     /** Builds a new instance of {@code ConnectionConfig}. */
     public ConnectorConfig build() {
       // validate only one GoogleCredentials configuration field set
@@ -220,7 +235,8 @@ public class ConnectorConfig {
           googleCredentials,
           googleCredentialsPath,
           quotaProject,
-          refreshStrategy);
+          refreshStrategy,
+          enableBuiltinTelemetry);
     }
   }
 }

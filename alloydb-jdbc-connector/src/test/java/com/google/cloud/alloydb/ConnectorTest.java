@@ -79,8 +79,7 @@ public class ConnectorTest {
   @Test
   public void create_successfulPrivateConnection() throws IOException {
     MockAlloyDBAdminGrpc mock = new MockAlloyDBAdminGrpc("127.0.0.1", IpType.PRIVATE);
-    ConnectionConfig config =
-        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(INSTANCE_NAME)).build();
+    ConnectionConfig config = newTelemetryDisabledConfig();
     Connector connector = newConnector(config.getConnectorConfig(), mock);
 
     Socket socket = connector.connect(config);
@@ -92,8 +91,7 @@ public class ConnectorTest {
   public void create_throwsTerminalException() {
     MockAlloyDBAdminGrpc mock =
         new MockAlloyDBAdminGrpc(Code.NOT_FOUND.getNumber(), ERROR_MESSAGE_NOT_FOUND);
-    ConnectionConfig config =
-        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(INSTANCE_NAME)).build();
+    ConnectionConfig config = newTelemetryDisabledConfig();
     Connector connector = newConnector(config.getConnectorConfig(), mock);
 
     TerminalException ex = assertThrows(TerminalException.class, () -> connector.connect(config));
@@ -172,8 +170,7 @@ public class ConnectorTest {
   @Test
   public void connect_returnsThePlainSocket_whenMetricsAreDisabled() throws IOException {
     MockAlloyDBAdminGrpc mock = new MockAlloyDBAdminGrpc("127.0.0.1", IpType.PRIVATE);
-    ConnectionConfig config =
-        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(INSTANCE_NAME)).build();
+    ConnectionConfig config = newTelemetryDisabledConfig();
     Connector connector = newConnector(config.getConnectorConfig(), mock);
 
     Socket socket = connector.connect(config);
@@ -235,6 +232,17 @@ public class ConnectorTest {
                 TestCertificates.INSTANCE.getRootCertificate()),
             caCertificate));
     return stubConnectionInfoCache;
+  }
+
+  /**
+   * Returns a config with built-in telemetry turned off, so that a test exercising the connection
+   * path alone does not stand up a Cloud Monitoring exporter.
+   */
+  private ConnectionConfig newTelemetryDisabledConfig() {
+    return new ConnectionConfig.Builder()
+        .withInstanceName(InstanceName.parse(INSTANCE_NAME))
+        .withConnectorConfig(new ConnectorConfig.Builder().withEnableBuiltinTelemetry(false).build())
+        .build();
   }
 
   private Connector newConnector(ConnectorConfig config, MockAlloyDBAdminGrpc mock) {
