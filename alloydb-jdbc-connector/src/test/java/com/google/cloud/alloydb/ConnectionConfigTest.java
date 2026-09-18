@@ -70,6 +70,28 @@ public class ConnectionConfigTest {
     assertThat(config.getIpType()).isEqualTo(IpType.PUBLIC);
     assertThat(config.getConnectorConfig().getRefreshStrategy())
         .isEqualTo(RefreshStrategy.REFRESH_AHEAD);
+    assertThat(config.getConnectorConfig().isEnableBuiltinTelemetry()).isTrue();
+  }
+
+  @Test
+  public void testConfigFromProps_enableBuiltinTelemetryFalse() {
+    Properties props = new Properties();
+    props.setProperty(ConnectionConfig.ALLOYDB_INSTANCE_NAME, INSTANCE_NAME);
+    props.setProperty(ConnectionConfig.ALLOYDB_ENABLE_BUILTIN_TELEMETRY, "false");
+
+    ConnectionConfig config = ConnectionConfig.fromConnectionProperties(props);
+
+    assertThat(config.getConnectorConfig().isEnableBuiltinTelemetry()).isFalse();
+  }
+
+  @Test
+  public void testConfigFromProps_enableBuiltinTelemetryDefaultsToTrue() {
+    Properties props = new Properties();
+    props.setProperty(ConnectionConfig.ALLOYDB_INSTANCE_NAME, INSTANCE_NAME);
+
+    ConnectionConfig config = ConnectionConfig.fromConnectionProperties(props);
+
+    assertThat(config.getConnectorConfig().isEnableBuiltinTelemetry()).isTrue();
   }
 
   @Test

@@ -205,11 +205,9 @@ class Connector {
     // Building a recorder stands up a gRPC channel, which is far too much work to do inside
     // computeIfAbsent while holding a bin lock. Build it outside the map and discard the loser of
     // any race instead.
-    // Metrics stay off until the configuration property that turns them on arrives in a later
-    // change.
     MetricRecorder created =
         MetricRecorderFactory.newMetricRecorder(
-            /* enabled= */ false,
+            this.config.isEnableBuiltinTelemetry(),
             instanceName.getProject(),
             instanceName.getLocation(),
             instanceName.getCluster(),
