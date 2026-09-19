@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.4.0...v1.4.1) (2026-09-19)
+
+
+### Bug Fixes
+
+* classify connection failures with typed exceptions ([#740](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/740)) ([d6f5b3b](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/d6f5b3b4a07051bfd88b5ef2c491e8e09f568514))
+
 ## [1.4.0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.3.3...v1.4.0) (2026-09-15)
 
 
