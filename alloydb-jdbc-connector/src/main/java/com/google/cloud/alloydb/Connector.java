@@ -69,7 +69,11 @@ class Connector {
   }
 
   Socket connect(ConnectionConfig config) throws IOException {
-    ConnectionInfoCache connectionInfoCache = getConnection(config);
+    // Telemetry is wired through the connector but not yet recorded anywhere. The recorder that
+    // reports to Cloud Monitoring arrives in a later change.
+    MetricRecorder metricRecorder = new NullMetricRecorder();
+
+    ConnectionInfoCache connectionInfoCache = getConnection(config, metricRecorder);
     ConnectionInfo connectionInfo = connectionInfoCache.getConnectionInfo();
 
     try {
@@ -103,9 +107,9 @@ class Connector {
     }
   }
 
-  ConnectionInfoCache getConnection(ConnectionConfig config) {
+  ConnectionInfoCache getConnection(ConnectionConfig config, MetricRecorder metricRecorder) {
     ConnectionInfoCache instance =
-        instances.computeIfAbsent(config, k -> createConnectionInfo(config));
+        instances.computeIfAbsent(config, k -> createConnectionInfo(config, metricRecorder));
 
     // If the client certificate has expired (as when the computer goes to
     // sleep, and the refresh cycle cannot run), force a refresh immediately.
@@ -117,14 +121,16 @@ class Connector {
     return instance;
   }
 
-  private ConnectionInfoCache createConnectionInfo(ConnectionConfig config) {
+  private ConnectionInfoCache createConnectionInfo(
+      ConnectionConfig config, MetricRecorder metricRecorder) {
     logger.debug(String.format("[%s] Connection info added to cache.", config.getInstanceName()));
     return connectionInfoCacheFactory.create(
         this.executor,
         this.connectionInfoRepo,
         config.getInstanceName(),
         this.clientConnectorKeyPair,
-        MIN_RATE_LIMIT_MS);
+        MIN_RATE_LIMIT_MS,
+        metricRecorder);
   }
 
   @Override

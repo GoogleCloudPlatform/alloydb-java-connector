@@ -35,6 +35,7 @@ public class LazyConnectionInfoCache implements ConnectionInfoCache {
   private final ConnectionInfoRepository connectionInfoRepo;
   private final InstanceName instanceURI;
   private final KeyPair clientConnectorKeyPair;
+  private final MetricRecorder metricRecorder;
 
   private final Object connectionInfoGuard = new Object();
 
@@ -47,10 +48,12 @@ public class LazyConnectionInfoCache implements ConnectionInfoCache {
   public LazyConnectionInfoCache(
       ConnectionInfoRepository connectionInfoRepo,
       InstanceName instanceURI,
-      KeyPair clientConnectorKeyPair) {
+      KeyPair clientConnectorKeyPair,
+      MetricRecorder metricRecorder) {
     this.connectionInfoRepo = connectionInfoRepo;
     this.instanceURI = instanceURI;
     this.clientConnectorKeyPair = clientConnectorKeyPair;
+    this.metricRecorder = metricRecorder;
   }
 
   @Override
@@ -72,13 +75,16 @@ public class LazyConnectionInfoCache implements ConnectionInfoCache {
           ListenableFuture<ConnectionInfo> infoFuture =
               connectionInfoRepo.getConnectionInfo(instanceURI, clientConnectorKeyPair);
           this.connectionInfo = infoFuture.get(CLIENT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+          metricRecorder.recordRefreshCount(TelemetryAttributes.REFRESH_LAZY_SUCCEEDED);
         } catch (TerminalException e) {
+          metricRecorder.recordRefreshCount(TelemetryAttributes.REFRESH_LAZY_FAILED);
           logger.debug(
               String.format(
                   "[%s] Lazy Refresh Operation: Failed with a terminal error.", instanceURI),
               e);
           throw e;
         } catch (Exception e) {
+          metricRecorder.recordRefreshCount(TelemetryAttributes.REFRESH_LAZY_FAILED);
           throw new RuntimeException(
               String.format("[%s] Refresh Operation: Failed!", instanceURI), e);
         }
@@ -100,7 +106,7 @@ public class LazyConnectionInfoCache implements ConnectionInfoCache {
   /** Force a new refresh of the instance data if the client certificate has expired. */
   @Override
   public void forceRefresh() {
-    // invalidate connectionInfo so that the next call to getConectionInfo() will
+    // invalidate connectionInfo so that the next call to getConnectionInfo() will
     // fetch new data.
     synchronized (connectionInfoGuard) {
       if (closed) {

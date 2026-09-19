@@ -43,6 +43,7 @@ class Refresher {
   private final RefreshCalculator refreshCalculator;
   private final Supplier<ListenableFuture<ConnectionInfo>> refreshOperation;
   private final String name;
+  private final MetricRecorder metricRecorder;
 
   @GuardedBy("connectionInfoGuard")
   private ListenableFuture<ConnectionInfo> current;
@@ -63,12 +64,14 @@ class Refresher {
       String name,
       ListeningScheduledExecutorService executor,
       Supplier<ListenableFuture<ConnectionInfo>> refreshOperation,
-      AsyncRateLimiter rateLimiter) {
+      AsyncRateLimiter rateLimiter,
+      MetricRecorder metricRecorder) {
     this.name = name;
     this.executor = executor;
     this.refreshCalculator = new RefreshCalculator();
     this.refreshOperation = refreshOperation;
     this.rateLimiter = rateLimiter;
+    this.metricRecorder = metricRecorder;
     synchronized (connectionInfoGuard) {
       forceRefresh();
       this.current = this.next;
@@ -204,6 +207,8 @@ class Refresher {
       // This will throw an exception if the refresh attempt has failed.
       ConnectionInfo info = connectionInfoFuture.get();
 
+      metricRecorder.recordRefreshCount(TelemetryAttributes.REFRESH_AHEAD_SUCCEEDED);
+
       logger.debug(
           String.format(
               "[%s] Refresh Operation: Completed refresh with new certificate expiration at %s.",
@@ -239,6 +244,8 @@ class Refresher {
       }
 
     } catch (ExecutionException | InterruptedException e) {
+
+      metricRecorder.recordRefreshCount(TelemetryAttributes.REFRESH_AHEAD_FAILED);
 
       // No refresh retry when the TerminalException is raised.
       final Throwable cause = e.getCause();
