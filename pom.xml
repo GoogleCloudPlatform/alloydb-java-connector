@@ -159,6 +159,32 @@
         <artifactId>failureaccess</artifactId>
         <version>1.0.3</version>
       </dependency>
+      <!--
+        OpenTelemetry artifact versions are already managed by
+        google-cloud-alloydb-connectors-bom above, which is imported first and therefore wins.
+        Do not import opentelemetry-bom here: a later import is silently ignored, so it would
+        only give the misleading impression of pinning a version.
+      -->
+      <dependency>
+        <groupId>com.google.cloud.opentelemetry</groupId>
+        <artifactId>exporter-metrics</artifactId>
+        <version>0.36.0</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.cloud.opentelemetry</groupId>
+        <artifactId>shared-resourcemapping</artifactId>
+        <version>0.36.0</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.semconv</groupId>
+        <artifactId>opentelemetry-semconv</artifactId>
+        <version>1.32.0</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.cloud</groupId>
+        <artifactId>google-cloud-monitoring</artifactId>
+        <version>3.52.0</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
