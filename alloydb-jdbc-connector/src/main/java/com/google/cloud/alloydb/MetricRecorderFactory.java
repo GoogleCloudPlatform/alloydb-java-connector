@@ -16,6 +16,8 @@
 
 package com.google.cloud.alloydb;
 
+import io.opentelemetry.sdk.metrics.export.MetricExporter;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,8 +26,17 @@ class MetricRecorderFactory {
 
   private static final Logger logger = LoggerFactory.getLogger(MetricRecorderFactory.class);
 
+  /**
+   * Supplies the Cloud Monitoring exporter shared by every instance in a project. It is a supplier
+   * rather than a value so that no gRPC channel is built when metrics are disabled.
+   */
+  interface MetricExporterSupplier {
+    MetricExporter get() throws IOException;
+  }
+
   static MetricRecorder newMetricRecorder(
       boolean enabled,
+      MetricExporterSupplier exporterSupplier,
       String projectId,
       String location,
       String cluster,
@@ -36,7 +47,8 @@ class MetricRecorderFactory {
       return new NullMetricRecorder();
     }
     try {
-      return new CloudMonitoringMetricRecorder(projectId, location, cluster, instance, clientUid);
+      return new CloudMonitoringMetricRecorder(
+          exporterSupplier.get(), projectId, location, cluster, instance, clientUid);
     } catch (Throwable t) {
       // Telemetry must never stop a connection from being established. Catch Throwable rather than
       // Exception so that a missing OpenTelemetry class (NoClassDefFoundError on a minimized or

@@ -18,11 +18,13 @@ package com.google.cloud.alloydb;
 import com.google.cloud.alloydb.v1alpha.InstanceName;
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
+import io.opentelemetry.sdk.metrics.export.MetricExporter;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.KeyPair;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +32,7 @@ class Connector {
 
   private static final Logger logger = LoggerFactory.getLogger(Connector.class);
   private static final long MIN_RATE_LIMIT_MS = 30000;
+  private static final long METRICS_SHUTDOWN_TIMEOUT_SECONDS = 10;
 
   private final ListeningScheduledExecutorService executor;
   private final ConnectionInfoRepository connectionInfoRepo;
@@ -41,6 +44,7 @@ class Connector {
   private final String userAgents;
   private final String clientUid;
   private final ConcurrentHashMap<InstanceName, MetricRecorder> metricRecorders;
+  private final ConcurrentHashMap<String, MetricExporter> metricExporters;
 
   Connector(
       ConnectorConfig config,
@@ -61,6 +65,7 @@ class Connector {
     this.userAgents = userAgents;
     this.clientUid = UUID.randomUUID().toString();
     this.metricRecorders = new ConcurrentHashMap<>();
+    this.metricExporters = new ConcurrentHashMap<>();
   }
 
   public ConnectorConfig getConfig() {
@@ -83,6 +88,17 @@ class Connector {
           }
         });
     this.metricRecorders.clear();
+    // Only now that every meter provider has stopped, and so had its last chance to flush through
+    // one of these, are the shared exporters safe to shut down.
+    this.metricExporters.forEach(
+        (projectId, exporter) -> {
+          try {
+            exporter.shutdown().join(METRICS_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+          } catch (RuntimeException e) {
+            logger.debug(String.format("[%s] Metric exporter failed to shut down.", projectId), e);
+          }
+        });
+    this.metricExporters.clear();
   }
 
   Socket connect(ConnectionConfig config) throws IOException {
@@ -149,20 +165,43 @@ class Connector {
     if (existing != null) {
       return existing;
     }
-    // Building a recorder stands up a gRPC channel, which is far too much work to do inside
-    // computeIfAbsent while holding a bin lock. Build it outside the map and discard the loser of
-    // any race instead.
+    // Building a recorder can stand up a gRPC channel (see getMetricExporter), which is far too
+    // much work to do inside computeIfAbsent while holding a bin lock. Build it outside the map and
+    // discard the loser of any race instead.
     // Metrics stay off until the configuration property that turns them on arrives in a later
     // change.
     MetricRecorder created =
         MetricRecorderFactory.newMetricRecorder(
             /* enabled= */ false,
+            () -> getMetricExporter(instanceName.getProject()),
             instanceName.getProject(),
             instanceName.getLocation(),
             instanceName.getCluster(),
             instanceName.getInstance(),
             clientUid);
     MetricRecorder raced = metricRecorders.putIfAbsent(instanceName, created);
+    if (raced != null) {
+      created.shutdown();
+      return raced;
+    }
+    return created;
+  }
+
+  /**
+   * Returns the Cloud Monitoring exporter for {@code projectId}, creating it if necessary. Every
+   * instance in a project shares one, so an application connecting to N instances pays for one gRPC
+   * channel rather than N. The exporter is safe for concurrent use by each instance's reader.
+   */
+  private MetricExporter getMetricExporter(String projectId) throws IOException {
+    MetricExporter existing = metricExporters.get(projectId);
+    if (existing != null) {
+      return existing;
+    }
+    // As with the recorders above, building an exporter stands up a gRPC channel, which is far too
+    // much work to do inside computeIfAbsent while holding a bin lock. Build it outside the map and
+    // discard the loser of any race instead.
+    MetricExporter created = CloudMonitoringMetricRecorder.newExporter(projectId);
+    MetricExporter raced = metricExporters.putIfAbsent(projectId, created);
     if (raced != null) {
       created.shutdown();
       return raced;
