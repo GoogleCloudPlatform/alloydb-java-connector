@@ -26,13 +26,19 @@ import io.opentelemetry.api.metrics.DoubleHistogram;
 import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.metrics.LongUpDownCounter;
 import io.opentelemetry.api.metrics.Meter;
+import io.opentelemetry.sdk.common.CompletableResultCode;
+import io.opentelemetry.sdk.metrics.Aggregation;
+import io.opentelemetry.sdk.metrics.InstrumentType;
 import io.opentelemetry.sdk.metrics.SdkMeterProvider;
+import io.opentelemetry.sdk.metrics.data.AggregationTemporality;
+import io.opentelemetry.sdk.metrics.data.MetricData;
 import io.opentelemetry.sdk.metrics.export.MetricExporter;
 import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader;
 import io.opentelemetry.sdk.resources.Resource;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
@@ -95,8 +101,12 @@ class CloudMonitoringMetricRecorder implements MetricRecorder {
   private final LongCounter refreshCount;
 
   CloudMonitoringMetricRecorder(
-      String projectId, String location, String cluster, String instance, String clientUid)
-      throws IOException {
+      MetricExporter sharedExporter,
+      String projectId,
+      String location,
+      String cluster,
+      String instance,
+      String clientUid) {
 
     Resource resource =
         Resource.create(
@@ -108,34 +118,12 @@ class CloudMonitoringMetricRecorder implements MetricRecorder {
                 AttributeKey.stringKey(INSTANCE_ID), instance,
                 AttributeKey.stringKey(CLIENT_UID), clientUid));
 
-    MonitoredResourceDescription monitoredResourceDescription =
-        new MonitoredResourceDescription(
-            MONITORED_RESOURCE,
-            new HashSet<>(
-                Arrays.asList(PROJECT_ID, LOCATION, CLUSTER_ID, INSTANCE_ID, CLIENT_UID)));
-
-    MetricServiceSettings metricServiceSettings =
-        MetricServiceSettings.newBuilder()
-            .setTransportChannelProvider(
-                MetricServiceSettings.defaultGrpcTransportProviderBuilder()
-                    .setMaxInboundMetadataSize(MAX_INBOUND_METADATA_SIZE)
-                    .build())
-            .build();
-
-    MetricConfiguration configuration =
-        MetricConfiguration.builder()
-            .setProjectId(projectId)
-            .setPrefix(METRIC_PREFIX)
-            .setUseServiceTimeSeries(true)
-            .setMonitoredResourceDescription(monitoredResourceDescription)
-            .setMetricServiceSettings(metricServiceSettings)
-            .setResourceAttributesFilter(key -> false)
-            .setInstrumentationLibraryLabelsEnabled(false)
-            .build();
-    MetricExporter exporter = GoogleCloudMetricExporter.createWithConfiguration(configuration);
-
+    // Every instance needs its own meter provider, because the resource above identifies the
+    // instance and is fixed for a provider's lifetime. The exporter underneath is shared, so it is
+    // wrapped: PeriodicMetricReader.shutdown() shuts down whatever exporter it was handed, and one
+    // instance going away must not stop every other instance's metrics.
     PeriodicMetricReader reader =
-        PeriodicMetricReader.builder(exporter)
+        PeriodicMetricReader.builder(new NonClosingExporter(sharedExporter))
             .setInterval(Duration.ofMillis(DEFAULT_EXPORT_INTERVAL_MS))
             .build();
 
@@ -223,5 +211,85 @@ class CloudMonitoringMetricRecorder implements MetricRecorder {
             attrs.getRefreshStatus(),
             REFRESH_TYPE_KEY,
             attrs.getRefreshType()));
+  }
+
+  /**
+   * Builds the Cloud Monitoring exporter for {@code projectId}. This stands up a {@code
+   * MetricServiceClient}, and so a gRPC channel and its transport threads, which is why callers
+   * share one exporter across every instance in a project rather than building one per instance.
+   * The returned exporter is safe for concurrent use by several readers.
+   */
+  static MetricExporter newExporter(String projectId) throws IOException {
+    MonitoredResourceDescription monitoredResourceDescription =
+        new MonitoredResourceDescription(
+            MONITORED_RESOURCE,
+            new HashSet<>(
+                Arrays.asList(PROJECT_ID, LOCATION, CLUSTER_ID, INSTANCE_ID, CLIENT_UID)));
+
+    MetricServiceSettings metricServiceSettings =
+        MetricServiceSettings.newBuilder()
+            .setTransportChannelProvider(
+                MetricServiceSettings.defaultGrpcTransportProviderBuilder()
+                    .setMaxInboundMetadataSize(MAX_INBOUND_METADATA_SIZE)
+                    .build())
+            .build();
+
+    MetricConfiguration configuration =
+        MetricConfiguration.builder()
+            .setProjectId(projectId)
+            .setPrefix(METRIC_PREFIX)
+            .setUseServiceTimeSeries(true)
+            .setMonitoredResourceDescription(monitoredResourceDescription)
+            .setMetricServiceSettings(metricServiceSettings)
+            .setResourceAttributesFilter(key -> false)
+            .setInstrumentationLibraryLabelsEnabled(false)
+            .build();
+
+    return GoogleCloudMetricExporter.createWithConfiguration(configuration);
+  }
+
+  /**
+   * Delegates everything but shutdown to a shared exporter. Each instance registers its own {@link
+   * PeriodicMetricReader}, and a reader shuts down its exporter when it stops, so readers are
+   * handed one of these instead. The owner of the shared exporter shuts it down. Visible for
+   * testing.
+   */
+  static final class NonClosingExporter implements MetricExporter {
+
+    private final MetricExporter delegate;
+
+    NonClosingExporter(MetricExporter delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public AggregationTemporality getAggregationTemporality(InstrumentType instrumentType) {
+      return delegate.getAggregationTemporality(instrumentType);
+    }
+
+    @Override
+    public Aggregation getDefaultAggregation(InstrumentType instrumentType) {
+      return delegate.getDefaultAggregation(instrumentType);
+    }
+
+    @Override
+    public CompletableResultCode export(Collection<MetricData> metrics) {
+      return delegate.export(metrics);
+    }
+
+    @Override
+    public CompletableResultCode flush() {
+      return delegate.flush();
+    }
+
+    @Override
+    public CompletableResultCode shutdown() {
+      return CompletableResultCode.ofSuccess();
+    }
+
+    @Override
+    public void close() {
+      // No-op. The shared exporter's owner closes it.
+    }
   }
 }

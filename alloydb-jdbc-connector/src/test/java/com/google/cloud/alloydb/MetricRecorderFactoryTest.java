@@ -18,15 +18,24 @@ package com.google.cloud.alloydb;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import java.io.IOException;
 import org.junit.Test;
 
 public class MetricRecorderFactoryTest {
 
   @Test
-  public void testDisabledReturnsNullRecorder() {
+  public void testDisabledReturnsNullRecorderWithoutBuildingAnExporter() {
     MetricRecorder recorder =
         MetricRecorderFactory.newMetricRecorder(
-            false, "project", "region", "cluster", "instance", "uid");
+            false,
+            () -> {
+              throw new AssertionError("the exporter must not be built when metrics are disabled");
+            },
+            "project",
+            "region",
+            "cluster",
+            "instance",
+            "uid");
 
     assertThat(recorder).isInstanceOf(NullMetricRecorder.class);
     assertThat(recorder.isEnabled()).isFalse();
@@ -34,10 +43,19 @@ public class MetricRecorderFactoryTest {
 
   @Test
   public void testExporterFailureFallsBackToNullRecorder() {
-    // A blank project id makes the Cloud Monitoring exporter fail to initialize. The factory must
-    // swallow that and hand back a no-op recorder, because telemetry never blocks a connection.
+    // Telemetry never blocks a connection, so a failure to build the exporter must be swallowed in
+    // favor of a no-op recorder.
     MetricRecorder recorder =
-        MetricRecorderFactory.newMetricRecorder(true, "", "region", "cluster", "instance", "uid");
+        MetricRecorderFactory.newMetricRecorder(
+            true,
+            () -> {
+              throw new IOException("no credentials");
+            },
+            "project",
+            "region",
+            "cluster",
+            "instance",
+            "uid");
 
     assertThat(recorder).isInstanceOf(NullMetricRecorder.class);
     assertThat(recorder.isEnabled()).isFalse();
