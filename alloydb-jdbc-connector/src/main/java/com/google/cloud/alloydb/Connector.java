@@ -21,10 +21,12 @@ import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import io.opentelemetry.sdk.metrics.export.MetricExporter;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.security.KeyPair;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,9 +128,37 @@ class Connector {
               connectionInfo, config, clientConnectorKeyPair, accessTokenSupplier, userAgents);
       Socket s = socket.connect();
 
-      recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_SUCCESS);
+      // When telemetry is disabled there is nothing to count, so hand back the socket itself
+      // rather than paying for an instrumented wrapper on every read and write.
+      Socket result = s;
+      TelemetryAttributes connectionAttrs = null;
+      if (metricRecorder.isEnabled()) {
+        connectionAttrs = TelemetryAttributes.forConnection(iamAuthn);
+        try {
+          result = new InstrumentedSocket(s, metricRecorder, connectionAttrs);
+        } catch (SocketException e) {
+          try {
+            s.close();
+          } catch (IOException closeException) {
+            e.addSuppressed(closeException);
+          }
+          throw e;
+        }
+      }
+
+      TelemetryAttributes dialAttrs =
+          TelemetryAttributes.forDial(iamAuthn, cacheHit, TelemetryAttributes.DIAL_SUCCESS);
+      metricRecorder.recordDialCount(dialAttrs);
       metricRecorder.recordDialLatency((System.nanoTime() - startNanos) / 1_000_000.0);
-      return s;
+      if (connectionAttrs != null) {
+        metricRecorder.recordOpenConnection(connectionAttrs);
+      }
+      return result;
+    } catch (SSLException e) {
+      logger.debug(String.format("[%s] TLS handshake failed! Trigger a refresh.", instanceName));
+      recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_TLS_ERROR);
+      connectionInfoCache.forceRefresh();
+      throw e;
     } catch (UserConfigException e) {
       logger.debug(
           String.format("[%s] Connection failed due to user configuration error.", instanceName));
