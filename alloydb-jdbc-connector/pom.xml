@@ -66,6 +66,65 @@
           </usedDependencies>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.5.2</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <shadedArtifactAttached>true</shadedArtifactAttached>
+              <shadedClassifierName>all</shadedClassifierName>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <!-- Exclude signatures to prevent SecurityException when loading signed jars -->
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+              <transformers>
+                <!-- Merge META-INF/services/ files so SPIs (like gRPC) work correctly -->
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+              <relocations>
+                <relocation>
+                  <pattern>com.google.common</pattern>
+                  <shadedPattern>com.google.cloud.alloydb.shaded.com.google.common</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.google.api</pattern>
+                  <shadedPattern>com.google.cloud.alloydb.shaded.com.google.api</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.google.auth</pattern>
+                  <shadedPattern>com.google.cloud.alloydb.shaded.com.google.auth</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.google.protobuf</pattern>
+                  <shadedPattern>com.google.cloud.alloydb.shaded.com.google.protobuf</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>io.grpc</pattern>
+                  <shadedPattern>com.google.cloud.alloydb.shaded.io.grpc</shadedPattern>
+                </relocation>
+                 <relocation>
+                  <pattern>io.opencensus</pattern>
+                  <shadedPattern>com.google.cloud.alloydb.shaded.io.opencensus</shadedPattern>
+                </relocation>
+              </relocations>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
