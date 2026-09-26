@@ -25,6 +25,7 @@ import java.security.KeyPair;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +56,33 @@ class Connector {
       ConcurrentHashMap<ConnectionConfig, ConnectionInfoCache> instances,
       AccessTokenSupplier accessTokenSupplier,
       String userAgents) {
+    this(
+        config,
+        executor,
+        connectionInfoRepo,
+        clientConnectorKeyPair,
+        connectionInfoCacheFactory,
+        instances,
+        accessTokenSupplier,
+        userAgents,
+        new ConcurrentHashMap<>());
+  }
+
+  /**
+   * Visible for testing, so a test can install a {@link MetricRecorder} for an instance and observe
+   * what the connector records. Production callers use the constructor above, which starts with no
+   * recorders and builds them on demand.
+   */
+  Connector(
+      ConnectorConfig config,
+      ListeningScheduledExecutorService executor,
+      ConnectionInfoRepository connectionInfoRepo,
+      KeyPair clientConnectorKeyPair,
+      ConnectionInfoCacheFactory connectionInfoCacheFactory,
+      ConcurrentHashMap<ConnectionConfig, ConnectionInfoCache> instances,
+      AccessTokenSupplier accessTokenSupplier,
+      String userAgents,
+      ConcurrentHashMap<InstanceName, MetricRecorder> metricRecorders) {
     this.config = config;
     this.executor = executor;
     this.connectionInfoRepo = connectionInfoRepo;
@@ -64,7 +92,7 @@ class Connector {
     this.accessTokenSupplier = accessTokenSupplier;
     this.userAgents = userAgents;
     this.clientUid = UUID.randomUUID().toString();
-    this.metricRecorders = new ConcurrentHashMap<>();
+    this.metricRecorders = metricRecorders;
     this.metricExporters = new ConcurrentHashMap<>();
   }
 
@@ -129,6 +157,11 @@ class Connector {
       recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_SUCCESS);
       metricRecorder.recordDialLatency((System.nanoTime() - startNanos) / 1_000_000.0);
       return s;
+    } catch (SSLException e) {
+      logger.debug(String.format("[%s] TLS handshake failed! Trigger a refresh.", instanceName));
+      recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_TLS_ERROR);
+      connectionInfoCache.forceRefresh();
+      throw e;
     } catch (UserConfigException e) {
       logger.debug(
           String.format("[%s] Connection failed due to user configuration error.", instanceName));
