@@ -24,6 +24,7 @@ import java.net.Socket;
 import java.security.KeyPair;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLException;
 import org.slf4j.Logger;
@@ -46,6 +47,8 @@ class Connector {
   private final String clientUid;
   private final ConcurrentHashMap<InstanceName, MetricRecorder> metricRecorders;
   private final ConcurrentHashMap<String, MetricExporter> metricExporters;
+  private final InstrumentedSocket.Tracker socketTracker;
+  private final ScheduledFuture<?> socketTrackerTick;
 
   Connector(
       ConnectorConfig config,
@@ -94,6 +97,16 @@ class Connector {
     this.clientUid = UUID.randomUUID().toString();
     this.metricRecorders = metricRecorders;
     this.metricExporters = new ConcurrentHashMap<>();
+    this.socketTracker = new InstrumentedSocket.Tracker();
+    // One task for every connection this connector opens, rather than a reporting thread per
+    // connection: it reports the bytes that open connections have transferred, and notices the
+    // connections an application abandoned without closing.
+    this.socketTrackerTick =
+        executor.scheduleAtFixedRate(
+            socketTracker::tick,
+            InstrumentedSocket.Tracker.FLUSH_INTERVAL_MILLIS,
+            InstrumentedSocket.Tracker.FLUSH_INTERVAL_MILLIS,
+            TimeUnit.MILLISECONDS);
   }
 
   public ConnectorConfig getConfig() {
@@ -102,6 +115,11 @@ class Connector {
 
   public void close() throws IOException {
     logger.debug("Close all connections and remove them from cache.");
+    this.socketTrackerTick.cancel(false);
+    // One last tick, now that no further one is scheduled: it reports what the connections still
+    // open have transferred since the last one, which the recorder shutdown below would otherwise
+    // discard.
+    this.socketTracker.tick();
     this.instances.forEach((key, c) -> c.close());
     this.instances.clear();
     this.connectionInfoRepo.close();
@@ -148,15 +166,12 @@ class Connector {
       throw e;
     }
 
+    Socket s;
     try {
       ConnectionSocket socket =
           new ConnectionSocket(
               connectionInfo, config, clientConnectorKeyPair, accessTokenSupplier, userAgents);
-      Socket s = socket.connect();
-
-      recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_SUCCESS);
-      metricRecorder.recordDialLatency((System.nanoTime() - startNanos) / 1_000_000.0);
-      return s;
+      s = socket.connect();
     } catch (SSLException e) {
       logger.debug(String.format("[%s] TLS handshake failed! Trigger a refresh.", instanceName));
       recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_TLS_ERROR);
@@ -185,6 +200,39 @@ class Connector {
       // the caller sees the problem, but the connector will have a refreshed certificate on the
       // next invocation.
       throw e;
+    }
+
+    // The dial is complete and every way it can fail has been recorded above. What follows is the
+    // success path's bookkeeping, deliberately outside those handlers: a metric recorder that
+    // throws is not a failed dial, and must not be recorded as one or trigger a refresh. It is
+    // also all done before the socket is wrapped, which leaves nothing between counting the
+    // connection as open and handing it back that could throw and strand a connection counted as
+    // open that can never be closed.
+    try {
+      recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_SUCCESS);
+      metricRecorder.recordDialLatency((System.nanoTime() - startNanos) / 1_000_000.0);
+
+      // When telemetry is disabled there is nothing to count, so hand back the socket itself
+      // rather than paying for an instrumented wrapper on every read and write.
+      if (!metricRecorder.isEnabled()) {
+        return s;
+      }
+      return new InstrumentedSocket(
+          s, metricRecorder, TelemetryAttributes.forConnection(iamAuthn), socketTracker);
+    } catch (RuntimeException e) {
+      // Recording telemetry must not leak a connection. The caller never receives this socket, so
+      // nothing else will ever close it.
+      closeQuietly(s, instanceName);
+      throw e;
+    }
+  }
+
+  private static void closeQuietly(Socket socket, InstanceName instanceName) {
+    try {
+      socket.close();
+    } catch (IOException | RuntimeException e) {
+      logger.debug(
+          String.format("[%s] Failed to close a socket no caller received.", instanceName), e);
     }
   }
 

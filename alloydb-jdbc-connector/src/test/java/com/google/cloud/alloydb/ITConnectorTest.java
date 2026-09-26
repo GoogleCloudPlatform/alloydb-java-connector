@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.Socket;
 import java.security.KeyPair;
 import java.security.cert.CertificateException;
 import java.time.Instant;
@@ -30,7 +31,6 @@ import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import javax.net.ssl.SSLSocket;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.junit.After;
 import org.junit.Before;
@@ -77,11 +77,12 @@ public class ITConnectorTest {
 
   @Test
   public void testConnect_createsSocketConnection() throws IOException {
-    SSLSocket socket = null;
+    Socket socket = null;
+    Connector connector = null;
     ConnectionConfig config =
         new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
     try {
-      Connector connector =
+      connector =
           new Connector(
               config.getConnectorConfig(),
               executor,
@@ -92,13 +93,17 @@ public class ITConnectorTest {
               accessTokenSupplier,
               USER_AGENT);
 
-      socket = (SSLSocket) connector.connect(config);
+      socket = connector.connect(config);
 
       assertThat(socket.getKeepAlive()).isTrue();
       assertThat(socket.getTcpNoDelay()).isTrue();
     } finally {
       if (socket != null) {
         socket.close();
+      }
+      // A connector left open keeps its socket-tracker task on the executor.
+      if (connector != null) {
+        connector.close();
       }
     }
   }
@@ -122,12 +127,13 @@ public class ITConnectorTest {
             TestCertificates.INSTANCE.getRootCertificate()));
     StubConnectionInfoCacheFactory connectionInfoCacheFactory =
         new StubConnectionInfoCacheFactory(stubConnectionInfoCache);
-    SSLSocket socket = null;
+    Socket socket = null;
     ConnectionConfig config =
         new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
 
+    Connector connector = null;
     try {
-      Connector connector =
+      connector =
           new Connector(
               config.getConnectorConfig(),
               executor,
@@ -137,13 +143,17 @@ public class ITConnectorTest {
               new ConcurrentHashMap<>(),
               accessTokenSupplier,
               USER_AGENT);
-      socket = (SSLSocket) connector.connect(config);
+      socket = connector.connect(config);
     } catch (ConnectException ignore) {
       // The socket connect will fail because it's trying to connect to localhost with TLS certs.
       // So ignore the exception here.
     } finally {
       if (socket != null) {
         socket.close();
+      }
+      // A connector left open keeps its socket-tracker task on the executor.
+      if (connector != null) {
+        connector.close();
       }
       if (executor != null) {
         executor.shutdown();
@@ -264,6 +274,11 @@ public class ITConnectorTest {
                 new ConcurrentHashMap<>(),
                 accessTokenSupplier,
                 null)); // Different
+
+    // None of these connectors dials, so none is closed; their socket-tracker tasks die with the
+    // executors they were scheduled on. #tearDown shuts down the one every other connector here
+    // shares, which leaves this one.
+    exec.shutdownNow();
   }
 
   @Test

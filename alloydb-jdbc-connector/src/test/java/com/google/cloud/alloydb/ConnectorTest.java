@@ -57,6 +57,9 @@ public class ConnectorTest {
   static ListeningScheduledExecutorService defaultExecutor;
   private static FakeSslServer sslServer;
 
+  /** Every connector a test builds, so that {@link #after} closes it. */
+  private final List<Connector> connectors = new ArrayList<>();
+
   @BeforeClass
   public static void beforeClass() throws Exception {
     defaultExecutor = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(8));
@@ -65,9 +68,19 @@ public class ConnectorTest {
   }
 
   @After
-  public void after() {
-    // The SSL server is shared by every test in this class, so undo any per-test configuration.
-    sslServer.succeedMetadataExchange();
+  public void after() throws IOException {
+    try {
+      // A connector schedules a repeating socket-tracker task on the shared executor, so one left
+      // open keeps ticking for the rest of the class, as do the connection info cache and the
+      // metric recorders it holds.
+      for (Connector connector : connectors) {
+        connector.close();
+      }
+    } finally {
+      connectors.clear();
+      // The SSL server is shared by every test in this class, so undo any per-test configuration.
+      sslServer.succeedMetadataExchange();
+    }
   }
 
   @AfterClass
@@ -169,6 +182,47 @@ public class ConnectorTest {
     assertThat(recorder.dialStatuses).containsExactly(TelemetryAttributes.DIAL_TLS_ERROR);
   }
 
+  @Test
+  public void connect_returnsThePlainSocket_whenMetricsAreDisabled() throws IOException {
+    MockAlloyDBAdminGrpc mock = new MockAlloyDBAdminGrpc("127.0.0.1", IpType.PRIVATE);
+    ConnectionConfig config =
+        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(INSTANCE_NAME)).build();
+    Connector connector = newConnector(config.getConnectorConfig(), mock);
+
+    Socket socket = connector.connect(config);
+
+    // An application that has opted out of telemetry pays nothing on its reads and writes.
+    assertThat(socket).isNotInstanceOf(InstrumentedSocket.class);
+    socket.close();
+  }
+
+  @Test
+  public void connect_countsTheConnection_whenMetricsAreEnabled() throws Exception {
+    MockAlloyDBAdminGrpc mock = new MockAlloyDBAdminGrpc("127.0.0.1", IpType.PRIVATE);
+    ConnectionConfig config =
+        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(INSTANCE_NAME)).build();
+    RecordingMetricRecorder recorder = new RecordingMetricRecorder();
+    recorder.enabled = true;
+    Connector connector =
+        newConnector(
+            config.getConnectorConfig(),
+            mock,
+            new DefaultConnectionInfoCacheFactory(RefreshStrategy.REFRESH_AHEAD),
+            recorder);
+
+    Socket socket = connector.connect(config);
+
+    assertThat(socket).isInstanceOf(InstrumentedSocket.class);
+    assertThat(recorder.openConnections.get()).isEqualTo(1);
+    assertThat(recorder.closedConnections.get()).isEqualTo(0);
+
+    assertThat(readLine(socket)).isEqualTo(SERVER_MESSAGE);
+    socket.close();
+
+    assertThat(recorder.closedConnections.get()).isEqualTo(1);
+    assertThat(recorder.bytesRx.get()).isAtLeast(SERVER_MESSAGE.length());
+  }
+
   private StubConnectionInfoCache newStubConnectionInfoCache(String ipAddress) throws Exception {
     return newStubConnectionInfoCache(ipAddress, TestCertificates.INSTANCE.getRootCertificate());
   }
@@ -234,16 +288,19 @@ public class ConnectorTest {
     AccessTokenSupplier accessTokenSupplier =
         new DefaultAccessTokenSupplier(instanceCredentialFactory);
 
-    return new Connector(
-        config,
-        defaultExecutor,
-        connectionInfoRepository,
-        TestCertificates.INSTANCE.getClientKey(),
-        connectionInfoCacheFactory,
-        new ConcurrentHashMap<>(),
-        accessTokenSupplier,
-        USER_AGENT,
-        metricRecorders);
+    Connector connector =
+        new Connector(
+            config,
+            defaultExecutor,
+            connectionInfoRepository,
+            TestCertificates.INSTANCE.getClientKey(),
+            connectionInfoCacheFactory,
+            new ConcurrentHashMap<>(),
+            accessTokenSupplier,
+            USER_AGENT,
+            metricRecorders);
+    connectors.add(connector);
+    return connector;
   }
 
   private String readLine(Socket socket) throws IOException {
