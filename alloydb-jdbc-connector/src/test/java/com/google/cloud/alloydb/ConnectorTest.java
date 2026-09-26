@@ -32,9 +32,14 @@ import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import javax.net.ssl.SSLException;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -139,7 +144,37 @@ public class ConnectorTest {
     assertThat(stubConnectionInfoCache.hasForceRefreshed()).isFalse();
   }
 
+  @Test
+  public void connect_forcesRefresh_whenTlsHandshakeFails() throws Exception {
+    MockAlloyDBAdminGrpc mock = new MockAlloyDBAdminGrpc("127.0.0.1", IpType.PRIVATE);
+    ConnectionConfig config =
+        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(INSTANCE_NAME)).build();
+    // Connection info carrying a CA certificate that did not sign the server's certificate, so the
+    // client rejects the server during the handshake.
+    StubConnectionInfoCache stubConnectionInfoCache =
+        newStubConnectionInfoCache(
+            "127.0.0.1", TestCertificates.INSTANCE.getIntermediateCertificate());
+    RecordingMetricRecorder recorder = new RecordingMetricRecorder();
+    Connector connector =
+        newConnector(
+            config.getConnectorConfig(),
+            mock,
+            new StubConnectionInfoCacheFactory(stubConnectionInfoCache),
+            recorder);
+
+    assertThrows(SSLException.class, () -> connector.connect(config));
+
+    // A certificate the client cannot validate is a likely sign of stale connection info.
+    assertThat(stubConnectionInfoCache.hasForceRefreshed()).isTrue();
+    assertThat(recorder.dialStatuses).containsExactly(TelemetryAttributes.DIAL_TLS_ERROR);
+  }
+
   private StubConnectionInfoCache newStubConnectionInfoCache(String ipAddress) throws Exception {
+    return newStubConnectionInfoCache(ipAddress, TestCertificates.INSTANCE.getRootCertificate());
+  }
+
+  private StubConnectionInfoCache newStubConnectionInfoCache(
+      String ipAddress, X509Certificate caCertificate) throws Exception {
     KeyPair clientConnectorKeyPair = TestCertificates.INSTANCE.getClientKey();
     X509Certificate clientCertificate =
         TestCertificates.INSTANCE.getEphemeralCertificate(
@@ -157,7 +192,7 @@ public class ConnectorTest {
                 clientCertificate,
                 TestCertificates.INSTANCE.getIntermediateCertificate(),
                 TestCertificates.INSTANCE.getRootCertificate()),
-            TestCertificates.INSTANCE.getRootCertificate()));
+            caCertificate));
     return stubConnectionInfoCache;
   }
 
@@ -169,7 +204,25 @@ public class ConnectorTest {
   private Connector newConnector(
       ConnectorConfig config,
       MockAlloyDBAdminGrpc mock,
+      ConnectionInfoCacheFactory connectionInfoCacheFactory,
+      MetricRecorder metricRecorder) {
+    ConcurrentHashMap<InstanceName, MetricRecorder> recorders = new ConcurrentHashMap<>();
+    recorders.put(InstanceName.parse(INSTANCE_NAME), metricRecorder);
+    return newConnector(config, mock, connectionInfoCacheFactory, recorders);
+  }
+
+  private Connector newConnector(
+      ConnectorConfig config,
+      MockAlloyDBAdminGrpc mock,
       ConnectionInfoCacheFactory connectionInfoCacheFactory) {
+    return newConnector(config, mock, connectionInfoCacheFactory, new ConcurrentHashMap<>());
+  }
+
+  private Connector newConnector(
+      ConnectorConfig config,
+      MockAlloyDBAdminGrpc mock,
+      ConnectionInfoCacheFactory connectionInfoCacheFactory,
+      ConcurrentHashMap<InstanceName, MetricRecorder> metricRecorders) {
     CredentialFactoryProvider stubCredentialFactoryProvider =
         new CredentialFactoryProvider(new StubCredentialFactory());
     CredentialFactory instanceCredentialFactory =
@@ -189,12 +242,62 @@ public class ConnectorTest {
         connectionInfoCacheFactory,
         new ConcurrentHashMap<>(),
         accessTokenSupplier,
-        USER_AGENT);
+        USER_AGENT,
+        metricRecorders);
   }
 
   private String readLine(Socket socket) throws IOException {
     BufferedReader bufferedReader =
         new BufferedReader(new InputStreamReader(socket.getInputStream(), UTF_8));
     return bufferedReader.readLine();
+  }
+
+  private static final class RecordingMetricRecorder implements MetricRecorder {
+
+    boolean enabled;
+    final List<String> dialStatuses = new ArrayList<>();
+    final AtomicInteger openConnections = new AtomicInteger();
+    final AtomicInteger closedConnections = new AtomicInteger();
+    final AtomicLong bytesRx = new AtomicLong();
+    final AtomicLong bytesTx = new AtomicLong();
+
+    @Override
+    public boolean isEnabled() {
+      return enabled;
+    }
+
+    @Override
+    public void shutdown() {}
+
+    @Override
+    public void recordDialCount(TelemetryAttributes attrs) {
+      dialStatuses.add(attrs.getDialStatus());
+    }
+
+    @Override
+    public void recordDialLatency(double latencyMs) {}
+
+    @Override
+    public void recordOpenConnection(TelemetryAttributes attrs) {
+      openConnections.incrementAndGet();
+    }
+
+    @Override
+    public void recordClosedConnection(TelemetryAttributes attrs) {
+      closedConnections.incrementAndGet();
+    }
+
+    @Override
+    public void recordBytesRx(long count) {
+      bytesRx.addAndGet(count);
+    }
+
+    @Override
+    public void recordBytesTx(long count) {
+      bytesTx.addAndGet(count);
+    }
+
+    @Override
+    public void recordRefreshCount(TelemetryAttributes attrs) {}
   }
 }
