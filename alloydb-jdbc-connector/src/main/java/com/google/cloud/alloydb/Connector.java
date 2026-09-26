@@ -154,9 +154,20 @@ class Connector {
               connectionInfo, config, clientConnectorKeyPair, accessTokenSupplier, userAgents);
       Socket s = socket.connect();
 
+      // When telemetry is disabled there is nothing to count, so hand back the socket itself
+      // rather than paying for an instrumented wrapper on every read and write.
+      Socket result = s;
+      if (metricRecorder.isEnabled()) {
+        TelemetryAttributes connectionAttrs = TelemetryAttributes.forConnection(iamAuthn);
+        result = new InstrumentedSocket(s, metricRecorder, connectionAttrs);
+        // Recorded here, next to the wrap, so that nothing can throw in between and leave a socket
+        // that reports its close without a matching open.
+        metricRecorder.recordOpenConnection(connectionAttrs);
+      }
+
       recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_SUCCESS);
       metricRecorder.recordDialLatency((System.nanoTime() - startNanos) / 1_000_000.0);
-      return s;
+      return result;
     } catch (SSLException e) {
       logger.debug(String.format("[%s] TLS handshake failed! Trigger a refresh.", instanceName));
       recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_TLS_ERROR);

@@ -169,6 +169,47 @@ public class ConnectorTest {
     assertThat(recorder.dialStatuses).containsExactly(TelemetryAttributes.DIAL_TLS_ERROR);
   }
 
+  @Test
+  public void connect_returnsThePlainSocket_whenMetricsAreDisabled() throws IOException {
+    MockAlloyDBAdminGrpc mock = new MockAlloyDBAdminGrpc("127.0.0.1", IpType.PRIVATE);
+    ConnectionConfig config =
+        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(INSTANCE_NAME)).build();
+    Connector connector = newConnector(config.getConnectorConfig(), mock);
+
+    Socket socket = connector.connect(config);
+
+    // An application that has opted out of telemetry pays nothing on its reads and writes.
+    assertThat(socket).isNotInstanceOf(InstrumentedSocket.class);
+    socket.close();
+  }
+
+  @Test
+  public void connect_countsTheConnection_whenMetricsAreEnabled() throws Exception {
+    MockAlloyDBAdminGrpc mock = new MockAlloyDBAdminGrpc("127.0.0.1", IpType.PRIVATE);
+    ConnectionConfig config =
+        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(INSTANCE_NAME)).build();
+    RecordingMetricRecorder recorder = new RecordingMetricRecorder();
+    recorder.enabled = true;
+    Connector connector =
+        newConnector(
+            config.getConnectorConfig(),
+            mock,
+            new DefaultConnectionInfoCacheFactory(RefreshStrategy.REFRESH_AHEAD),
+            recorder);
+
+    Socket socket = connector.connect(config);
+
+    assertThat(socket).isInstanceOf(InstrumentedSocket.class);
+    assertThat(recorder.openConnections.get()).isEqualTo(1);
+    assertThat(recorder.closedConnections.get()).isEqualTo(0);
+
+    assertThat(readLine(socket)).isEqualTo(SERVER_MESSAGE);
+    socket.close();
+
+    assertThat(recorder.closedConnections.get()).isEqualTo(1);
+    assertThat(recorder.bytesRx.get()).isAtLeast(SERVER_MESSAGE.length());
+  }
+
   private StubConnectionInfoCache newStubConnectionInfoCache(String ipAddress) throws Exception {
     return newStubConnectionInfoCache(ipAddress, TestCertificates.INSTANCE.getRootCertificate());
   }
