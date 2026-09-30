@@ -107,27 +107,15 @@ class FakeSslServer {
                 pickedPort.set(sslServerSocket.getLocalPort());
                 countDownLatch.countDown();
                 for (; ; ) {
+                  // accept() failures are still fatal, as they mean the server itself is done.
                   SSLSocket socket = (SSLSocket) sslServerSocket.accept();
-                  socket.startHandshake();
-
-                  // Metadata exchange.
-                  socket.setSoTimeout(IO_TIMEOUT_MS);
-                  DataInputStream in =
-                      new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-                  int reqSize = in.readInt();
-                  byte[] reqData = new byte[reqSize];
-                  in.readFully(reqData);
-                  MetadataExchangeResponse response = metadataExchangeResponse;
-                  DataOutputStream out =
-                      new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-                  out.writeInt(response.getSerializedSize());
-                  out.write(response.toByteArray());
-                  out.flush();
-
-                  // Send message to the client.
-                  out.write(message.getBytes(UTF_8));
-                  out.flush();
-                  socket.close();
+                  // One connection per thread. A test may abandon a connection on purpose -- a
+                  // client that rejects the server certificate never completes the metadata
+                  // exchange -- and this server is shared by every test in a class, so neither a
+                  // failure nor a read that sits until IO_TIMEOUT_MS may hold up the next test.
+                  Thread worker = new Thread(() -> serveQuietly(socket));
+                  worker.setDaemon(true);
+                  worker.start();
                 }
               } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -138,6 +126,41 @@ class FakeSslServer {
     countDownLatch.await();
 
     return pickedPort.get();
+  }
+
+  private void serveQuietly(SSLSocket socket) {
+    try {
+      serve(socket);
+    } catch (Exception e) {
+      // Nothing useful to do: this connection is finished either way, and a test may well have
+      // arranged the failure.
+    } finally {
+      try {
+        socket.close();
+      } catch (IOException ignored) {
+        // Already failing; the socket is going away regardless.
+      }
+    }
+  }
+
+  private void serve(SSLSocket socket) throws IOException {
+    socket.startHandshake();
+
+    // Metadata exchange.
+    socket.setSoTimeout(IO_TIMEOUT_MS);
+    DataInputStream in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+    int reqSize = in.readInt();
+    byte[] reqData = new byte[reqSize];
+    in.readFully(reqData);
+    MetadataExchangeResponse response = metadataExchangeResponse;
+    DataOutputStream out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+    out.writeInt(response.getSerializedSize());
+    out.write(response.toByteArray());
+    out.flush();
+
+    // Send message to the client.
+    out.write(message.getBytes(UTF_8));
+    out.flush();
   }
 
   void stop() {
