@@ -32,6 +32,7 @@ import java.net.SocketException;
 import java.net.SocketOption;
 import java.net.StandardSocketOptions;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.After;
 import org.junit.Before;
@@ -278,6 +279,32 @@ public class InstrumentedSocketTest {
 
     assertThat(recorder.bytesTx.get()).isEqualTo(10);
     assertThat(recorder.closedConnections.get()).isEqualTo(1);
+  }
+
+  /**
+   * An application that leaks a connection would otherwise leave it counted as open for the life of
+   * the process, which makes the open-connection count useless to the applications most likely to
+   * be reading it.
+   */
+  @Test
+  public void testAbandonedSocketIsEventuallyReportedAsClosed() throws Exception {
+    InstrumentedSocket socket = newSocket();
+    socket.getOutputStream().write(new byte[10]);
+    // Every reference the test holds, dropped without a close. The streams are not kept either:
+    // they hold their socket, which would keep it from ever being collected.
+    socket = null;
+
+    // The JVM is under no obligation to collect anything on demand, so keep asking.
+    long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
+    while (recorder.closedConnections.get() == 0 && System.nanoTime() < deadlineNanos) {
+      System.gc();
+      tracker.tick();
+      Thread.sleep(20);
+    }
+
+    assertThat(recorder.closedConnections.get()).isEqualTo(1);
+    // The bytes it transferred are reported too, rather than lost along with the socket.
+    assertThat(recorder.bytesTx.get()).isEqualTo(10);
   }
 
   @Test
