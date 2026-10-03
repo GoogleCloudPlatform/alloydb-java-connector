@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.Socket;
 import java.security.KeyPair;
 import java.security.cert.CertificateException;
 import java.time.Instant;
@@ -30,7 +31,6 @@ import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import javax.net.ssl.SSLSocket;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.junit.After;
 import org.junit.Before;
@@ -77,7 +77,7 @@ public class ITConnectorTest {
 
   @Test
   public void testConnect_createsSocketConnection() throws IOException {
-    SSLSocket socket = null;
+    Socket socket = null;
     ConnectionConfig config =
         new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
     try {
@@ -92,7 +92,7 @@ public class ITConnectorTest {
               accessTokenSupplier,
               USER_AGENT);
 
-      socket = (SSLSocket) connector.connect(config);
+      socket = connector.connect(config);
 
       assertThat(socket.getKeepAlive()).isTrue();
       assertThat(socket.getTcpNoDelay()).isTrue();
@@ -122,7 +122,7 @@ public class ITConnectorTest {
             TestCertificates.INSTANCE.getRootCertificate()));
     StubConnectionInfoCacheFactory connectionInfoCacheFactory =
         new StubConnectionInfoCacheFactory(stubConnectionInfoCache);
-    SSLSocket socket = null;
+    Socket socket = null;
     ConnectionConfig config =
         new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(instanceName)).build();
 
@@ -137,7 +137,7 @@ public class ITConnectorTest {
               new ConcurrentHashMap<>(),
               accessTokenSupplier,
               USER_AGENT);
-      socket = (SSLSocket) connector.connect(config);
+      socket = connector.connect(config);
     } catch (ConnectException ignore) {
       // The socket connect will fail because it's trying to connect to localhost with TLS certs.
       // So ignore the exception here.
