@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import javax.net.ssl.SSLException;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -68,7 +69,8 @@ public class ConnectorTest {
   @After
   public void after() throws IOException {
     try {
-      // A connector left open keeps its connection info cache and its metric recorders running.
+      // A connector left open keeps its connection info cache and its metric recorders, and the
+      // socket-tracker task that counting a connection schedules on the shared executor.
       for (Connector connector : connectors) {
         connector.close();
       }
@@ -247,6 +249,45 @@ public class ConnectorTest {
     assertThat(stubConnectionInfoCache.hasForceRefreshed()).isFalse();
   }
 
+  @Test
+  public void connect_schedulesTheSocketTracker_onlyOnceThereIsAConnectionToCount()
+      throws Exception {
+    ScheduledThreadPoolExecutor raw =
+        (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
+    // The stub cache schedules no refresh, so the socket tracker is the only thing that can put a
+    // task on this executor.
+    ConnectionInfoCacheFactory connectionInfoCacheFactory =
+        new StubConnectionInfoCacheFactory(newStubConnectionInfoCache("127.0.0.1"));
+    MockAlloyDBAdminGrpc mock = new MockAlloyDBAdminGrpc("127.0.0.1", IpType.PRIVATE);
+    ConnectionConfig config =
+        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(INSTANCE_NAME)).build();
+    RecordingMetricRecorder recorder = new RecordingMetricRecorder();
+    try {
+      Connector connector =
+          newConnector(
+              config.getConnectorConfig(),
+              mock,
+              connectionInfoCacheFactory,
+              recorderFor(recorder),
+              MoreExecutors.listeningDecorator(raw));
+
+      // An application that has opted out of telemetry has nothing to report, so it must not pay a
+      // repeating task on the executor it shares with certificate refresh.
+      Socket plain = connector.connect(config);
+      plain.close();
+      assertThat(raw.getQueue()).isEmpty();
+
+      recorder.enabled = true;
+      Socket counted = connector.connect(config);
+
+      // The first counted connection is what the periodic report exists for.
+      assertThat(raw.getQueue()).isNotEmpty();
+      counted.close();
+    } finally {
+      raw.shutdownNow();
+    }
+  }
+
   private StubConnectionInfoCache newStubConnectionInfoCache(String ipAddress) throws Exception {
     return newStubConnectionInfoCache(ipAddress, TestCertificates.INSTANCE.getRootCertificate());
   }
@@ -305,12 +346,21 @@ public class ConnectorTest {
       MockAlloyDBAdminGrpc mock,
       ConnectionInfoCacheFactory connectionInfoCacheFactory,
       ConcurrentHashMap<InstanceName, MetricRecorder> metricRecorders) {
+    return newConnector(config, mock, connectionInfoCacheFactory, metricRecorders, defaultExecutor);
+  }
+
+  private Connector newConnector(
+      ConnectorConfig config,
+      MockAlloyDBAdminGrpc mock,
+      ConnectionInfoCacheFactory connectionInfoCacheFactory,
+      ConcurrentHashMap<InstanceName, MetricRecorder> metricRecorders,
+      ListeningScheduledExecutorService executor) {
     CredentialFactoryProvider stubCredentialFactoryProvider =
         new CredentialFactoryProvider(new StubCredentialFactory());
     CredentialFactory instanceCredentialFactory =
         stubCredentialFactoryProvider.getInstanceCredentialFactory(config);
     ConnectionInfoRepositoryFactory connectionInfoRepositoryFactory =
-        new StubConnectionInfoRepositoryFactory(defaultExecutor, mock);
+        new StubConnectionInfoRepositoryFactory(executor, mock);
     ConnectionInfoRepository connectionInfoRepository =
         connectionInfoRepositoryFactory.create(instanceCredentialFactory, config);
     AccessTokenSupplier accessTokenSupplier =
@@ -319,7 +369,7 @@ public class ConnectorTest {
     Connector connector =
         new Connector(
             config,
-            defaultExecutor,
+            executor,
             connectionInfoRepository,
             TestCertificates.INSTANCE.getClientKey(),
             connectionInfoCacheFactory,
