@@ -108,7 +108,8 @@ class Connector {
   /**
    * Starts the socket tracker's schedule, if it is not running already: one task for every
    * connection this connector opens, rather than a reporting thread per connection. It reports the
-   * bytes that open connections have transferred.
+   * bytes that open connections have transferred, and notices the connections an application
+   * abandoned without closing.
    *
    * <p>Scheduled on the first instrumented connection rather than with the connector, because until
    * there is one the task has an empty set to iterate and an empty queue to poll. An application
@@ -236,7 +237,10 @@ class Connector {
 
     // The dial is complete and every way it can fail has been recorded above. What follows is the
     // success path's bookkeeping, deliberately outside those handlers: a metric recorder that
-    // throws is not a failed dial, and must not be recorded as one or trigger a refresh.
+    // throws is not a failed dial, and must not be recorded as one or trigger a refresh. It is
+    // also all done before the socket is wrapped, which leaves nothing between counting the
+    // connection as open and handing it back that could throw and strand a connection counted as
+    // open that can never be closed.
     try {
       recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_SUCCESS);
       metricRecorder.recordDialLatency((System.nanoTime() - startNanos) / 1_000_000.0);
