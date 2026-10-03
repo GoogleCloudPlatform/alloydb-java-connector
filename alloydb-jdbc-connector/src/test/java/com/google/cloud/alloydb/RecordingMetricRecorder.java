@@ -39,6 +39,15 @@ final class RecordingMetricRecorder implements MetricRecorder {
    */
   volatile boolean enabled;
 
+  /**
+   * Makes the recording of a successful dial throw a {@link MetadataExchangeException}, which the
+   * connector must not mistake for a failed dial. Dial latency is the last thing a successful dial
+   * records, so by then the connection exists. The exception type is one of the connector's own on
+   * purpose: those are unchecked, so recording a success anywhere inside the handlers that classify
+   * a failure would let a recorder's failure be classified as one.
+   */
+  volatile boolean failDialLatency;
+
   @Override
   public boolean isEnabled() {
     return enabled;
@@ -53,7 +62,11 @@ final class RecordingMetricRecorder implements MetricRecorder {
   }
 
   @Override
-  public void recordDialLatency(double latencyMs) {}
+  public void recordDialLatency(double latencyMs) {
+    if (failDialLatency) {
+      throw new MetadataExchangeException("recorder is broken");
+    }
+  }
 
   @Override
   public void recordOpenConnection(TelemetryAttributes attrs) {

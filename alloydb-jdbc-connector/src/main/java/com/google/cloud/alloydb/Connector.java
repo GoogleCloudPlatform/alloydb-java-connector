@@ -148,15 +148,12 @@ class Connector {
       throw e;
     }
 
+    Socket s;
     try {
       ConnectionSocket socket =
           new ConnectionSocket(
               connectionInfo, config, clientConnectorKeyPair, accessTokenSupplier, userAgents);
-      Socket s = socket.connect();
-
-      recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_SUCCESS);
-      metricRecorder.recordDialLatency((System.nanoTime() - startNanos) / 1_000_000.0);
-      return s;
+      s = socket.connect();
     } catch (SSLException e) {
       logger.debug(String.format("[%s] TLS handshake failed! Trigger a refresh.", instanceName));
       recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_TLS_ERROR);
@@ -185,6 +182,29 @@ class Connector {
       // the caller sees the problem, but the connector will have a refreshed certificate on the
       // next invocation.
       throw e;
+    }
+
+    // The dial is complete and every way it can fail has been recorded above. What follows is the
+    // success path's bookkeeping, deliberately outside those handlers: a metric recorder that
+    // throws is not a failed dial, and must not be recorded as one or trigger a refresh.
+    try {
+      recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_SUCCESS);
+      metricRecorder.recordDialLatency((System.nanoTime() - startNanos) / 1_000_000.0);
+      return s;
+    } catch (RuntimeException e) {
+      // Recording telemetry must not leak a connection. The caller never receives this socket, so
+      // nothing else will ever close it.
+      closeQuietly(s, instanceName);
+      throw e;
+    }
+  }
+
+  private static void closeQuietly(Socket socket, InstanceName instanceName) {
+    try {
+      socket.close();
+    } catch (IOException | RuntimeException e) {
+      logger.debug(
+          String.format("[%s] Failed to close a socket no caller received.", instanceName), e);
     }
   }
 
