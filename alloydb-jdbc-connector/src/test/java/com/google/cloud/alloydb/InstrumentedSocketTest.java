@@ -20,8 +20,10 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
 
+import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -29,6 +31,8 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketOption;
 import java.net.StandardSocketOptions;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -84,6 +88,29 @@ public class InstrumentedSocketTest {
   }
 
   /**
+   * Reads and discards everything the peer receives, so a write larger than the socket's send
+   * buffer cannot block the test.
+   */
+  private Thread startPeerDrain() {
+    Thread drain =
+        new Thread(
+            () -> {
+              try {
+                InputStream peerIn = peer.getInputStream();
+                byte[] buf = new byte[8192];
+                while (peerIn.read(buf) != -1) {
+                  // Discard.
+                }
+              } catch (IOException ignored) {
+                // The socket closed; the test is done reading.
+              }
+            });
+    drain.setDaemon(true);
+    drain.start();
+    return drain;
+  }
+
+  /**
    * InstrumentedSocket is constructed on a null SocketImpl, so any Socket method it fails to
    * delegate silently answers from an empty superclass instead of the real connection.
    */
@@ -135,6 +162,41 @@ public class InstrumentedSocketTest {
   }
 
   @Test
+  public void testBytesAreCountedAsTheyAreTransferred() throws IOException {
+    InstrumentedSocket socket = newSocket();
+    OutputStream out = socket.getOutputStream();
+
+    out.write(new byte[100]);
+    out.write(7);
+    out.flush();
+
+    byte[] buf = new byte[3];
+    peer.getOutputStream().write(buf);
+    peer.getOutputStream().flush();
+    InputStream in = socket.getInputStream();
+    ByteStreams.readFully(in, buf);
+
+    // Each read and write reports its own bytes, so the counts are complete without a close.
+    assertThat(recorder.bytesTx.get()).isEqualTo(101);
+    assertThat(recorder.bytesRx.get()).isEqualTo(3);
+  }
+
+  @Test
+  public void testLargeTransferIsCountedInFull() throws IOException {
+    InstrumentedSocket socket = newSocket();
+    OutputStream out = socket.getOutputStream();
+
+    startPeerDrain();
+
+    for (int i = 0; i < 16; i++) {
+      out.write(new byte[8 * 1024]);
+    }
+    out.flush();
+
+    assertThat(recorder.bytesTx.get()).isEqualTo(128L * 1024);
+  }
+
+  @Test
   public void testClosedConnectionRecordedExactlyOnce() throws IOException {
     InstrumentedSocket socket = newSocket();
 
@@ -151,6 +213,40 @@ public class InstrumentedSocketTest {
 
     assertThat(recorder.openConnections.get()).isEqualTo(1);
     assertThat(recorder.closedConnections.get()).isEqualTo(0);
+  }
+
+  @Test
+  public void testHalfCloseDelegates() throws IOException {
+    InstrumentedSocket socket = newSocket();
+
+    socket.shutdownOutput();
+    socket.shutdownInput();
+
+    assertThat(delegate.isOutputShutdown()).isTrue();
+    assertThat(delegate.isInputShutdown()).isTrue();
+  }
+
+  /**
+   * The counts are recorded from the read and write path, where an unchecked exception from a
+   * recorder would break a connection that is working perfectly well and reach the driver as
+   * something it cannot turn into a SQLException. Nor may a broken recorder cost the connection its
+   * close, which is reported once and never retried: a connection that misses it stays counted as
+   * open for the life of the process.
+   */
+  @Test
+  public void testBrokenRecorderDoesNotFailAWriteAReadOrAClose() throws IOException {
+    InstrumentedSocket socket = newSocket();
+    peer.getOutputStream().write(new byte[10]);
+    peer.getOutputStream().flush();
+    startPeerDrain();
+    recorder.failByteCounts = true;
+
+    socket.getOutputStream().write(new byte[128 * 1024]);
+    ByteStreams.readFully(socket.getInputStream(), new byte[10]);
+    socket.close();
+
+    assertThat(recorder.closedConnections.get()).isEqualTo(1);
+    assertThat(delegate.isClosed()).isTrue();
   }
 
   /**
@@ -200,5 +296,33 @@ public class InstrumentedSocketTest {
 
     assertThat(delegate.isClosed()).isTrue();
     assertThat(recorder.closedConnections.get()).isEqualTo(1);
+  }
+
+  @Test
+  public void testCloseDuringConcurrentWriteDoesNotLoseBytes() throws Exception {
+    InstrumentedSocket socket = newSocket();
+    OutputStream out = socket.getOutputStream();
+    AtomicLong written = new AtomicLong();
+    CountDownLatch started = new CountDownLatch(1);
+
+    Thread writer =
+        new Thread(
+            () -> {
+              try {
+                for (int i = 0; i < 1_000_000; i++) {
+                  started.countDown();
+                  out.write(1);
+                  written.incrementAndGet();
+                }
+              } catch (IOException ignored) {
+                // The socket closed out from under this thread; that's the point of the test.
+              }
+            });
+    writer.start();
+    started.await();
+    socket.close();
+    writer.join();
+
+    assertThat(recorder.bytesTx.get()).isEqualTo(written.get());
   }
 }

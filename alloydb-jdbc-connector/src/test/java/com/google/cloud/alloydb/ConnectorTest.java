@@ -216,6 +216,7 @@ public class ConnectorTest {
     socket.close();
 
     assertThat(recorder.closedConnections.get()).isEqualTo(1);
+    assertThat(recorder.bytesRx.get()).isAtLeast(SERVER_MESSAGE.length());
   }
 
   /**
