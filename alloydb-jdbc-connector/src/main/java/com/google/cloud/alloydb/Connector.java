@@ -190,7 +190,13 @@ class Connector {
     try {
       recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_SUCCESS);
       metricRecorder.recordDialLatency((System.nanoTime() - startNanos) / 1_000_000.0);
-      return s;
+
+      // When telemetry is disabled there is nothing to count, so hand back the socket itself
+      // rather than paying for an instrumented wrapper on every read and write.
+      if (!metricRecorder.isEnabled()) {
+        return s;
+      }
+      return new InstrumentedSocket(s, metricRecorder, TelemetryAttributes.forConnection(iamAuthn));
     } catch (RuntimeException e) {
       // Recording telemetry must not leak a connection. The caller never receives this socket, so
       // nothing else will ever close it.
