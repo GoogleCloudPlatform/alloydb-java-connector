@@ -37,8 +37,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import javax.net.ssl.SSLException;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -57,6 +55,9 @@ public class ConnectorTest {
   static ListeningScheduledExecutorService defaultExecutor;
   private static FakeSslServer sslServer;
 
+  /** Every connector a test builds, so that {@link #after} closes it. */
+  private final List<Connector> connectors = new ArrayList<>();
+
   @BeforeClass
   public static void beforeClass() throws Exception {
     defaultExecutor = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(8));
@@ -65,9 +66,17 @@ public class ConnectorTest {
   }
 
   @After
-  public void after() {
-    // The SSL server is shared by every test in this class, so undo any per-test configuration.
-    sslServer.succeedMetadataExchange();
+  public void after() throws IOException {
+    try {
+      // A connector left open keeps its connection info cache and its metric recorders running.
+      for (Connector connector : connectors) {
+        connector.close();
+      }
+    } finally {
+      connectors.clear();
+      // The SSL server is shared by every test in this class, so undo any per-test configuration.
+      sslServer.succeedMetadataExchange();
+    }
   }
 
   @AfterClass
@@ -206,9 +215,13 @@ public class ConnectorTest {
       MockAlloyDBAdminGrpc mock,
       ConnectionInfoCacheFactory connectionInfoCacheFactory,
       MetricRecorder metricRecorder) {
+    return newConnector(config, mock, connectionInfoCacheFactory, recorderFor(metricRecorder));
+  }
+
+  private ConcurrentHashMap<InstanceName, MetricRecorder> recorderFor(MetricRecorder recorder) {
     ConcurrentHashMap<InstanceName, MetricRecorder> recorders = new ConcurrentHashMap<>();
-    recorders.put(InstanceName.parse(INSTANCE_NAME), metricRecorder);
-    return newConnector(config, mock, connectionInfoCacheFactory, recorders);
+    recorders.put(InstanceName.parse(INSTANCE_NAME), recorder);
+    return recorders;
   }
 
   private Connector newConnector(
@@ -234,70 +247,24 @@ public class ConnectorTest {
     AccessTokenSupplier accessTokenSupplier =
         new DefaultAccessTokenSupplier(instanceCredentialFactory);
 
-    return new Connector(
-        config,
-        defaultExecutor,
-        connectionInfoRepository,
-        TestCertificates.INSTANCE.getClientKey(),
-        connectionInfoCacheFactory,
-        new ConcurrentHashMap<>(),
-        accessTokenSupplier,
-        USER_AGENT,
-        metricRecorders);
+    Connector connector =
+        new Connector(
+            config,
+            defaultExecutor,
+            connectionInfoRepository,
+            TestCertificates.INSTANCE.getClientKey(),
+            connectionInfoCacheFactory,
+            new ConcurrentHashMap<>(),
+            accessTokenSupplier,
+            USER_AGENT,
+            metricRecorders);
+    connectors.add(connector);
+    return connector;
   }
 
   private String readLine(Socket socket) throws IOException {
     BufferedReader bufferedReader =
         new BufferedReader(new InputStreamReader(socket.getInputStream(), UTF_8));
     return bufferedReader.readLine();
-  }
-
-  private static final class RecordingMetricRecorder implements MetricRecorder {
-
-    boolean enabled;
-    final List<String> dialStatuses = new ArrayList<>();
-    final AtomicInteger openConnections = new AtomicInteger();
-    final AtomicInteger closedConnections = new AtomicInteger();
-    final AtomicLong bytesRx = new AtomicLong();
-    final AtomicLong bytesTx = new AtomicLong();
-
-    @Override
-    public boolean isEnabled() {
-      return enabled;
-    }
-
-    @Override
-    public void shutdown() {}
-
-    @Override
-    public void recordDialCount(TelemetryAttributes attrs) {
-      dialStatuses.add(attrs.getDialStatus());
-    }
-
-    @Override
-    public void recordDialLatency(double latencyMs) {}
-
-    @Override
-    public void recordOpenConnection(TelemetryAttributes attrs) {
-      openConnections.incrementAndGet();
-    }
-
-    @Override
-    public void recordClosedConnection(TelemetryAttributes attrs) {
-      closedConnections.incrementAndGet();
-    }
-
-    @Override
-    public void recordBytesRx(long count) {
-      bytesRx.addAndGet(count);
-    }
-
-    @Override
-    public void recordBytesTx(long count) {
-      bytesTx.addAndGet(count);
-    }
-
-    @Override
-    public void recordRefreshCount(TelemetryAttributes attrs) {}
   }
 }
