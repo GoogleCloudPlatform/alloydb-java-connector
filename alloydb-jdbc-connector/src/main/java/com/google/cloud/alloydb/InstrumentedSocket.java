@@ -31,6 +31,8 @@ import java.net.SocketException;
 import java.net.SocketOption;
 import java.nio.channels.SocketChannel;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.LongConsumer;
 import org.slf4j.Logger;
@@ -58,14 +60,17 @@ import org.slf4j.LoggerFactory;
  * <p>Byte counts are accumulated locally and flushed to the {@link MetricRecorder} in batches.
  * Recording every read and write directly would put an attribute-set lookup and an allocation on
  * the socket's hot path, which for a byte-at-a-time caller would mean one metric update per byte.
+ * {@link Tracker} flushes what has accumulated on a fixed interval, so batching costs accuracy only
+ * within that interval.
  */
 class InstrumentedSocket extends Socket {
 
   private static final Logger logger = LoggerFactory.getLogger(InstrumentedSocket.class);
 
   /**
-   * How many bytes may sit unreported before a flush happens. This bounds how long a transferred
-   * byte goes unreported on a connection that is moving data, for the price of one comparison per
+   * How many bytes may sit unreported before a flush happens without waiting for the next periodic
+   * flush. {@link Tracker} bounds how long a byte can go unreported; this bounds how many bytes a
+   * connection moving data in bulk holds on to in between, for the price of one comparison per
    * call.
    */
   private static final long FLUSH_BYTE_THRESHOLD = 64 * 1024;
@@ -75,6 +80,8 @@ class InstrumentedSocket extends Socket {
   private final TelemetryAttributes attrs;
   private final ByteCounter rx;
   private final ByteCounter tx;
+  private final Tracker tracker;
+  private final Bookkeeping bookkeeping;
 
   private InputStream inputStream;
   private OutputStream outputStream;
@@ -88,17 +95,20 @@ class InstrumentedSocket extends Socket {
   private final AtomicBoolean closed = new AtomicBoolean();
 
   /**
-   * Wraps {@code delegate}, counts the connection as open, and counts the bytes it transfers from
-   * here on.
+   * Wraps {@code delegate}, counts the connection as open, and registers it with {@code tracker} so
+   * that its byte counts are reported while it is open.
    */
-  InstrumentedSocket(Socket delegate, MetricRecorder metricRecorder, TelemetryAttributes attrs) {
+  InstrumentedSocket(
+      Socket delegate, MetricRecorder metricRecorder, TelemetryAttributes attrs, Tracker tracker) {
     super();
     this.delegate = delegate;
     this.metricRecorder = metricRecorder;
     this.attrs = attrs;
     this.rx = new ByteCounter(metricRecorder::recordBytesRx);
     this.tx = new ByteCounter(metricRecorder::recordBytesTx);
+    this.tracker = tracker;
     metricRecorder.recordOpenConnection(attrs);
+    this.bookkeeping = tracker.register(rx, tx);
   }
 
   @Override
@@ -139,6 +149,8 @@ class InstrumentedSocket extends Socket {
       delegate.close();
     } finally {
       if (firstClose) {
+        // Nothing periodic should keep flushing a connection that is gone.
+        tracker.unregister(bookkeeping);
         recordClose();
       }
     }
@@ -433,8 +445,10 @@ class InstrumentedSocket extends Socket {
   }
 
   /**
-   * Accumulates a byte count and flushes it to a metric in batches. Nothing here reads a clock,
-   * which keeps even a System.nanoTime() call off the per-read-and-write path.
+   * Accumulates a byte count and flushes it to a metric in batches. Nothing here reads a clock: a
+   * {@link Tracker} calls {@link #flush()} on the interval instead, which keeps even a
+   * System.nanoTime() call off the per-read-and-write path and makes the interval something the
+   * counter actually obeys rather than samples.
    */
   static final class ByteCounter {
 
@@ -492,6 +506,72 @@ class InstrumentedSocket extends Socket {
     synchronized void close() {
       closed = true;
       flush();
+    }
+  }
+
+  /**
+   * The open connections of one {@link Connector}, and the thing that has to happen to them
+   * periodically rather than on the I/O path: their byte counts have to reach the recorder while
+   * they are still open.
+   *
+   * <p>The Go connector runs a reporting ticker per connection. A thread per connection would be
+   * far too expensive here, so {@link #tick()} serves every connection a connector has open and
+   * runs on the executor the connector already owns.
+   */
+  static final class Tracker {
+
+    /**
+     * How often {@link #tick()} is expected to run, and therefore the longest a transferred byte
+     * goes unreported, bar the shortcut in {@link InstrumentedSocket#FLUSH_BYTE_THRESHOLD}.
+     */
+    static final long FLUSH_INTERVAL_MILLIS = TimeUnit.SECONDS.toMillis(5);
+
+    /**
+     * The sockets that are open, by way of the bookkeeping that outlives them. Holding the
+     * bookkeeping rather than the socket keeps this set from pinning a connection the application
+     * abandoned without closing, which would never be removed from it.
+     */
+    private final Set<Bookkeeping> open = ConcurrentHashMap.newKeySet();
+
+    Bookkeeping register(ByteCounter rx, ByteCounter tx) {
+      Bookkeeping registered = new Bookkeeping(rx, tx);
+      open.add(registered);
+      return registered;
+    }
+
+    void unregister(Bookkeeping bookkeeping) {
+      open.remove(bookkeeping);
+    }
+
+    /**
+     * Flushes every open connection's byte counts. Must not throw: it runs on a fixed-rate
+     * schedule, which a single escaping exception would cancel for the life of the connector.
+     */
+    void tick() {
+      for (Bookkeeping bookkeeping : open) {
+        try {
+          bookkeeping.flush();
+        } catch (RuntimeException e) {
+          logger.debug("Failed to report the byte counts of an open connection.", e);
+        }
+      }
+    }
+  }
+
+  /** What a connection has left to report, held apart from the socket so as not to pin it. */
+  static final class Bookkeeping {
+
+    private final ByteCounter rx;
+    private final ByteCounter tx;
+
+    Bookkeeping(ByteCounter rx, ByteCounter tx) {
+      this.rx = rx;
+      this.tx = tx;
+    }
+
+    void flush() {
+      rx.flush();
+      tx.flush();
     }
   }
 

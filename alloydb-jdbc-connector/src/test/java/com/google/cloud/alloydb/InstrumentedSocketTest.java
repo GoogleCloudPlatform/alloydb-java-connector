@@ -43,6 +43,7 @@ public class InstrumentedSocketTest {
   private Socket delegate;
   private Socket peer;
   private RecordingMetricRecorder recorder;
+  private InstrumentedSocket.Tracker tracker;
 
   @Before
   public void setUp() throws IOException {
@@ -54,6 +55,7 @@ public class InstrumentedSocketTest {
     recorder = new RecordingMetricRecorder();
     // Every socket here is one the connector only builds with telemetry turned on.
     recorder.enabled = true;
+    tracker = new InstrumentedSocket.Tracker();
   }
 
   @After
@@ -74,7 +76,8 @@ public class InstrumentedSocketTest {
   }
 
   private InstrumentedSocket newSocket() throws IOException {
-    return new InstrumentedSocket(delegate, recorder, TelemetryAttributes.forConnection(false));
+    return new InstrumentedSocket(
+        delegate, recorder, TelemetryAttributes.forConnection(false), tracker);
   }
 
   /** Whether this runtime has the Socket option methods added in Java 9 at all. */
@@ -230,6 +233,53 @@ public class InstrumentedSocketTest {
     assertThat(recorder.bytesTx.get()).isEqualTo(128 * 1024);
   }
 
+  /**
+   * The counters are batched, so what a connection has transferred reaches the recorder on the
+   * tracker's interval. A pooled connection can stay open for hours, and one that is both quiet and
+   * low-volume reaches neither the byte threshold nor its close for just as long.
+   */
+  @Test
+  public void testTrickleIsReportedOnTheNextFlush() throws IOException {
+    InstrumentedSocket socket = newSocket();
+    OutputStream out = socket.getOutputStream();
+
+    out.write(new byte[10]);
+    out.flush();
+    peer.getOutputStream().write(new byte[4]);
+    peer.getOutputStream().flush();
+    ByteStreams.readFully(socket.getInputStream(), new byte[4]);
+
+    // Far too little traffic to reach the byte threshold on its own.
+    assertThat(recorder.bytesTx.get()).isEqualTo(0);
+    assertThat(recorder.bytesRx.get()).isEqualTo(0);
+
+    tracker.tick();
+
+    assertThat(recorder.bytesTx.get()).isEqualTo(10);
+    assertThat(recorder.bytesRx.get()).isEqualTo(4);
+
+    // Already reported, so a later tick must not count them twice.
+    tracker.tick();
+    socket.close();
+
+    assertThat(recorder.bytesTx.get()).isEqualTo(10);
+    assertThat(recorder.bytesRx.get()).isEqualTo(4);
+  }
+
+  @Test
+  public void testClosedConnectionIsNotFlushedAgain() throws IOException {
+    InstrumentedSocket socket = newSocket();
+    OutputStream out = socket.getOutputStream();
+
+    out.write(new byte[10]);
+    out.flush();
+    socket.close();
+    tracker.tick();
+
+    assertThat(recorder.bytesTx.get()).isEqualTo(10);
+    assertThat(recorder.closedConnections.get()).isEqualTo(1);
+  }
+
   @Test
   public void testOpenConnectionIsRecordedOnceOnConstruction() throws IOException {
     newSocket();
@@ -307,7 +357,7 @@ public class InstrumentedSocketTest {
 
     // The bytes really were sent, so the failed flush puts them back rather than dropping them.
     recorder.failByteFlushes = false;
-    socket.close();
+    tracker.tick();
     assertThat(recorder.bytesTx.get()).isEqualTo(128 * 1024);
   }
 
@@ -332,7 +382,7 @@ public class InstrumentedSocketTest {
 
     // Neither half-close dropped the bytes it was flushing.
     recorder.failByteFlushes = false;
-    socket.close();
+    tracker.tick();
     assertThat(recorder.bytesTx.get()).isEqualTo(10);
     assertThat(recorder.bytesRx.get()).isEqualTo(10);
   }
