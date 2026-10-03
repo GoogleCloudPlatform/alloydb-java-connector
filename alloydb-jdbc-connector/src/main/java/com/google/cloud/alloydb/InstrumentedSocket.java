@@ -22,6 +22,9 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.ref.PhantomReference;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -39,8 +42,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A Socket wrapper that records the connection as open while the driver holds it and as closed once
- * it is closed.
+ * A Socket wrapper that counts the bytes sent and received on the connection and records the
+ * connection as closed when it is closed.
  *
  * <p>The delegate {@link Connector#connect} wraps is the {@code SSLSocket} that {@link
  * ConnectionSocket#connect} returns, but this wrapper is a plain {@link Socket}: the connector
@@ -76,8 +79,6 @@ class InstrumentedSocket extends Socket {
   private static final long FLUSH_BYTE_THRESHOLD = 64 * 1024;
 
   private final Socket delegate;
-  private final MetricRecorder metricRecorder;
-  private final TelemetryAttributes attrs;
   private final ByteCounter rx;
   private final ByteCounter tx;
   private final Tracker tracker;
@@ -96,19 +97,24 @@ class InstrumentedSocket extends Socket {
 
   /**
    * Wraps {@code delegate}, counts the connection as open, and registers it with {@code tracker} so
-   * that its byte counts are reported while it is open.
+   * that its byte counts are reported while it is open and its close is reported even if the
+   * application abandons it without closing.
    */
   InstrumentedSocket(
       Socket delegate, MetricRecorder metricRecorder, TelemetryAttributes attrs, Tracker tracker) {
     super();
     this.delegate = delegate;
-    this.metricRecorder = metricRecorder;
-    this.attrs = attrs;
     this.rx = new ByteCounter(metricRecorder::recordBytesRx);
     this.tx = new ByteCounter(metricRecorder::recordBytesTx);
     this.tracker = tracker;
+    // The open is recorded before the socket is registered, so that a recorder which fails here
+    // leaves nothing registered: bookkeeping that outlived a failed construction would be reaped
+    // and report a close for an open that was never counted, driving open_connections negative.
+    // Connector#connect closes the delegate in that case. The other order of failure -- register
+    // throwing once the open is counted, which takes an OutOfMemoryError -- would leave the
+    // connection counted as open with nothing left to report its close, and is not guarded against.
     metricRecorder.recordOpenConnection(attrs);
-    this.bookkeeping = tracker.register(rx, tx);
+    this.bookkeeping = tracker.register(this, rx, tx, metricRecorder, attrs);
   }
 
   @Override
@@ -149,32 +155,10 @@ class InstrumentedSocket extends Socket {
       delegate.close();
     } finally {
       if (firstClose) {
-        // Nothing periodic should keep flushing a connection that is gone.
+        // Flushes what the counters still hold and records the close, exactly once.
         tracker.unregister(bookkeeping);
-        recordClose();
       }
     }
-  }
-
-  /**
-   * Reports the connection's final byte counts and its close, exactly once however the caller
-   * closed it.
-   *
-   * <p>The close is recorded before the counters are flushed. This is the connection's only chance
-   * to report it -- nothing will try again -- and a counter whose flush throws must not take the
-   * close down with it, or the connection stays counted as open for the life of the process.
-   */
-  private void recordClose() {
-    try {
-      metricRecorder.recordClosedConnection(attrs);
-    } catch (RuntimeException e) {
-      // A recorder that fails must not become a failure of Socket.close(). The caller's close
-      // succeeded, and this runs from close()'s finally block, where an exception would replace
-      // whatever the delegate's own close reported.
-      logger.debug("Failed to report the close of a connection.", e);
-    }
-    rx.close();
-    tx.close();
   }
 
   /*
@@ -333,8 +317,9 @@ class InstrumentedSocket extends Socket {
   @Override
   public void shutdownInput() throws IOException {
     delegate.shutdownInput();
-    // Nothing will ever be read again, so flush now rather than leave these bytes to a flush that
-    // only another read would trigger.
+    // Nothing will ever be read again, so flush now rather than leave these bytes to the periodic
+    // flush: a caller that half-closes and then keeps the connection open for a long time would
+    // otherwise report them very late, or not at all if it abandons the socket.
     rx.flush();
   }
 
@@ -510,9 +495,10 @@ class InstrumentedSocket extends Socket {
   }
 
   /**
-   * The open connections of one {@link Connector}, and the thing that has to happen to them
+   * The open connections of one {@link Connector}, and the two things that have to happen to them
    * periodically rather than on the I/O path: their byte counts have to reach the recorder while
-   * they are still open.
+   * they are still open, and a connection the application abandoned without closing has to stop
+   * being counted as open.
    *
    * <p>The Go connector runs a reporting ticker per connection. A thread per connection would be
    * far too expensive here, so {@link #tick()} serves every connection a connector has open and
@@ -528,24 +514,43 @@ class InstrumentedSocket extends Socket {
 
     /**
      * The sockets that are open, by way of the bookkeeping that outlives them. Holding the
-     * bookkeeping rather than the socket keeps this set from pinning a connection the application
-     * abandoned without closing, which would never be removed from it.
+     * bookkeeping rather than the socket is what lets an abandoned socket be collected at all, and
+     * is why the bookkeeping must not reach its own socket.
      */
     private final Set<Bookkeeping> open = ConcurrentHashMap.newKeySet();
 
-    Bookkeeping register(ByteCounter rx, ByteCounter tx) {
-      Bookkeeping registered = new Bookkeeping(rx, tx);
+    private final ReferenceQueue<InstrumentedSocket> abandoned = new ReferenceQueue<>();
+
+    Bookkeeping register(
+        InstrumentedSocket socket,
+        ByteCounter rx,
+        ByteCounter tx,
+        MetricRecorder metricRecorder,
+        TelemetryAttributes attrs) {
+      Bookkeeping registered = new Bookkeeping(socket, abandoned, rx, tx, metricRecorder, attrs);
       open.add(registered);
       return registered;
     }
 
+    /** Reports the close of a connection that was closed properly, exactly once. */
     void unregister(Bookkeeping bookkeeping) {
       open.remove(bookkeeping);
+      // Closed properly, so there is nothing here for the reaper to find.
+      bookkeeping.clear();
+      try {
+        bookkeeping.recordClose();
+      } catch (RuntimeException e) {
+        // A recorder that fails must not become a failure of Socket.close(). The caller's close
+        // succeeded, and this runs from close()'s finally block, where an exception would replace
+        // whatever the delegate's own close reported.
+        logger.debug("Failed to report the close of a connection.", e);
+      }
     }
 
     /**
-     * Flushes every open connection's byte counts. Must not throw: it runs on a fixed-rate
-     * schedule, which a single escaping exception would cancel for the life of the connector.
+     * Flushes every open connection's byte counts and reports the close of every connection the
+     * application dropped on the floor. Must not throw: it runs on a fixed-rate schedule, which a
+     * single escaping exception would cancel for the life of the connector.
      */
     void tick() {
       for (Bookkeeping bookkeeping : open) {
@@ -555,23 +560,76 @@ class InstrumentedSocket extends Socket {
           logger.debug("Failed to report the byte counts of an open connection.", e);
         }
       }
+      Reference<? extends InstrumentedSocket> collected;
+      while ((collected = abandoned.poll()) != null) {
+        Bookkeeping bookkeeping = (Bookkeeping) collected;
+        open.remove(bookkeeping);
+        logger.debug("A connection was garbage collected without being closed.");
+        try {
+          bookkeeping.recordClose();
+        } catch (RuntimeException e) {
+          logger.debug("Failed to report the close of an abandoned connection.", e);
+        }
+      }
     }
   }
 
-  /** What a connection has left to report, held apart from the socket so as not to pin it. */
-  static final class Bookkeeping {
+  /**
+   * What a connection's close has to report, held apart from the socket so that it survives the
+   * socket being collected.
+   *
+   * <p>This is the fallback for a connection the application never closes: an
+   * InstrumentedSocket.close() that never comes would otherwise leave the connection counted as
+   * open for the life of the process, which breaks the open-connection count for exactly the
+   * applications most likely to be looking at it. Being a {@link PhantomReference} to its own
+   * socket is what lets {@link Tracker#tick()} notice. (The file descriptor needs no such help --
+   * the JDK's own socket cleaner reclaims it.)
+   *
+   * <p>Nothing reachable from here may reach the socket, or the socket could never be collected and
+   * the reference would never be enqueued.
+   */
+  static final class Bookkeeping extends PhantomReference<InstrumentedSocket> {
 
     private final ByteCounter rx;
     private final ByteCounter tx;
+    private final MetricRecorder metricRecorder;
+    private final TelemetryAttributes attrs;
+    private final AtomicBoolean recorded = new AtomicBoolean();
 
-    Bookkeeping(ByteCounter rx, ByteCounter tx) {
+    Bookkeeping(
+        InstrumentedSocket socket,
+        ReferenceQueue<? super InstrumentedSocket> queue,
+        ByteCounter rx,
+        ByteCounter tx,
+        MetricRecorder metricRecorder,
+        TelemetryAttributes attrs) {
+      super(socket, queue);
       this.rx = rx;
       this.tx = tx;
+      this.metricRecorder = metricRecorder;
+      this.attrs = attrs;
     }
 
     void flush() {
       rx.flush();
       tx.flush();
+    }
+
+    /**
+     * Reports the connection's final byte counts and its close, exactly once, whichever of {@link
+     * InstrumentedSocket#close()} and the reaper gets here first.
+     */
+    void recordClose() {
+      if (!recorded.compareAndSet(false, true)) {
+        return;
+      }
+      // The close is recorded before the counters are flushed. This is the connection's only
+      // chance to report it -- `recorded` is already set and the reference is no longer enqueued,
+      // so nothing will try again -- and a counter whose flush throws must not take the close down
+      // with it, or the connection stays counted as open for the life of the process.
+      metricRecorder.recordClosedConnection(attrs);
+      rx.close();
+      tx.close();
     }
   }
 
