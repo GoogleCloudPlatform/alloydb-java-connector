@@ -48,6 +48,9 @@ final class RecordingMetricRecorder implements MetricRecorder {
    */
   volatile boolean failDialLatency;
 
+  /** Makes the byte-count methods throw, which the connector is expected to survive. */
+  volatile boolean failByteFlushes;
+
   @Override
   public boolean isEnabled() {
     return enabled;
@@ -80,11 +83,17 @@ final class RecordingMetricRecorder implements MetricRecorder {
 
   @Override
   public void recordBytesRx(long count) {
+    if (failByteFlushes) {
+      throw new IllegalStateException("recorder is broken");
+    }
     bytesRx.addAndGet(count);
   }
 
   @Override
   public void recordBytesTx(long count) {
+    if (failByteFlushes) {
+      throw new IllegalStateException("recorder is broken");
+    }
     bytesTx.addAndGet(count);
   }
 
