@@ -36,3 +36,4 @@ artman-genfiles
 
 .flattened-pom.xml
 .envrc
+dependency-reduced-pom.xml
