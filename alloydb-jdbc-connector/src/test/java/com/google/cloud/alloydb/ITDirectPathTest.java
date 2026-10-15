@@ -37,6 +37,7 @@ public class ITDirectPathTest {
 
   @Before
   public void setUp() {
+    PrivateIpAssumptions.assumePrivateIpAvailable();
     this.dataSource = AlloyDbJdbcDirectPathDataSourceFactory.createDataSource();
   }
 

@@ -37,6 +37,7 @@ public class ITSocketFactoryTest {
 
   @Before
   public void setUp() {
+    PrivateIpAssumptions.assumePrivateIpAvailable();
     this.dataSource = AlloyDbJdbcConnectorDataSourceFactory.createDataSource();
   }
 

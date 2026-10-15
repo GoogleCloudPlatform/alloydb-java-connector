@@ -29,12 +29,21 @@ Guidelines](https://opensource.google/conduct/).
 
 ## Testing
 
-NOTE: Be sure to run the following commands in the same VPC as the AlloyDB instance
-
 1. Set the environment variables. You can see an example of the environment
-variables needed by running `cat .envrc.example`
+variables needed by running `cat .envrc.example`. The instance in
+`ALLOYDB_INSTANCE_NAME` must have public IP enabled.
 1. Run `gcloud auth application-default login`
-1. Run the unit tests: `mvn test -B -ntp -Pcoverage -Dclirr.skip=true
--Denforcer.skip=true`
-1. Run the integration tests: `mvn -ntp -Penable-integration-tests
--DtrimStackTrace=false -Dclirr.skip=true -Denforcer.skip=true -fae verify`
+1. Run the tests:
+
+   ```bash
+   # Unit tests. No AlloyDB instance needed.
+   ./scripts/test_units.sh
+
+   # Integration tests from outside the instance's VPC. Connection tests use
+   # public IP; tests that need private IP, PSC, or a direct connection are
+   # skipped.
+   ./scripts/test_system.sh --skip-private-ip
+
+   # Full integration suite. Run this in the same VPC as the AlloyDB instance.
+   ./scripts/test_system.sh
+   ```

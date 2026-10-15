@@ -37,6 +37,7 @@ public class ITPscTest {
 
   @Before
   public void setUp() {
+    PrivateIpAssumptions.assumePrivateIpAvailable();
     this.dataSource = AlloyDbJdbcPscDataSourceFactory.createDataSource();
   }
 

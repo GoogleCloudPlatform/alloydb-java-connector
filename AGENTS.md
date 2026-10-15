@@ -39,13 +39,22 @@ For a single unit test:
 
 - Fix formatter, compiler, Error Prone, and unit-test failures before finishing.
 - Error Prone runs on JDK 21+ with `-Werror` behavior (`failOnWarning`). A clean JDK 8 compile is not enough.
-- Do not run integration tests unless the environment below is already configured. They need a live AlloyDB instance in the same VPC.
+- Do not run integration tests unless the environment below is already configured. They need a live AlloyDB instance.
+
+Test commands:
+
+```bash
+./scripts/test_units.sh                      # unit tests; no AlloyDB instance needed
+./scripts/test_system.sh --skip-private-ip   # integration tests over public IP; VPC-only tests are skipped
+./scripts/test_system.sh                     # full integration suite; needs VPC access to the instance
+```
 
 Integration tests (`scripts/test_system.sh`, Maven profile `enable-integration-tests`) need Application Default Credentials (`gcloud auth application-default login`) and the variables in `.envrc.example`:
 
 - `ALLOYDB_DB`, `ALLOYDB_USER`, `ALLOYDB_PASS`
-- `ALLOYDB_INSTANCE_NAME`, `ALLOYDB_INSTANCE_IP`
-- `ALLOYDB_IAM_USER`, `ALLOYDB_IMPERSONATED_USER`, `ALLOYDB_PSC_INSTANCE_URI`
+- `ALLOYDB_INSTANCE_NAME` (must have public IP enabled)
+- `ALLOYDB_IAM_USER`, `ALLOYDB_IMPERSONATED_USER`
+- `ALLOYDB_INSTANCE_IP`, `ALLOYDB_PSC_INSTANCE_URI` (full suite only; not needed with `--skip-private-ip`)
 
 ## Code style
 
@@ -61,6 +70,8 @@ Integration tests (`scripts/test_system.sh`, Maven profile `enable-integration-t
 
 - Unit tests sit next to the class they cover and are named `*Test`. They must not contact AlloyDB, the metadata server, or the network.
 - Integration tests are named `IT*`. They run only under `-Penable-integration-tests`.
+- Integration tests that connect to the instance use `alloydbIpType=PUBLIC` (or `IpType.PUBLIC`) so they run from outside the VPC.
+- A new `IT*` test that needs VPC access (private IP, PSC, or a direct connection) must call `PrivateIpAssumptions.assumePrivateIpAvailable()` at the start of `@Before`, so `--skip-private-ip` skips it.
 - Add or update a unit test for every behavior change, including bug fixes.
 - `scripts/test_units.sh` fails when JaCoCo line coverage drops below 75%. Do not lower that threshold.
 - Native-image code under `com.google.cloud.alloydb.nativeimage` is excluded from the coverage run. Do not "fix" coverage by deleting that exclude.

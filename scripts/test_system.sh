@@ -15,6 +15,16 @@
 
 set -eo pipefail
 
+# --skip-private-ip runs the suite from outside the instance's VPC: tests that
+# need private IP, PSC, or a direct connection are skipped.
+extra_args=()
+if [[ $# -eq 1 && "$1" == "--skip-private-ip" ]]; then
+  extra_args+=("-DskipPrivateIp=true")
+elif [[ $# -ne 0 ]]; then
+  echo "Usage: $0 [--skip-private-ip]" >&2
+  exit 1
+fi
+
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 # Install dependencies
@@ -31,4 +41,5 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
   -DtrimStackTrace=false \
   -Dclirr.skip=true \
   -Denforcer.skip=true \
-  -fae
+  -fae \
+  "${extra_args[@]}"
