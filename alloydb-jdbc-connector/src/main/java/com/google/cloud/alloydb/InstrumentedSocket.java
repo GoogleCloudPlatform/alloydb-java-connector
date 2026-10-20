@@ -32,6 +32,7 @@ import java.net.SocketOption;
 import java.nio.channels.SocketChannel;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.LongConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,14 +54,27 @@ import org.slf4j.LoggerFactory;
  * ever closes. Every method of {@code Socket} is therefore delegated, including the three option
  * methods added in Java 9 -- see {@link #setOption} for how, given that this module compiles
  * against the Java 8 API.
+ *
+ * <p>Byte counts are accumulated locally and flushed to the {@link MetricRecorder} in batches.
+ * Recording every read and write directly would put an attribute-set lookup and an allocation on
+ * the socket's hot path, which for a byte-at-a-time caller would mean one metric update per byte.
  */
 class InstrumentedSocket extends Socket {
 
   private static final Logger logger = LoggerFactory.getLogger(InstrumentedSocket.class);
 
+  /**
+   * How many bytes may sit unreported before a flush happens. This bounds how long a transferred
+   * byte goes unreported on a connection that is moving data, for the price of one comparison per
+   * call.
+   */
+  private static final long FLUSH_BYTE_THRESHOLD = 64 * 1024;
+
   private final Socket delegate;
   private final MetricRecorder metricRecorder;
   private final TelemetryAttributes attrs;
+  private final ByteCounter rx;
+  private final ByteCounter tx;
 
   private InputStream inputStream;
   private OutputStream outputStream;
@@ -73,12 +87,17 @@ class InstrumentedSocket extends Socket {
    */
   private final AtomicBoolean closed = new AtomicBoolean();
 
-  /** Wraps {@code delegate} and counts the connection as open. */
+  /**
+   * Wraps {@code delegate}, counts the connection as open, and counts the bytes it transfers from
+   * here on.
+   */
   InstrumentedSocket(Socket delegate, MetricRecorder metricRecorder, TelemetryAttributes attrs) {
     super();
     this.delegate = delegate;
     this.metricRecorder = metricRecorder;
     this.attrs = attrs;
+    this.rx = new ByteCounter(metricRecorder::recordBytesRx);
+    this.tx = new ByteCounter(metricRecorder::recordBytesTx);
     metricRecorder.recordOpenConnection(attrs);
   }
 
@@ -89,7 +108,7 @@ class InstrumentedSocket extends Socket {
     checkNotClosed();
     // Socket.getInputStream() is expected to return the same stream on every call.
     if (inputStream == null) {
-      inputStream = new ClosingInputStream(delegate.getInputStream());
+      inputStream = new CountingInputStream(delegate.getInputStream(), rx);
     }
     return inputStream;
   }
@@ -98,7 +117,7 @@ class InstrumentedSocket extends Socket {
   public synchronized OutputStream getOutputStream() throws IOException {
     checkNotClosed();
     if (outputStream == null) {
-      outputStream = new ClosingOutputStream(delegate.getOutputStream());
+      outputStream = new CountingOutputStream(delegate.getOutputStream(), tx);
     }
     return outputStream;
   }
@@ -125,7 +144,14 @@ class InstrumentedSocket extends Socket {
     }
   }
 
-  /** Reports the close of the connection, exactly once however the caller closed it. */
+  /**
+   * Reports the connection's final byte counts and its close, exactly once however the caller
+   * closed it.
+   *
+   * <p>The close is recorded before the counters are flushed. This is the connection's only chance
+   * to report it -- nothing will try again -- and a counter whose flush throws must not take the
+   * close down with it, or the connection stays counted as open for the life of the process.
+   */
   private void recordClose() {
     try {
       metricRecorder.recordClosedConnection(attrs);
@@ -135,6 +161,8 @@ class InstrumentedSocket extends Socket {
       // whatever the delegate's own close reported.
       logger.debug("Failed to report the close of a connection.", e);
     }
+    rx.close();
+    tx.close();
   }
 
   /*
@@ -215,6 +243,9 @@ class InstrumentedSocket extends Socket {
   @Override
   public void sendUrgentData(int data) throws IOException {
     delegate.sendUrgentData(data);
+    // One byte leaves the connection this way too, so it belongs in the count. Added after the
+    // send, so a socket that refuses urgent data -- SSLSocket does -- counts nothing.
+    tx.add(1);
   }
 
   @Override
@@ -290,11 +321,15 @@ class InstrumentedSocket extends Socket {
   @Override
   public void shutdownInput() throws IOException {
     delegate.shutdownInput();
+    // Nothing will ever be read again, so flush now rather than leave these bytes to a flush that
+    // only another read would trigger.
+    rx.flush();
   }
 
   @Override
   public void shutdownOutput() throws IOException {
     delegate.shutdownOutput();
+    tx.flush();
   }
 
   @Override
@@ -398,34 +433,137 @@ class InstrumentedSocket extends Socket {
   }
 
   /**
-   * Routes a stream close back through {@link InstrumentedSocket#close()}.
-   *
-   * <p>{@code Socket.close()} is documented to close the socket's streams too, and callers take the
-   * converse for granted. Closing the delegate's stream directly would skip the closed-connection
-   * bookkeeping, so the connection would stay counted as open for the life of the process.
+   * Accumulates a byte count and flushes it to a metric in batches. Nothing here reads a clock,
+   * which keeps even a System.nanoTime() call off the per-read-and-write path.
    */
-  private final class ClosingInputStream extends FilterInputStream {
+  static final class ByteCounter {
 
-    ClosingInputStream(InputStream in) {
+    private final LongConsumer sink;
+
+    // Guarded by "this", so add(), flush(), and close() are mutually exclusive.
+    private long pending;
+    private boolean closed;
+
+    ByteCounter(LongConsumer sink) {
+      this.sink = sink;
+    }
+
+    synchronized void add(long count) {
+      if (count <= 0) {
+        return;
+      }
+      pending += count;
+      if (closed) {
+        // A read or write raced with close(): the terminal flush in close() may already have run
+        // and will not run again, so this counter must flush itself immediately rather than let
+        // these bytes sit in `pending` forever. Whichever of close()'s flush or this add() runs
+        // last is guaranteed (by the shared monitor) to see `closed == true` and flush, so no
+        // interleaving loses bytes.
+        flush();
+        return;
+      }
+      if (pending >= FLUSH_BYTE_THRESHOLD) {
+        flush();
+      }
+    }
+
+    synchronized void flush() {
+      long count = pending;
+      if (count <= 0) {
+        return;
+      }
+      pending = 0;
+      try {
+        sink.accept(count);
+      } catch (RuntimeException e) {
+        // A recorder that fails must not reach the caller. This runs on the read and write path,
+        // where an unchecked exception would break a connection that is working and reach the
+        // driver as something it cannot turn into a SQLException, and from shutdownInput() and
+        // shutdownOutput(), where the operation it would be reported against has already
+        // succeeded. The count goes back into `pending` rather than being dropped: the bytes
+        // really were transferred -- on the read side they are already off the socket -- so the
+        // next flush should report them.
+        pending += count;
+        logger.debug("Failed to report the byte counts of a connection.", e);
+      }
+    }
+
+    /** The terminal flush. Called once per connection, however the connection ended. */
+    synchronized void close() {
+      closed = true;
+      flush();
+    }
+  }
+
+  // A hand-rolled counting FilterInputStream/FilterOutputStream, rather than Guava's
+  // com.google.common.io.CountingInputStream/CountingOutputStream (already a dependency of this
+  // module). Both are declared `final`, so they cannot be subclassed to add the batched-flush
+  // behavior this class needs, and they only expose a running total via getCount() with no way to
+  // reset it per interval. Reusing them would mean wrapping them and computing a delta against a
+  // saved checkpoint on every read/write, which is no simpler than counting the bytes directly
+  // here.
+  private final class CountingInputStream extends FilterInputStream {
+
+    private final ByteCounter counter;
+
+    CountingInputStream(InputStream in, ByteCounter counter) {
       super(in);
+      this.counter = counter;
+    }
+
+    @Override
+    public int read() throws IOException {
+      int b = in.read();
+      if (b != -1) {
+        counter.add(1);
+      }
+      return b;
+    }
+
+    @Override
+    public int read(byte[] buf, int off, int len) throws IOException {
+      int n = in.read(buf, off, len);
+      counter.add(n);
+      return n;
+    }
+
+    @Override
+    public long skip(long n) throws IOException {
+      long skipped = in.skip(n);
+      counter.add(skipped);
+      return skipped;
     }
 
     @Override
     public void close() throws IOException {
+      // Socket.close() is documented to close the socket's streams too; route back through the
+      // outer close() instead of closing the delegate's stream directly, so the closed-connection
+      // bookkeeping there (the `closed` guard, recordClosedConnection, counter flush) always runs
+      // however the caller chooses to close the connection.
       InstrumentedSocket.this.close();
     }
   }
 
-  private final class ClosingOutputStream extends FilterOutputStream {
+  private final class CountingOutputStream extends FilterOutputStream {
 
-    ClosingOutputStream(OutputStream out) {
+    private final ByteCounter counter;
+
+    CountingOutputStream(OutputStream out, ByteCounter counter) {
       super(out);
+      this.counter = counter;
+    }
+
+    @Override
+    public void write(int b) throws IOException {
+      out.write(b);
+      counter.add(1);
     }
 
     @Override
     public void write(byte[] buf, int off, int len) throws IOException {
       // FilterOutputStream's implementation writes a byte at a time; go straight to the delegate.
       out.write(buf, off, len);
+      counter.add(len);
     }
 
     @Override
