@@ -18,12 +18,15 @@ package com.google.cloud.alloydb;
 import com.google.cloud.alloydb.v1alpha.InstanceName;
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 import io.opentelemetry.sdk.metrics.export.MetricExporter;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.KeyPair;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLException;
 import org.slf4j.Logger;
@@ -46,6 +49,11 @@ class Connector {
   private final String clientUid;
   private final ConcurrentHashMap<InstanceName, MetricRecorder> metricRecorders;
   private final ConcurrentHashMap<String, MetricExporter> metricExporters;
+  private final InstrumentedSocket.Tracker socketTracker;
+  private final Object socketTrackerGuard = new Object();
+
+  @GuardedBy("socketTrackerGuard")
+  private ScheduledFuture<?> socketTrackerTick;
 
   Connector(
       ConnectorConfig config,
@@ -94,6 +102,39 @@ class Connector {
     this.clientUid = UUID.randomUUID().toString();
     this.metricRecorders = metricRecorders;
     this.metricExporters = new ConcurrentHashMap<>();
+    this.socketTracker = new InstrumentedSocket.Tracker();
+  }
+
+  /**
+   * Starts the socket tracker's schedule, if it is not running already: one task for every
+   * connection this connector opens, rather than a reporting thread per connection. It reports the
+   * bytes that open connections have transferred.
+   *
+   * <p>Scheduled on the first instrumented connection rather than with the connector, because until
+   * there is one the task has an empty set to iterate and an empty queue to poll. An application
+   * with telemetry disabled never gets one, and must not pay a repeating task on the executor the
+   * connector shares with certificate refresh for the life of the process.
+   */
+  private void startSocketTracker() {
+    synchronized (socketTrackerGuard) {
+      if (socketTrackerTick != null) {
+        return;
+      }
+      try {
+        socketTrackerTick =
+            executor.scheduleAtFixedRate(
+                socketTracker::tick,
+                InstrumentedSocket.Tracker.FLUSH_INTERVAL_MILLIS,
+                InstrumentedSocket.Tracker.FLUSH_INTERVAL_MILLIS,
+                TimeUnit.MILLISECONDS);
+      } catch (RejectedExecutionException e) {
+        // The registry's executor was shut down while this dial was in flight: ConnectorRegistry
+        // checks for shutdown and then releases the lock before it ever reaches this far. A dial
+        // must not fail for want of the periodic report, and a connection that outlives the
+        // registry has close() left to report what it transferred.
+        logger.debug("Could not schedule the socket tracker. The executor is shut down.", e);
+      }
+    }
   }
 
   public ConnectorConfig getConfig() {
@@ -102,6 +143,15 @@ class Connector {
 
   public void close() throws IOException {
     logger.debug("Close all connections and remove them from cache.");
+    synchronized (socketTrackerGuard) {
+      if (socketTrackerTick != null) {
+        socketTrackerTick.cancel(false);
+      }
+    }
+    // One last tick, now that no further one is scheduled: it reports what the connections still
+    // open have transferred since the last one, which the recorder shutdown below would otherwise
+    // discard.
+    this.socketTracker.tick();
     this.instances.forEach((key, c) -> c.close());
     this.instances.clear();
     this.connectionInfoRepo.close();
@@ -196,7 +246,10 @@ class Connector {
       if (!metricRecorder.isEnabled()) {
         return s;
       }
-      return new InstrumentedSocket(s, metricRecorder, TelemetryAttributes.forConnection(iamAuthn));
+      // There is a connection to report on now, so the tracker needs its schedule.
+      startSocketTracker();
+      return new InstrumentedSocket(
+          s, metricRecorder, TelemetryAttributes.forConnection(iamAuthn), socketTracker);
     } catch (RuntimeException e) {
       // Recording telemetry must not leak a connection. The caller never receives this socket, so
       // nothing else will ever close it.
