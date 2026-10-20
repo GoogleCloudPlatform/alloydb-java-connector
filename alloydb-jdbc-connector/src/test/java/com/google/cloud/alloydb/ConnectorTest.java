@@ -178,6 +178,34 @@ public class ConnectorTest {
     assertThat(recorder.dialStatuses).containsExactly(TelemetryAttributes.DIAL_TLS_ERROR);
   }
 
+  /**
+   * A metric recorder that throws is not a failed dial. The connector's own dial exceptions are
+   * unchecked, so recording the success inside the handlers that classify a failure let a broken
+   * recorder be counted as a failed dial and force a needless refresh of connection info that was
+   * perfectly good.
+   */
+  @Test
+  public void connect_doesNotRecordAFailedDial_whenRecordingTheSuccessThrows() throws Exception {
+    MockAlloyDBAdminGrpc mock = new MockAlloyDBAdminGrpc("127.0.0.1", IpType.PRIVATE);
+    ConnectionConfig config =
+        new ConnectionConfig.Builder().withInstanceName(InstanceName.parse(INSTANCE_NAME)).build();
+    StubConnectionInfoCache stubConnectionInfoCache = newStubConnectionInfoCache("127.0.0.1");
+    RecordingMetricRecorder recorder = new RecordingMetricRecorder();
+    recorder.failDialLatency = true;
+    Connector connector =
+        newConnector(
+            config.getConnectorConfig(),
+            mock,
+            new StubConnectionInfoCacheFactory(stubConnectionInfoCache),
+            recorder);
+
+    assertThrows(MetadataExchangeException.class, () -> connector.connect(config));
+
+    // The dial itself succeeded, so that is what it is recorded as, exactly once.
+    assertThat(recorder.dialStatuses).containsExactly(TelemetryAttributes.DIAL_SUCCESS);
+    assertThat(stubConnectionInfoCache.hasForceRefreshed()).isFalse();
+  }
+
   private StubConnectionInfoCache newStubConnectionInfoCache(String ipAddress) throws Exception {
     return newStubConnectionInfoCache(ipAddress, TestCertificates.INSTANCE.getRootCertificate());
   }
