@@ -62,6 +62,7 @@
     <error-prone.version>2.50.0</error-prone.version>
     <error-prone-annotations.version>2.50.0</error-prone-annotations.version>
     <bouncycastle.version>1.86</bouncycastle.version>
+    <conscrypt.version>2.6.2</conscrypt.version>
   </properties>
 
   <dependencyManagement>
@@ -138,6 +139,17 @@
         <groupId>org.bouncycastle</groupId>
         <artifactId>bcpkix-jdk18on</artifactId>
         <version>${bouncycastle.version}</version>
+      </dependency>
+      <!-- Post-quantum key exchange needs Conscrypt 2.6.0 or newer, and 2.6.2 or newer
+           to keep the glibc floor at GLIBC_2.14. google-cloud-alloydb already resolves
+           2.6.2 transitively, so this pin changes nothing about what applications get
+           today. It is here to record the connector's own requirement, which is not
+           otherwise expressed anywhere, so that a future GAPIC release cannot quietly
+           drop post-quantum support. See docs/pqc.md. -->
+      <dependency>
+        <groupId>org.conscrypt</groupId>
+        <artifactId>conscrypt-openjdk-uber</artifactId>
+        <version>${conscrypt.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.api</groupId>

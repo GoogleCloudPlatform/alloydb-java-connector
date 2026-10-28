@@ -29,7 +29,6 @@ import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
@@ -68,6 +67,7 @@ enum TestCertificates {
   private final String SHA_256_WITH_RSA = "SHA256WithRSA";
   private final String PRIVATE_IP = "127.0.0.1";
   private final String DNS_NAME = "localhost";
+  private final String MISMATCHED_DNS_NAME = "wrong.alloydb.example.com";
 
   @SuppressWarnings("ImmutableEnumChecker")
   private final X500Name ROOT_CERT_SUBJECT = new X500Name("CN=root.alloydb");
@@ -92,6 +92,9 @@ enum TestCertificates {
 
   @SuppressWarnings("ImmutableEnumChecker")
   private final X509Certificate serverCertificate;
+
+  @SuppressWarnings("ImmutableEnumChecker")
+  private final X509Certificate mismatchedServerCertificate;
 
   @SuppressWarnings("ImmutableEnumChecker")
   private final KeyPair intermediateKeyPair;
@@ -129,6 +132,14 @@ enum TestCertificates {
               ROOT_CERT_SUBJECT,
               rootKeyPair.getPrivate(),
               ONE_YEAR_FROM_NOW);
+      this.mismatchedServerCertificate =
+          buildSignedCertificate(
+              SERVER_CERT_SUBJECT,
+              serverKeyPair.getPublic(),
+              ROOT_CERT_SUBJECT,
+              rootKeyPair.getPrivate(),
+              ONE_YEAR_FROM_NOW,
+              new GeneralName(GeneralName.dNSName, MISMATCHED_DNS_NAME));
     } catch (OperatorCreationException | CertificateException | IOException e) {
       throw new RuntimeException(e);
     }
@@ -158,6 +169,16 @@ enum TestCertificates {
   /** Returns the server-side proxy certificate. */
   public X509Certificate getServerCertificate() {
     return serverCertificate;
+  }
+
+  /**
+   * Returns a certificate signed by the same root CA as {@link #getServerCertificate()}, but whose
+   * subject alternative name matches neither the loopback address nor localhost. A client that
+   * verifies the server's identity must reject it; a client that only verifies the chain of trust
+   * will accept it.
+   */
+  public X509Certificate getMismatchedServerCertificate() {
+    return mismatchedServerCertificate;
   }
 
   /** Returns the intermediate CA certificate used to sign ephemeral certificates. */
@@ -205,6 +226,25 @@ enum TestCertificates {
       PrivateKey issuerPrivateKey,
       Instant notAfter)
       throws OperatorCreationException, CertIOException, CertificateException {
+    return buildSignedCertificate(
+        subject,
+        subjectPublicKey,
+        certificateIssuer,
+        issuerPrivateKey,
+        notAfter,
+        new GeneralName(GeneralName.dNSName, DNS_NAME),
+        new GeneralName(GeneralName.iPAddress, PRIVATE_IP));
+  }
+
+  /** Creates a certificate with the given subject, subject alternative names and root CA cert. */
+  private X509Certificate buildSignedCertificate(
+      X500Name subject,
+      PublicKey subjectPublicKey,
+      X500Name certificateIssuer,
+      PrivateKey issuerPrivateKey,
+      Instant notAfter,
+      GeneralName... subjectAlternativeNames)
+      throws OperatorCreationException, CertIOException, CertificateException {
     PKCS10CertificationRequestBuilder pkcs10CertificationRequestBuilder =
         new JcaPKCS10CertificationRequestBuilder(subject, subjectPublicKey);
     JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder(SHA_256_WITH_RSA);
@@ -226,13 +266,7 @@ enum TestCertificates {
         false,
         new KeyUsage(KeyUsage.cRLSign | KeyUsage.keyCertSign | KeyUsage.digitalSignature));
     certificateBuilder.addExtension(
-        Extension.subjectAlternativeName,
-        false,
-        new DERSequence(
-            new ASN1Encodable[] {
-              new GeneralName(GeneralName.dNSName, DNS_NAME),
-              new GeneralName(GeneralName.iPAddress, PRIVATE_IP)
-            }));
+        Extension.subjectAlternativeName, false, new DERSequence(subjectAlternativeNames));
 
     X509CertificateHolder certificateHolder = certificateBuilder.build(csrContentSigner);
     return new JcaX509CertificateConverter().getCertificate(certificateHolder);

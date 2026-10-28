@@ -97,6 +97,28 @@ public class ConnectorTest {
     assertThat(readLine(socket)).isEqualTo(SERVER_MESSAGE);
   }
 
+  /**
+   * End-to-end coverage of the Conscrypt path: a Conscrypt SSLContext, a Conscrypt trust manager, a
+   * key manager from the default provider, SNI, HTTPS endpoint identification and the metadata
+   * exchange all have to work together. See ConnectionSocketConscryptTest for the certificate
+   * identity checks and the post-quantum group.
+   */
+  @Test
+  public void create_successfulPrivateConnection_withConscrypt() throws IOException {
+    NativeImage.assumeConscryptIsLoadable();
+    MockAlloyDBAdminGrpc mock = new MockAlloyDBAdminGrpc("127.0.0.1", IpType.PRIVATE);
+    ConnectionConfig config =
+        new ConnectionConfig.Builder()
+            .withInstanceName(InstanceName.parse(INSTANCE_NAME))
+            .withTlsProvider(TlsProvider.CONSCRYPT)
+            .build();
+    Connector connector = newConnector(config.getConnectorConfig(), mock);
+
+    Socket socket = connector.connect(config);
+
+    assertThat(readLine(socket)).isEqualTo(SERVER_MESSAGE);
+  }
+
   @Test
   public void create_throwsTerminalException() {
     MockAlloyDBAdminGrpc mock =
