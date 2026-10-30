@@ -18,12 +18,15 @@ package com.google.cloud.alloydb;
 import com.google.cloud.alloydb.v1alpha.InstanceName;
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 import io.opentelemetry.sdk.metrics.export.MetricExporter;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.KeyPair;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLException;
 import org.slf4j.Logger;
@@ -46,6 +49,11 @@ class Connector {
   private final String clientUid;
   private final ConcurrentHashMap<InstanceName, MetricRecorder> metricRecorders;
   private final ConcurrentHashMap<String, MetricExporter> metricExporters;
+  private final InstrumentedSocket.Tracker socketTracker;
+  private final Object socketTrackerGuard = new Object();
+
+  @GuardedBy("socketTrackerGuard")
+  private ScheduledFuture<?> socketTrackerTick;
 
   Connector(
       ConnectorConfig config,
@@ -94,6 +102,39 @@ class Connector {
     this.clientUid = UUID.randomUUID().toString();
     this.metricRecorders = metricRecorders;
     this.metricExporters = new ConcurrentHashMap<>();
+    this.socketTracker = new InstrumentedSocket.Tracker();
+  }
+
+  /**
+   * Starts the socket tracker's schedule, if it is not running already: one task for every
+   * connection this connector opens, rather than a reaper thread per connection. It reports the
+   * close of the connections an application abandoned without closing.
+   *
+   * <p>Scheduled on the first instrumented connection rather than with the connector, because until
+   * there is one the task has an empty queue to poll. An application with telemetry disabled never
+   * gets one, and must not pay a repeating task on the executor the connector shares with
+   * certificate refresh for the life of the process.
+   */
+  private void startSocketTracker() {
+    synchronized (socketTrackerGuard) {
+      if (socketTrackerTick != null) {
+        return;
+      }
+      try {
+        socketTrackerTick =
+            executor.scheduleAtFixedRate(
+                socketTracker::tick,
+                InstrumentedSocket.Tracker.REAP_INTERVAL_MILLIS,
+                InstrumentedSocket.Tracker.REAP_INTERVAL_MILLIS,
+                TimeUnit.MILLISECONDS);
+      } catch (RejectedExecutionException e) {
+        // The registry's executor was shut down while this dial was in flight: ConnectorRegistry
+        // checks for shutdown and then releases the lock before it ever reaches this far. A dial
+        // must not fail for want of the reaper, and a connection the application closes properly
+        // reports its own close whether or not anything is scheduled.
+        logger.debug("Could not schedule the socket tracker. The executor is shut down.", e);
+      }
+    }
   }
 
   public ConnectorConfig getConfig() {
@@ -102,6 +143,14 @@ class Connector {
 
   public void close() throws IOException {
     logger.debug("Close all connections and remove them from cache.");
+    synchronized (socketTrackerGuard) {
+      if (socketTrackerTick != null) {
+        socketTrackerTick.cancel(false);
+      }
+    }
+    // One last tick, now that no further one is scheduled: it reports the close of any connection
+    // already collected, which the recorder shutdown below would otherwise discard.
+    this.socketTracker.tick();
     this.instances.forEach((key, c) -> c.close());
     this.instances.clear();
     this.connectionInfoRepo.close();
@@ -186,7 +235,10 @@ class Connector {
 
     // The dial is complete and every way it can fail has been recorded above. What follows is the
     // success path's bookkeeping, deliberately outside those handlers: a metric recorder that
-    // throws is not a failed dial, and must not be recorded as one or trigger a refresh.
+    // throws is not a failed dial, and must not be recorded as one or trigger a refresh. It is
+    // also all done before the socket is wrapped, which leaves nothing between counting the
+    // connection as open and handing it back that could throw and strand a connection counted as
+    // open that can never be closed.
     try {
       recordDial(metricRecorder, iamAuthn, cacheHit, TelemetryAttributes.DIAL_SUCCESS);
       metricRecorder.recordDialLatency((System.nanoTime() - startNanos) / 1_000_000.0);
@@ -196,7 +248,10 @@ class Connector {
       if (!metricRecorder.isEnabled()) {
         return s;
       }
-      return new InstrumentedSocket(s, metricRecorder, TelemetryAttributes.forConnection(iamAuthn));
+      // There is a connection that can be abandoned now, so the tracker needs its schedule.
+      startSocketTracker();
+      return new InstrumentedSocket(
+          s, metricRecorder, TelemetryAttributes.forConnection(iamAuthn), socketTracker);
     } catch (RuntimeException e) {
       // Recording telemetry must not leak a connection. The caller never receives this socket, so
       // nothing else will ever close it.
