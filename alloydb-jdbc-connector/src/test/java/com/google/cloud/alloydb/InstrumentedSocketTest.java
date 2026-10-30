@@ -32,6 +32,7 @@ import java.net.SocketException;
 import java.net.SocketOption;
 import java.net.StandardSocketOptions;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.After;
 import org.junit.Before;
@@ -43,6 +44,7 @@ public class InstrumentedSocketTest {
   private Socket delegate;
   private Socket peer;
   private RecordingMetricRecorder recorder;
+  private InstrumentedSocket.Tracker tracker;
 
   @Before
   public void setUp() throws IOException {
@@ -54,6 +56,7 @@ public class InstrumentedSocketTest {
     recorder = new RecordingMetricRecorder();
     // Every socket here is one the connector only builds with telemetry turned on.
     recorder.enabled = true;
+    tracker = new InstrumentedSocket.Tracker();
   }
 
   @After
@@ -74,7 +77,8 @@ public class InstrumentedSocketTest {
   }
 
   private InstrumentedSocket newSocket() throws IOException {
-    return new InstrumentedSocket(delegate, recorder, TelemetryAttributes.forConnection(false));
+    return new InstrumentedSocket(
+        delegate, recorder, TelemetryAttributes.forConnection(false), tracker);
   }
 
   /** Whether this runtime has the Socket option methods added in Java 9 at all. */
@@ -205,6 +209,42 @@ public class InstrumentedSocketTest {
 
     assertThat(recorder.closedConnections.get()).isEqualTo(1);
     assertThat(delegate.isClosed()).isTrue();
+  }
+
+  @Test
+  public void testClosedConnectionIsNotReportedAgainByATick() throws IOException {
+    InstrumentedSocket socket = newSocket();
+
+    socket.close();
+    tracker.tick();
+
+    assertThat(recorder.closedConnections.get()).isEqualTo(1);
+  }
+
+  /**
+   * An application that leaks a connection would otherwise leave it counted as open for the life of
+   * the process, which makes the open-connection count useless to the applications most likely to
+   * be reading it.
+   */
+  @Test
+  public void testAbandonedSocketIsEventuallyReportedAsClosed() throws Exception {
+    InstrumentedSocket socket = newSocket();
+    socket.getOutputStream().write(new byte[10]);
+    // Every reference the test holds, dropped without a close. The streams are not kept either:
+    // they hold their socket, which would keep it from ever being collected.
+    socket = null;
+
+    // The JVM is under no obligation to collect anything on demand, so keep asking.
+    long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
+    while (recorder.closedConnections.get() == 0 && System.nanoTime() < deadlineNanos) {
+      System.gc();
+      tracker.tick();
+      Thread.sleep(20);
+    }
+
+    assertThat(recorder.closedConnections.get()).isEqualTo(1);
+    // What it wrote was reported as it was written, rather than lost along with the socket.
+    assertThat(recorder.bytesTx.get()).isEqualTo(10);
   }
 
   @Test
