@@ -32,6 +32,7 @@ import java.net.SocketOption;
 import java.nio.channels.SocketChannel;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.LongConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +54,11 @@ import org.slf4j.LoggerFactory;
  * ever closes. Every method of {@code Socket} is therefore delegated, including the three option
  * methods added in Java 9 -- see {@link #setOption} for how, given that this module compiles
  * against the Java 8 API.
+ *
+ * <p>Bytes are recorded as they move, from the streams below. The byte counters carry a fixed
+ * attribute set that {@link CloudMonitoringMetricRecorder} builds once, so a recording is a lookup
+ * of one aggregator and an atomic add to it -- cheap enough to leave on the read and write path,
+ * which the Postgres driver drives through an 8KiB buffer of its own in each direction anyway.
  */
 class InstrumentedSocket extends Socket {
 
@@ -61,6 +67,8 @@ class InstrumentedSocket extends Socket {
   private final Socket delegate;
   private final MetricRecorder metricRecorder;
   private final TelemetryAttributes attrs;
+  private final LongConsumer rx;
+  private final LongConsumer tx;
 
   private InputStream inputStream;
   private OutputStream outputStream;
@@ -73,12 +81,17 @@ class InstrumentedSocket extends Socket {
    */
   private final AtomicBoolean closed = new AtomicBoolean();
 
-  /** Wraps {@code delegate} and counts the connection as open. */
+  /**
+   * Wraps {@code delegate}, counts the connection as open, and counts the bytes it transfers from
+   * here on.
+   */
   InstrumentedSocket(Socket delegate, MetricRecorder metricRecorder, TelemetryAttributes attrs) {
     super();
     this.delegate = delegate;
     this.metricRecorder = metricRecorder;
     this.attrs = attrs;
+    this.rx = metricRecorder::recordBytesRx;
+    this.tx = metricRecorder::recordBytesTx;
     metricRecorder.recordOpenConnection(attrs);
   }
 
@@ -89,7 +102,7 @@ class InstrumentedSocket extends Socket {
     checkNotClosed();
     // Socket.getInputStream() is expected to return the same stream on every call.
     if (inputStream == null) {
-      inputStream = new ClosingInputStream(delegate.getInputStream());
+      inputStream = new CountingInputStream(delegate.getInputStream(), rx);
     }
     return inputStream;
   }
@@ -98,7 +111,7 @@ class InstrumentedSocket extends Socket {
   public synchronized OutputStream getOutputStream() throws IOException {
     checkNotClosed();
     if (outputStream == null) {
-      outputStream = new ClosingOutputStream(delegate.getOutputStream());
+      outputStream = new CountingOutputStream(delegate.getOutputStream(), tx);
     }
     return outputStream;
   }
@@ -134,6 +147,25 @@ class InstrumentedSocket extends Socket {
       // succeeded, and this runs from close()'s finally block, where an exception would replace
       // whatever the delegate's own close reported.
       logger.debug("Failed to report the close of a connection.", e);
+    }
+  }
+
+  /**
+   * Reports {@code count} transferred bytes, and swallows a recorder that fails to.
+   *
+   * <p>This runs on the read and write path, where an unchecked exception would break a connection
+   * that is working and reach the driver as something it cannot turn into a SQLException. The count
+   * is dropped rather than held for a later recording: the bytes are already transferred, and
+   * keeping them would mean state on the socket for a recorder that is broken anyway.
+   */
+  private static void record(LongConsumer metric, long count) {
+    if (count <= 0) {
+      return;
+    }
+    try {
+      metric.accept(count);
+    } catch (RuntimeException e) {
+      logger.debug("Failed to report the byte counts of a connection.", e);
     }
   }
 
@@ -215,6 +247,9 @@ class InstrumentedSocket extends Socket {
   @Override
   public void sendUrgentData(int data) throws IOException {
     delegate.sendUrgentData(data);
+    // One byte leaves the connection this way too, so it belongs in the count. Added after the
+    // send, so a socket that refuses urgent data -- SSLSocket does -- counts nothing.
+    record(tx, 1);
   }
 
   @Override
@@ -397,35 +432,73 @@ class InstrumentedSocket extends Socket {
     }
   }
 
-  /**
-   * Routes a stream close back through {@link InstrumentedSocket#close()}.
-   *
-   * <p>{@code Socket.close()} is documented to close the socket's streams too, and callers take the
-   * converse for granted. Closing the delegate's stream directly would skip the closed-connection
-   * bookkeeping, so the connection would stay counted as open for the life of the process.
-   */
-  private final class ClosingInputStream extends FilterInputStream {
+  // A hand-rolled counting FilterInputStream/FilterOutputStream, rather than Guava's
+  // com.google.common.io.CountingInputStream/CountingOutputStream (already a dependency of this
+  // module). Those only expose a running total via getCount(), which nothing here would report
+  // without computing a delta against a saved checkpoint on every read and write, and they are
+  // declared `final`, so they cannot be subclassed to report the count as it accrues instead.
+  private final class CountingInputStream extends FilterInputStream {
 
-    ClosingInputStream(InputStream in) {
+    private final LongConsumer metric;
+
+    CountingInputStream(InputStream in, LongConsumer metric) {
       super(in);
+      this.metric = metric;
+    }
+
+    @Override
+    public int read() throws IOException {
+      int b = in.read();
+      if (b != -1) {
+        record(metric, 1);
+      }
+      return b;
+    }
+
+    @Override
+    public int read(byte[] buf, int off, int len) throws IOException {
+      int n = in.read(buf, off, len);
+      record(metric, n);
+      return n;
+    }
+
+    @Override
+    public long skip(long n) throws IOException {
+      long skipped = in.skip(n);
+      record(metric, skipped);
+      return skipped;
     }
 
     @Override
     public void close() throws IOException {
+      // Socket.close() is documented to close the socket's streams too; route back through the
+      // outer close() instead of closing the delegate's stream directly, so the closed-connection
+      // bookkeeping there (the `closed` guard, recordClosedConnection) always runs however the
+      // caller chooses to close the connection.
       InstrumentedSocket.this.close();
     }
   }
 
-  private final class ClosingOutputStream extends FilterOutputStream {
+  private final class CountingOutputStream extends FilterOutputStream {
 
-    ClosingOutputStream(OutputStream out) {
+    private final LongConsumer metric;
+
+    CountingOutputStream(OutputStream out, LongConsumer metric) {
       super(out);
+      this.metric = metric;
+    }
+
+    @Override
+    public void write(int b) throws IOException {
+      out.write(b);
+      record(metric, 1);
     }
 
     @Override
     public void write(byte[] buf, int off, int len) throws IOException {
       // FilterOutputStream's implementation writes a byte at a time; go straight to the delegate.
       out.write(buf, off, len);
+      record(metric, len);
     }
 
     @Override
