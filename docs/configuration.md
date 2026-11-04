@@ -245,6 +245,36 @@ Users may only set exactly one of these fields. If more than one field is set,
 The credentials are loaded exactly once when the ConnectorConfig is
 registered with `ConnectorRegistry.register()`.
 
+## Built-in Metrics
+
+The connector reports metrics about its own operation to Cloud Monitoring, under
+the `alloydb.googleapis.com/client/connector` prefix and the
+`alloydb.googleapis.com/InstanceClient` monitored resource in the project that
+owns the instance:
+
+| Metric | Description |
+|---|---|
+| `dial_count` | Connection attempts, labeled by outcome. |
+| `dial_latencies` | How long connection attempts took. |
+| `open_connections` | Connections currently open. |
+| `bytes_sent_count` / `bytes_received_count` | Traffic over connector-created sockets. |
+| `refresh_count` | Client certificate refreshes, labeled by outcome. |
+
+No query text, database contents, or connection credentials are reported.
+
+This is on by default. To turn it off, set the `alloydbEnableBuiltinTelemetry`
+connection property to `false`:
+
+```java
+config.addDataSourceProperty("alloydbEnableBuiltinTelemetry", "false");
+```
+
+Writing metrics requires the `monitoring.timeSeries.create` permission (for
+example via the `roles/monitoring.metricWriter` role) on the instance's project.
+If the credentials in use lack it, or if the exporter cannot start for any other
+reason, the connector logs a warning and continues without metrics. Telemetry
+never prevents a connection from being established.
+
 ## Configuration Property Reference
 
 ### Connector Configuration Properties
@@ -260,6 +290,7 @@ configuration using the AlloyDB API.
 | alloydbUniverseDomain  | A TPC Universe domain.                                                                                                                                                                                                    | `apis-tpczero.goog` |
 | alloydbGoogleCredentialsPath | A file path to a JSON file containing a GoogleCredentials oauth token.                                                                                                                                              | `/home/alice/secrets/my-credentials.json` |
 | alloydbRefreshStrategy | Either `refresh_ahead` where certificates are refreshed in a background thread, or `lazy` where certificates are refreshed as needed. The `lazy` strategy is best when CPU isn't always available (e.g., Cloud Run) |
+| alloydbEnableBuiltinTelemetry | Whether the connector reports its own metrics (dial count and latency, open connections, bytes sent and received, certificate refresh count) to Cloud Monitoring in the instance's project. Defaults to `true`. Set to `false` to turn the reporting off. See [Built-in metrics](#built-in-metrics). | `false` |
 
 ### Connection Configuration Properties
 
