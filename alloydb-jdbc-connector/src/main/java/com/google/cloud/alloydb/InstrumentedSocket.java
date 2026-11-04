@@ -22,6 +22,9 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.ref.PhantomReference;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -31,6 +34,8 @@ import java.net.SocketException;
 import java.net.SocketOption;
 import java.nio.channels.SocketChannel;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.LongConsumer;
 import org.slf4j.Logger;
@@ -59,16 +64,21 @@ import org.slf4j.LoggerFactory;
  * attribute set that {@link CloudMonitoringMetricRecorder} builds once, so a recording is a lookup
  * of one aggregator and an atomic add to it -- cheap enough to leave on the read and write path,
  * which the Postgres driver drives through an 8KiB buffer of its own in each direction anyway.
+ *
+ * <p>A connection the application drops without ever closing it would stay counted as open for the
+ * life of the process, which breaks open_connections for exactly the applications most likely to be
+ * reading it. Each socket therefore registers a {@link Bookkeeping} with its connector's {@link
+ * Tracker}, which reports the close of every connection the collector has taken.
  */
 class InstrumentedSocket extends Socket {
 
   private static final Logger logger = LoggerFactory.getLogger(InstrumentedSocket.class);
 
   private final Socket delegate;
-  private final MetricRecorder metricRecorder;
-  private final TelemetryAttributes attrs;
   private final LongConsumer rx;
   private final LongConsumer tx;
+  private final Tracker tracker;
+  private final Bookkeeping bookkeeping;
 
   private InputStream inputStream;
   private OutputStream outputStream;
@@ -82,17 +92,25 @@ class InstrumentedSocket extends Socket {
   private final AtomicBoolean closed = new AtomicBoolean();
 
   /**
-   * Wraps {@code delegate}, counts the connection as open, and counts the bytes it transfers from
-   * here on.
+   * Wraps {@code delegate}, counts the connection as open, counts the bytes it transfers from here
+   * on, and registers it with {@code tracker} so that its close is reported even if the application
+   * abandons it without closing.
    */
-  InstrumentedSocket(Socket delegate, MetricRecorder metricRecorder, TelemetryAttributes attrs) {
+  InstrumentedSocket(
+      Socket delegate, MetricRecorder metricRecorder, TelemetryAttributes attrs, Tracker tracker) {
     super();
     this.delegate = delegate;
-    this.metricRecorder = metricRecorder;
-    this.attrs = attrs;
     this.rx = metricRecorder::recordBytesRx;
     this.tx = metricRecorder::recordBytesTx;
+    this.tracker = tracker;
+    // The open is recorded before the socket is registered, so that a recorder which fails here
+    // leaves nothing registered: bookkeeping that outlived a failed construction would be reaped
+    // and report a close for an open that was never counted, driving open_connections negative.
+    // Connector#connect closes the delegate in that case. The other order of failure -- register
+    // throwing once the open is counted, which takes an OutOfMemoryError -- would leave the
+    // connection counted as open with nothing left to report its close, and is not guarded against.
     metricRecorder.recordOpenConnection(attrs);
+    this.bookkeeping = tracker.register(this, metricRecorder, attrs);
   }
 
   @Override
@@ -133,20 +151,10 @@ class InstrumentedSocket extends Socket {
       delegate.close();
     } finally {
       if (firstClose) {
-        recordClose();
+        // Records the close and takes the connection off the reaper's books, exactly once however
+        // the caller closed it.
+        tracker.unregister(bookkeeping);
       }
-    }
-  }
-
-  /** Reports the close of the connection, exactly once however the caller closed it. */
-  private void recordClose() {
-    try {
-      metricRecorder.recordClosedConnection(attrs);
-    } catch (RuntimeException e) {
-      // A recorder that fails must not become a failure of Socket.close(). The caller's close
-      // succeeded, and this runs from close()'s finally block, where an exception would replace
-      // whatever the delegate's own close reported.
-      logger.debug("Failed to report the close of a connection.", e);
     }
   }
 
@@ -429,6 +437,111 @@ class InstrumentedSocket extends Socket {
       Throwables.throwIfInstanceOf(e.getCause(), IOException.class);
       Throwables.throwIfUnchecked(e.getCause());
       throw new AssertionError(e.getCause());
+    }
+  }
+
+  /**
+   * The open connections of one {@link Connector}, and the close each of them still owes the
+   * recorder if the application never gets round to closing it.
+   *
+   * <p>The Go connector runs a ticker per connection. A thread per connection would be far too
+   * expensive here, so {@link #tick()} serves every connection a connector has open and runs on the
+   * executor the connector already owns.
+   */
+  static final class Tracker {
+
+    /**
+     * How often {@link #tick()} is expected to run, and therefore how promptly a connection the
+     * application abandoned is noticed.
+     */
+    static final long REAP_INTERVAL_MILLIS = TimeUnit.SECONDS.toMillis(5);
+
+    /**
+     * The bookkeeping of every connection this connector has open. A {@link PhantomReference} that
+     * nothing holds can be collected before it is ever enqueued, so this set is what keeps each one
+     * alive until its socket is either closed or reaped. Holding the bookkeeping rather than the
+     * socket is what lets an abandoned socket be collected at all, and is why the bookkeeping must
+     * not reach its own socket.
+     */
+    private final Set<Bookkeeping> open = ConcurrentHashMap.newKeySet();
+
+    private final ReferenceQueue<InstrumentedSocket> abandoned = new ReferenceQueue<>();
+
+    Bookkeeping register(
+        InstrumentedSocket socket, MetricRecorder metricRecorder, TelemetryAttributes attrs) {
+      Bookkeeping registered = new Bookkeeping(socket, abandoned, metricRecorder, attrs);
+      open.add(registered);
+      return registered;
+    }
+
+    /** Reports the close of a connection that was closed properly, exactly once. */
+    void unregister(Bookkeeping bookkeeping) {
+      open.remove(bookkeeping);
+      // Closed properly, so there is nothing here for the reaper to find.
+      bookkeeping.clear();
+      try {
+        bookkeeping.recordClose();
+      } catch (RuntimeException e) {
+        // A recorder that fails must not become a failure of Socket.close(). The caller's close
+        // succeeded, and this runs from close()'s finally block, where an exception would replace
+        // whatever the delegate's own close reported.
+        logger.debug("Failed to report the close of a connection.", e);
+      }
+    }
+
+    /**
+     * Reports the close of every connection the application dropped on the floor. Must not throw:
+     * it runs on a fixed-rate schedule, which a single escaping exception would cancel for the life
+     * of the connector.
+     */
+    void tick() {
+      Reference<? extends InstrumentedSocket> collected;
+      while ((collected = abandoned.poll()) != null) {
+        Bookkeeping bookkeeping = (Bookkeeping) collected;
+        open.remove(bookkeeping);
+        logger.debug("A connection was garbage collected without being closed.");
+        try {
+          bookkeeping.recordClose();
+        } catch (RuntimeException e) {
+          logger.debug("Failed to report the close of an abandoned connection.", e);
+        }
+      }
+    }
+  }
+
+  /**
+   * What a connection's close has to report, in a reference the collector enqueues once the
+   * application has let go of the socket.
+   *
+   * <p>It carries the recorder and the attributes rather than the connection: a {@code
+   * PhantomReference} that can reach its own referent keeps it alive, so bookkeeping that held its
+   * socket would see neither the socket collected nor itself enqueued.
+   */
+  static final class Bookkeeping extends PhantomReference<InstrumentedSocket> {
+
+    private final MetricRecorder metricRecorder;
+    private final TelemetryAttributes attrs;
+    private final AtomicBoolean recorded = new AtomicBoolean();
+
+    Bookkeeping(
+        InstrumentedSocket socket,
+        ReferenceQueue<? super InstrumentedSocket> queue,
+        MetricRecorder metricRecorder,
+        TelemetryAttributes attrs) {
+      super(socket, queue);
+      this.metricRecorder = metricRecorder;
+      this.attrs = attrs;
+    }
+
+    /**
+     * Reports the connection's close, exactly once, whichever of {@link InstrumentedSocket#close()}
+     * and the reaper gets here first.
+     */
+    void recordClose() {
+      if (!recorded.compareAndSet(false, true)) {
+        return;
+      }
+      metricRecorder.recordClosedConnection(attrs);
     }
   }
 
