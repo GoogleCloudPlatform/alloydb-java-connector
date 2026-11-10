@@ -276,6 +276,10 @@ public class ConnectorConfigTest {
     final String wantAdminServiceEndpoint = "alloydb.googleapis.com:443";
     final String wantGoogleCredentialsPath = "/path/to/credentials";
     final String wantQuotaProject = "myNewProject";
+    // Fields left unset on the builder are null.
+    final String wantUniverseDomain = null;
+    final Supplier<GoogleCredentials> wantGoogleCredentialsSupplier = null;
+    final GoogleCredentials wantGoogleCredentials = null;
     ConnectorConfig cc =
         new ConnectorConfig.Builder()
             .withTargetPrincipal(wantTargetPrincipal)
@@ -292,9 +296,9 @@ public class ConnectorConfigTest {
                 wantTargetPrincipal,
                 wantDelegates,
                 wantAdminServiceEndpoint,
-                null, // universeDomain
-                null, // googleCredentialsSupplier
-                null, // googleCredentials
+                wantUniverseDomain,
+                wantGoogleCredentialsSupplier,
+                wantGoogleCredentials,
                 wantGoogleCredentialsPath,
                 wantQuotaProject,
                 RefreshStrategy.REFRESH_AHEAD));
