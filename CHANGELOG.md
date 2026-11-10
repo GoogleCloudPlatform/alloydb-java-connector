@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.4.1](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.4.0...v1.4.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* classify connection failures with typed exceptions ([#740](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/740)) ([d6f5b3b](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/d6f5b3b4a07051bfd88b5ef2c491e8e09f568514))
+* classify TLS handshake failures as tls_error ([#753](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/753)) ([a153b07](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/a153b07443ae860d345ebc67f1462dad15182779))
+
+
+### Dependencies
+
+* Update dependency maven to v3.10.0 ([#762](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/762)) ([f516470](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/f5164709006e8a032e48ca88991a01187a4a3a3e))
+* Update Non-major dependencies ([#738](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/738)) ([eae1824](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/eae182467e029936e6b144467e46f151a6872b30))
+
 ## [1.4.0](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.3.3...v1.4.0) (2026-09-15)
 
 
