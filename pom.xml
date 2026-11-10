@@ -168,12 +168,12 @@
       <dependency>
         <groupId>com.google.cloud.opentelemetry</groupId>
         <artifactId>exporter-metrics</artifactId>
-        <version>0.36.0</version>
+        <version>0.37.0</version>
       </dependency>
       <dependency>
         <groupId>com.google.cloud.opentelemetry</groupId>
         <artifactId>shared-resourcemapping</artifactId>
-        <version>0.36.0</version>
+        <version>0.37.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.semconv</groupId>
