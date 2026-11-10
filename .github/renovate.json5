@@ -25,6 +25,17 @@
   ],
   packageRules: [
     {
+      // exporter-metrics is deprecated (0.37.0+) and its OTLP replacement
+      // doesn't support built-in service metrics. Hold at 0.36.0 until we
+      // replace it. See
+      // https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/771
+      matchPackageNames: [
+        'com.google.cloud.opentelemetry:exporter-metrics',
+        'com.google.cloud.opentelemetry:shared-resourcemapping',
+      ],
+      enabled: false,
+    },
+    {
       groupName: 'Non-major dependencies',
       matchManagers: [
         'maven',
