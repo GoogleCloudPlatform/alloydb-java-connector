@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.2](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.4.1...v1.4.2) (2026-11-11)
+
+
+### Dependencies
+
+* don't upgrade the metrics exporter ([#773](https://github.com/GoogleCloudPlatform/alloydb-java-connector/issues/773)) ([a5d62a5](https://github.com/GoogleCloudPlatform/alloydb-java-connector/commit/a5d62a5c53410dc7dd20d74715abd4ff2c38a426))
+
 ## [1.4.1](https://github.com/GoogleCloudPlatform/alloydb-java-connector/compare/v1.4.0...v1.4.1) (2026-11-10)
 
 
