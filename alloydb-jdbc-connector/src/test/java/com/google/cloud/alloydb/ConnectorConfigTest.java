@@ -301,6 +301,7 @@ public class ConnectorConfigTest {
                 wantGoogleCredentials,
                 wantGoogleCredentialsPath,
                 wantQuotaProject,
-                RefreshStrategy.REFRESH_AHEAD));
+                RefreshStrategy.REFRESH_AHEAD,
+                true));
   }
 }
