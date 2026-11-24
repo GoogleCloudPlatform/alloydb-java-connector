@@ -166,6 +166,32 @@ public class DefaultAccessTokenSupplierTest {
     assertThat(ex).hasMessageThat().contains("Access Token expiration time is in the past");
   }
 
+  @Test
+  public void testRefreshErrorDoesNotLeakCredentialsToString() {
+    GoogleCredentials unrefreshableCredentials =
+        new GoogleCredentials(
+            GoogleCredentials.newBuilder()
+                .setAccessToken(new AccessToken("my-expired-token", Date.from(past)))) {
+          @Override
+          public AccessToken refreshAccessToken() {
+            throw new IllegalStateException("Refresh not supported");
+          }
+
+          @Override
+          public String toString() {
+            return "FakeCredentials{secret=SECRET_REFRESH_TOKEN_LEAK}";
+          }
+        };
+
+    DefaultAccessTokenSupplier supplier =
+        new DefaultAccessTokenSupplier(new GoogleCredentialsFactory(unrefreshableCredentials));
+    IllegalStateException ex = assertThrows(IllegalStateException.class, supplier::getTokenValue);
+    assertThat(ex)
+        .hasMessageThat()
+        .isEqualTo("Error refreshing credentials " + unrefreshableCredentials.getClass().getName());
+    assertThat(ex).hasMessageThat().doesNotContain("SECRET_REFRESH_TOKEN_LEAK");
+  }
+
   private static class GoogleCredentialsFactory implements CredentialFactory {
     private final GoogleCredentials credentials;
 

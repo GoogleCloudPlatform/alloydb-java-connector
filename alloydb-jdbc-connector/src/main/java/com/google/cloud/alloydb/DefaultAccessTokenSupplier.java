@@ -56,7 +56,8 @@ class DefaultAccessTokenSupplier implements AccessTokenSupplier {
     try {
       credentials.refreshIfExpired();
     } catch (IllegalStateException e) {
-      throw new IllegalStateException("Error refreshing credentials " + credentials, e);
+      throw new IllegalStateException(
+          "Error refreshing credentials " + credentials.getClass().getName(), e);
     }
     if (credentials.getAccessToken() == null
         || "".equals(credentials.getAccessToken().getTokenValue())) {
