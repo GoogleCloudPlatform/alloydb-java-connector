@@ -290,6 +290,40 @@ use the instance's Public IP.
 config.addDataSourceProperty("alloydbIpType", "PUBLIC");
 ```
 
+### Post-Quantum Cryptography (PQC)
+
+The Java Connector supports hybrid Post-Quantum Cryptography (PQC) key exchange
+protocols for TLS 1.3. Negotiation is automatic on JDK 27+ (via JEP 527). From
+Java 8 through JDK 26 it takes one step: point the connector at Conscrypt, a
+JSSE provider that is already a connector dependency, with the
+`alloydbTlsProvider` connection property. There is nothing to add to your build
+and no provider to register.
+
+```java
+config.addDataSourceProperty("alloydbTlsProvider", "CONSCRYPT");
+```
+
+The property accepts:
+
+| Value | Behavior |
+| --- | --- |
+| `JDK` (default) | Always use the JRE's default JSSE provider. |
+| `AUTO` | Use post-quantum key exchange wherever available: the JRE itself on JDK 27+, else Conscrypt where it loads. |
+| `CONSCRYPT` | Require Conscrypt, failing the connection rather than falling back. |
+
+Under `JDK` and `AUTO`, connections still succeed using classical cryptography
+when post-quantum key exchange is unavailable. `CONSCRYPT` is the one value that
+does not fall back: it fails the connection instead, so that a classical
+handshake is never served silently.
+
+The default is `JDK` so that moving AlloyDB connections onto a different TLS
+implementation is always a deliberate choice. Opting in is always explicit.
+
+Conscrypt is a native library and is not available on every platform. For the
+platform list, the cost of loading it, and how to confirm that a post-quantum
+group was actually negotiated, see the
+[Post-Quantum Cryptography Guide](pqc.md).
+
 ## Configuration Reference
 
 - See [Configuration Reference](configuration.md)
